@@ -1,19 +1,24 @@
 package com.group_2;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
+import com.group_2.service.WGService;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@SpringBootApplication
 public class Main {
+
     public static void main(String[] args) {
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("wg-pu");
-        EntityManager em = emf.createEntityManager();
+        SpringApplication.run(Main.class, args);
+    }
 
-        try {
-            em.getTransaction().begin();
-
+    @Bean
+    public CommandLineRunner demo(WGService wgService) {
+        return (args) -> {
             User admin = new User("Alice");
             Room room1 = new Room("Living Room");
             Room room2 = new Room("Kitchen");
@@ -21,26 +26,16 @@ public class Main {
             rooms.add(room1);
             rooms.add(room2);
 
-            WG wg = new WG("My WG", admin, rooms);
+            WG wg = wgService.createWG("My WG", admin, rooms);
 
             // Add another user
             User bob = new User("Bob");
-            wg.addMitbewohner(bob);
-
-            em.persist(wg);
-
-            em.getTransaction().commit();
+            wgService.addMitbewohner(wg.getId(), bob); // Assuming getId() exists, need to check entity
 
             System.out.println("WG persisted successfully!");
 
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            e.printStackTrace();
-        } finally {
-            em.close();
-            emf.close();
-        }
+            List<WG> wgs = wgService.getAllWGs();
+            System.out.println("WG count: " + wgs.size());
+        };
     }
 }

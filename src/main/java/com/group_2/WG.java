@@ -11,6 +11,10 @@ public class WG {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // Changed to Long for consistency with other entities
 
+    public Long getId() {
+        return id;
+    }
+
     public String name;
 
     @OneToMany(cascade = CascadeType.ALL)
