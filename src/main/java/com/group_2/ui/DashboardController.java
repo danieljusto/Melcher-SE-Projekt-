@@ -1,14 +1,13 @@
 package com.group_2.ui;
 
-import com.group_2.Room;
-import com.group_2.User;
-import com.group_2.WG;
 import com.group_2.service.WGService;
 import com.group_2.service.UserService;
 import com.group_2.service.RoomService;
+import com.model.Room;
+import com.model.User;
+import com.model.WG;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -27,7 +26,6 @@ public class DashboardController extends Controller {
     private final UserService userService;
     private final WGService wgService;
     private final RoomService roomService;
-    private User currentUser;
 
     // Sidebar elements
     @FXML
@@ -102,13 +100,14 @@ public class DashboardController extends Controller {
         this.roomService = roomService;
     }
 
-    public void initView(User user) {
-        this.currentUser = userService.getUser(user.getId()).orElse(user);
+    public void initView() {
+        refreshCurrentUser();
         updateSidebarUserInfo();
         showWgView();
     }
 
     private void updateSidebarUserInfo() {
+        User currentUser = getCurrentUser();
         if (currentUser != null) {
             String initial = currentUser.getName() != null && !currentUser.getName().isEmpty()
                     ? currentUser.getName().substring(0, 1).toUpperCase()
@@ -122,9 +121,7 @@ public class DashboardController extends Controller {
 
     @FXML
     public void refreshView() {
-        if (currentUser != null) {
-            this.currentUser = userService.getUser(currentUser.getId()).orElse(currentUser);
-        }
+        refreshCurrentUser();
         updateSidebarUserInfo();
         showWgView();
     }
@@ -152,7 +149,7 @@ public class DashboardController extends Controller {
         resetAllViews();
         resetMenuStyles();
         menuWgButton.getStyleClass().add("menu-item-active");
-        showWGDetails(currentUser.getWg());
+        showWGDetails(getCurrentUser().getWg());
     }
 
     @FXML
@@ -164,6 +161,7 @@ public class DashboardController extends Controller {
         accountView.setVisible(true);
         accountView.setManaged(true);
 
+        User currentUser = getCurrentUser();
         String initial = currentUser.getName() != null && !currentUser.getName().isEmpty()
                 ? currentUser.getName().substring(0, 1).toUpperCase()
                 : "?";
@@ -188,6 +186,7 @@ public class DashboardController extends Controller {
         roomsView.setVisible(true);
         roomsView.setManaged(true);
 
+        User currentUser = getCurrentUser();
         roomsListBox.getChildren().clear();
         if (currentUser.getWg() != null && currentUser.getWg().rooms != null) {
             for (Room room : currentUser.getWg().rooms) {
@@ -209,6 +208,7 @@ public class DashboardController extends Controller {
         membersView.setVisible(true);
         membersView.setManaged(true);
 
+        User currentUser = getCurrentUser();
         membersListBox.getChildren().clear();
         if (currentUser.getWg() != null && currentUser.getWg().mitbewohner != null) {
             for (User member : currentUser.getWg().mitbewohner) {
@@ -231,8 +231,13 @@ public class DashboardController extends Controller {
         loadScene(menuWgButton.getScene(), "/main_screen.fxml");
         javafx.application.Platform.runLater(() -> {
             MainScreenController mainScreenController = applicationContext.getBean(MainScreenController.class);
-            mainScreenController.initView(currentUser);
+            mainScreenController.initView();
         });
+    }
+
+    @FXML
+    public void showShoppingLists() {
+        loadScene(menuWgButton.getScene(), "/shopping_list.fxml");
     }
 
     private void showWGDetails(WG wg) {

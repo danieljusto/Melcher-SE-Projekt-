@@ -42,6 +42,10 @@
                 <Button fx:id="menuMembersButton" text="👥  Members" 
                         styleClass="menu-item" 
                         onAction="#showMembersView"/>
+                
+                <Button text="🛒  Shopping Lists" 
+                        styleClass="menu-item" 
+                        onAction="#showShoppingLists"/>
 
                 <!-- Spacer -->
                 <Region VBox.vgrow="ALWAYS"/>

@@ -1,4 +1,4 @@
-package com.group_2;
+package com.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

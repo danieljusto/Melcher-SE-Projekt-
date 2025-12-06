@@ -1,9 +1,10 @@
 package com.group_2.service;
 
-import com.group_2.Room;
-import com.group_2.User;
-import com.group_2.WG;
 import com.group_2.repository.WGRepository;
+import com.model.Room;
+import com.model.User;
+import com.model.WG;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

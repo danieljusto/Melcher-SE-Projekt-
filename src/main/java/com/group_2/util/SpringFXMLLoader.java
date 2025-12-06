@@ -1,4 +1,4 @@
-package com.group_2.ui;
+package com.group_2.util;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

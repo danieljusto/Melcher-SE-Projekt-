@@ -1,7 +1,8 @@
 package com.group_2.ui;
 
-import com.group_2.User;
 import com.group_2.service.UserService;
+import com.model.User;
+
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -40,6 +41,7 @@ public class LoginController extends Controller {
 
         Optional<User> user = userService.authenticate(email, password);
         if (user.isPresent()) {
+            setCurrentUser(user.get()); // Set the current user in the session
             navigateAfterAuth(user.get());
         } else {
             showAlert(Alert.AlertType.ERROR, "Login Failed", "Invalid email or password.");
@@ -58,14 +60,14 @@ public class LoginController extends Controller {
             loadScene(emailField.getScene(), "/main_screen.fxml");
             javafx.application.Platform.runLater(() -> {
                 MainScreenController mainScreenController = applicationContext.getBean(MainScreenController.class);
-                mainScreenController.initView(user);
+                mainScreenController.initView();
             });
         } else {
             // User has no WG - go to no_wg screen
             loadScene(emailField.getScene(), "/no_wg.fxml");
             javafx.application.Platform.runLater(() -> {
                 NoWgController noWgController = applicationContext.getBean(NoWgController.class);
-                noWgController.initView(user);
+                noWgController.initView();
             });
         }
     }

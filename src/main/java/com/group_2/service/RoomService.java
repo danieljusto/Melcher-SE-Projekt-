@@ -1,7 +1,8 @@
 package com.group_2.service;
 
-import com.group_2.Room;
 import com.group_2.repository.RoomRepository;
+import com.model.Room;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

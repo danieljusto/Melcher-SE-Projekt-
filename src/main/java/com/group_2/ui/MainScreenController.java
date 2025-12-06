@@ -1,8 +1,8 @@
 package com.group_2.ui;
 
-import com.group_2.User;
-import com.group_2.WG;
-import com.group_2.service.UserService;
+import com.model.User;
+import com.model.WG;
+
 import javafx.scene.control.Alert;
 import javafx.scene.text.Text;
 import javafx.fxml.FXML;
@@ -17,9 +17,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MainScreenController extends Controller {
-
-    private final UserService userService;
-    private User currentUser;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -44,17 +41,14 @@ public class MainScreenController extends Controller {
     @FXML
     private Text inviteCodeText;
 
-    public MainScreenController(UserService userService) {
-        this.userService = userService;
-    }
-
-    public void initView(User user) {
-        this.currentUser = userService.getUser(user.getId()).orElse(user);
+    public void initView() {
+        refreshCurrentUser();
         updateHeader();
         updateStats();
     }
 
     private void updateHeader() {
+        User currentUser = getCurrentUser();
         if (currentUser != null) {
             String fullName = currentUser.getName() +
                     (currentUser.getSurname() != null ? " " + currentUser.getSurname() : "");
@@ -77,6 +71,7 @@ public class MainScreenController extends Controller {
     }
 
     private void updateStats() {
+        User currentUser = getCurrentUser();
         WG wg = currentUser != null ? currentUser.getWg() : null;
         if (wg != null) {
             int memberCount = wg.mitbewohner != null ? wg.mitbewohner.size() : 0;
@@ -97,7 +92,7 @@ public class MainScreenController extends Controller {
         loadScene(headerUserName.getScene(), "/dashboard.fxml");
         javafx.application.Platform.runLater(() -> {
             DashboardController dashboardController = applicationContext.getBean(DashboardController.class);
-            dashboardController.initView(currentUser);
+            dashboardController.initView();
         });
     }
 
@@ -109,8 +104,7 @@ public class MainScreenController extends Controller {
 
     @FXML
     public void navigateToShoppingList() {
-        showAlert(Alert.AlertType.INFORMATION, "Coming Soon",
-                "The Shopping List feature is coming soon!");
+        loadScene(headerUserName.getScene(), "/shopping_list.fxml");
     }
 
     @FXML
@@ -121,6 +115,7 @@ public class MainScreenController extends Controller {
 
     @FXML
     public void handleLogout() {
+        clearSession();
         loadScene(headerUserName.getScene(), "/login.fxml");
     }
 }

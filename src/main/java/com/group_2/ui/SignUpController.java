@@ -1,7 +1,8 @@
 package com.group_2.ui;
 
-import com.group_2.User;
 import com.group_2.service.UserService;
+import com.model.User;
+
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -44,12 +45,13 @@ public class SignUpController extends Controller {
 
         try {
             User user = userService.registerUser(name, surname, email, password);
+            setCurrentUser(user); // Set as current user in session
             showAlert(Alert.AlertType.INFORMATION, "Signup Successful", "Account created!");
             // New users never have a WG, so go to no_wg screen
             loadScene(signupNameField.getScene(), "/no_wg.fxml");
             javafx.application.Platform.runLater(() -> {
                 NoWgController noWgController = applicationContext.getBean(NoWgController.class);
-                noWgController.initView(user);
+                noWgController.initView();
             });
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Signup Failed", e.getMessage());

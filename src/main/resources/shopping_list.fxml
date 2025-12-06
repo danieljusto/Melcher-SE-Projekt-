@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.group_2.ui.ShoppingListController"
+            styleClass="dashboard-root"
+            stylesheets="@/styles.css"
+            prefWidth="1100" prefHeight="700">
+
+    <!-- Sidebar -->
+    <left>
+        <VBox styleClass="sidebar">
+            <!-- Logo/Header -->
+            <VBox styleClass="sidebar-header" spacing="5">
+                <Text text="🛒 Shopping Lists" styleClass="sidebar-logo"/>
+                <Text text="Manage shared shopping" styleClass="sidebar-subtitle"/>
+            </VBox>
+
+            <!-- Navigation Menu -->
+            <VBox styleClass="sidebar-menu" VBox.vgrow="ALWAYS">
+                <Text text="NAVIGATION" styleClass="menu-section-label"/>
+                
+                <Button text="🏠  Home" styleClass="menu-item" onAction="#backToHome"/>
+                
+                <Button text="🏘️  Dashboard" styleClass="menu-item" onAction="#goToDashboard"/>
+
+                <!-- Spacer -->
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <!-- User Profile at Bottom -->
+                <HBox styleClass="user-profile-section" spacing="12" alignment="CENTER_LEFT">
+                    <StackPane styleClass="avatar">
+                        <Text fx:id="avatarInitial" text="?" styleClass="avatar-text"/>
+                    </StackPane>
+                    <VBox spacing="2">
+                        <Text fx:id="userNameText" text="User Name" styleClass="user-name"/>
+                        <Text fx:id="userEmailText" text="user@email.com" styleClass="user-email"/>
+                    </VBox>
+                </HBox>
+                
+                <Button text="🚪  Logout" styleClass="menu-item" onAction="#handleLogout"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- Main Content Area -->
+    <center>
+        <HBox spacing="20">
+            <!-- Left Panel: Shopping Lists -->
+            <VBox styleClass="main-content" spacing="20" prefWidth="350">
+                <VBox styleClass="content-header" spacing="8">
+                    <Text text="My Lists" styleClass="page-title"/>
+                    <Text text="Your personal and shared lists" styleClass="page-subtitle"/>
+                </VBox>
+
+                <Button text="+ Create New List" styleClass="primary-button" onAction="#showCreateListDialog"/>
+
+                <ScrollPane fitToWidth="true" styleClass="scroll-pane" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="listsContainer" spacing="10">
+                        <!-- Lists will be added here dynamically -->
+                    </VBox>
+                </ScrollPane>
+            </VBox>
+
+            <!-- Right Panel: Selected List Items -->
+            <VBox styleClass="main-content" spacing="20" HBox.hgrow="ALWAYS">
+                <!-- Placeholder when no list selected -->
+                <VBox fx:id="noListSelectedView" alignment="CENTER" spacing="15" VBox.vgrow="ALWAYS">
+                    <Text text="📋" style="-fx-font-size: 48px;"/>
+                    <Text text="Select a list to view items" styleClass="card-subtitle"/>
+                </VBox>
+
+                <!-- List details view -->
+                <VBox fx:id="listDetailsView" spacing="20" visible="false" managed="false">
+                    <VBox styleClass="content-header" spacing="8">
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Text fx:id="selectedListName" text="List Name" styleClass="page-title"/>
+                            <StackPane fx:id="sharedBadge" styleClass="badge" visible="false" managed="false">
+                                <Text text="👥 Shared" styleClass="badge-text"/>
+                            </StackPane>
+                        </HBox>
+                        <Text fx:id="selectedListCreator" text="Created by: You" styleClass="page-subtitle"/>
+                    </VBox>
+
+                    <!-- Add Item Section -->
+                    <VBox styleClass="card" spacing="15">
+                        <Text text="Add Item" styleClass="card-title"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <TextField fx:id="newItemField" promptText="Enter item name..." 
+                                       styleClass="modern-text-field" HBox.hgrow="ALWAYS"/>
+                            <Button text="+ Add" styleClass="primary-button" onAction="#addItem"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Items List -->
+                    <VBox styleClass="card" spacing="15" VBox.vgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT">
+                            <Text text="Items" styleClass="card-title"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Text fx:id="itemCountText" text="0 items" styleClass="card-subtitle"/>
+                        </HBox>
+                        <ScrollPane fitToWidth="true" styleClass="scroll-pane" VBox.vgrow="ALWAYS">
+                            <VBox fx:id="itemsContainer" spacing="8">
+                                <!-- Items will be added here dynamically -->
+                            </VBox>
+                        </ScrollPane>
+                    </VBox>
+
+                    <!-- List Actions -->
+                    <HBox spacing="15">
+                        <Button text="⚙️ Manage Sharing" styleClass="secondary-button" onAction="#showSharingDialog"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="deleteListButton" text="🗑️ Delete List" styleClass="danger-button" onAction="#deleteSelectedList"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </HBox>
+    </center>
+
+</BorderPane>
