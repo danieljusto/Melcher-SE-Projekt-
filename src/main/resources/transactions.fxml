@@ -106,60 +106,13 @@
                     </VBox>
 
                 </VBox>
+
             </ScrollPane>
         </center>
     </BorderPane>
 
-    <!-- Add Transaction Dialog Overlay (Hidden by default) -->
-    <StackPane fx:id="addTransactionDialog" visible="false" managed="false" 
-               style="-fx-background-color: rgba(0,0,0,0.5);" alignment="CENTER">
-        <VBox styleClass="card" spacing="20" style="-fx-max-width: 500; -fx-padding: 30; -fx-background-color: white;">
-            <Text text="Add New Transaction" styleClass="card-title"/>
-            
-            <VBox spacing="8">
-                <Text text="Creditor (Who Paid)" styleClass="card-subtitle"/>
-                <Text fx:id="creditorText" text="You" style="-fx-font-size: 14px; -fx-font-weight: 600;"/>
-            </VBox>
-            
-            <VBox spacing="8">
-                <Text text="Select Debtors (Who Owes)" styleClass="card-subtitle"/>
-                <VBox fx:id="debtorListBox" spacing="5">
-                    <!-- Checkboxes will be added here dynamically -->
-                </VBox>
-            </VBox>
-            
-            <VBox spacing="8">
-                <Text text="Split Type" styleClass="card-subtitle"/>
-                <HBox spacing="15">
-                    <RadioButton fx:id="equalSplitRadio" text="Split Equally" selected="true" 
-                                 onAction="#handleSplitTypeChange" styleClass="radio-button"/>
-                    <RadioButton fx:id="customSplitRadio" text="Custom Percentages" 
-                                 onAction="#handleSplitTypeChange" styleClass="radio-button"/>
-                </HBox>
-            </VBox>
-            
-            <VBox fx:id="customPercentageBox" spacing="8" visible="false" managed="false">
-                <Text text="Enter Percentages (must sum to 100%)" styleClass="card-subtitle"/>
-                <VBox fx:id="percentageFieldsBox" spacing="5">
-                    <!-- Percentage fields will be added here dynamically -->
-                </VBox>
-            </VBox>
-            
-            <VBox spacing="8">
-                <Text text="Total Amount (€)" styleClass="card-subtitle"/>
-                <TextField fx:id="amountField" promptText="e.g., 50.00" styleClass="text-field"/>
-            </VBox>
-            
-            <VBox spacing="8">
-                <Text text="Description" styleClass="card-subtitle"/>
-                <TextField fx:id="descriptionField" promptText="e.g., Groceries" styleClass="text-field"/>
-            </VBox>
-            
-            <HBox spacing="15" alignment="CENTER">
-                <Button text="Cancel" onAction="#handleCancelTransaction" styleClass="secondary-button" prefWidth="120"/>
-                <Button text="Save Transaction" onAction="#handleSaveTransaction" styleClass="primary-button" prefWidth="150"/>
-            </HBox>
-        </VBox>
-    </StackPane>
+    <!-- Transaction Dialog Overlay -->
+    <fx:include source="transaction_dialog.fxml" fx:id="transactionDialog"/>
 
 </StackPane>
+

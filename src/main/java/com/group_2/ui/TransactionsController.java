@@ -50,29 +50,7 @@ public class TransactionsController extends Controller {
     @FXML
     private TableColumn<BalanceEntry, String> balanceColumn;
 
-    // Add Transaction Dialog
-    @FXML
-    private StackPane addTransactionDialog;
-    @FXML
-    private Text creditorText;
-    @FXML
-    private VBox debtorListBox;
-    @FXML
-    private RadioButton equalSplitRadio;
-    @FXML
-    private RadioButton customSplitRadio;
-    @FXML
-    private VBox customPercentageBox;
-    @FXML
-    private VBox percentageFieldsBox;
-    @FXML
-    private TextField amountField;
-    @FXML
-    private TextField descriptionField;
-
-    private ToggleGroup splitTypeGroup;
-    private Map<Long, CheckBox> debtorCheckBoxes = new HashMap<>();
-    private Map<Long, TextField> percentageFields = new HashMap<>();
+    // Transaction dialog fields will be added here
 
     private DecimalFormat currencyFormat = new DecimalFormat("€#,##0.00");
 
@@ -86,7 +64,7 @@ public class TransactionsController extends Controller {
     @FXML
     public void initialize() {
         setupBalanceTable();
-        setupSplitTypeToggle();
+        // Dialog setup will be added here
     }
 
     public void initView() {
@@ -148,12 +126,6 @@ public class TransactionsController extends Controller {
         });
     }
 
-    private void setupSplitTypeToggle() {
-        splitTypeGroup = new ToggleGroup();
-        equalSplitRadio.setToggleGroup(splitTypeGroup);
-        customSplitRadio.setToggleGroup(splitTypeGroup);
-    }
-
     private void updateBalanceDisplay() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null)
@@ -203,165 +175,8 @@ public class TransactionsController extends Controller {
 
     @FXML
     public void showAddTransactionDialog() {
-        User currentUser = sessionManager.getCurrentUser();
-        if (currentUser == null) {
-            showAlert(Alert.AlertType.WARNING, "Error", "No user session found.");
-            return;
-        }
-        WG wg = currentUser.getWg();
-
-        if (wg == null || wg.mitbewohner == null) {
-            showAlert(Alert.AlertType.WARNING, "No WG", "You must be part of a WG to create transactions.");
-            return;
-        }
-
-        debtorCheckBoxes.clear();
-        percentageFields.clear();
-        debtorListBox.getChildren().clear();
-        percentageFieldsBox.getChildren().clear();
-        amountField.clear();
-        descriptionField.clear();
-        equalSplitRadio.setSelected(true);
-        customPercentageBox.setVisible(false);
-        customPercentageBox.setManaged(false);
-
-        creditorText.setText(currentUser.getName() +
-                (currentUser.getSurname() != null ? " " + currentUser.getSurname() : ""));
-
-        for (User member : wg.mitbewohner) {
-            if (!member.getId().equals(currentUser.getId())) {
-                CheckBox checkBox = new CheckBox(member.getName() +
-                        (member.getSurname() != null ? " " + member.getSurname() : ""));
-                checkBox.setStyle("-fx-font-size: 14px;");
-                debtorCheckBoxes.put(member.getId(), checkBox);
-                debtorListBox.getChildren().add(checkBox);
-            }
-        }
-
-        addTransactionDialog.setVisible(true);
-        addTransactionDialog.setManaged(true);
-        addTransactionDialog.toFront();
-    }
-
-    @FXML
-    public void handleSplitTypeChange() {
-        boolean isCustom = customSplitRadio.isSelected();
-        customPercentageBox.setVisible(isCustom);
-        customPercentageBox.setManaged(isCustom);
-
-        if (isCustom) {
-            updatePercentageFields();
-        }
-    }
-
-    private void updatePercentageFields() {
-        percentageFieldsBox.getChildren().clear();
-        percentageFields.clear();
-
-        for (Map.Entry<Long, CheckBox> entry : debtorCheckBoxes.entrySet()) {
-            if (entry.getValue().isSelected()) {
-                Long memberId = entry.getKey();
-                String memberName = entry.getValue().getText();
-
-                HBox row = new HBox(10);
-                row.setAlignment(Pos.CENTER_LEFT);
-
-                Text label = new Text(memberName + ":");
-                label.setStyle("-fx-font-size: 13px;");
-                label.setWrappingWidth(150);
-
-                TextField percentField = new TextField();
-                percentField.setPromptText("%");
-                percentField.setPrefWidth(80);
-                percentField.getStyleClass().add("text-field");
-
-                percentageFields.put(memberId, percentField);
-
-                row.getChildren().addAll(label, percentField);
-                percentageFieldsBox.getChildren().add(row);
-            }
-        }
-    }
-
-    @FXML
-    public void handleSaveTransaction() {
-        try {
-            User currentUser = sessionManager.getCurrentUser();
-            if (currentUser == null) {
-                showAlert(Alert.AlertType.ERROR, "Error", "No user session found.");
-                return;
-            }
-
-            if (amountField.getText().trim().isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Input", "Please enter an amount.");
-                return;
-            }
-
-            if (descriptionField.getText().trim().isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Input", "Please enter a description.");
-                return;
-            }
-
-            List<Long> debtorIds = new ArrayList<>();
-            for (Map.Entry<Long, CheckBox> entry : debtorCheckBoxes.entrySet()) {
-                if (entry.getValue().isSelected()) {
-                    debtorIds.add(entry.getKey());
-                }
-            }
-
-            if (debtorIds.isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "No Debtors Selected", "Please select at least one debtor.");
-                return;
-            }
-
-            double totalAmount = Double.parseDouble(amountField.getText().trim());
-            String description = descriptionField.getText().trim();
-
-            List<Double> percentages = null;
-            if (customSplitRadio.isSelected()) {
-                percentages = new ArrayList<>();
-                for (Long debtorId : debtorIds) {
-                    TextField percentField = percentageFields.get(debtorId);
-                    if (percentField == null || percentField.getText().trim().isEmpty()) {
-                        showAlert(Alert.AlertType.WARNING, "Invalid Percentages",
-                                "Please enter percentages for all selected debtors.");
-                        return;
-                    }
-                    percentages.add(Double.parseDouble(percentField.getText().trim()));
-                }
-
-                double sum = percentages.stream().mapToDouble(Double::doubleValue).sum();
-                if (Math.abs(sum - 100.0) > 0.01) {
-                    showAlert(Alert.AlertType.WARNING, "Invalid Percentages",
-                            "Percentages must sum to 100%. Current sum: " + sum + "%");
-                    return;
-                }
-            }
-
-            transactionService.createTransaction(
-                    currentUser.getId(),
-                    debtorIds,
-                    percentages,
-                    totalAmount,
-                    description);
-
-            updateBalanceDisplay();
-            updateBalanceSheet();
-            handleCancelTransaction();
-
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Transaction created successfully!");
-
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter valid numbers.");
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to create transaction: " + e.getMessage());
-        }
-    }
-
-    @FXML
-    public void handleCancelTransaction() {
-        addTransactionDialog.setVisible(false);
-        addTransactionDialog.setManaged(false);
+        // New Splitwise-style dialog will be implemented here
+        System.out.println("Add Transaction clicked - dialog not yet implemented");
     }
 
     @FXML

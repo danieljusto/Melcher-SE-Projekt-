@@ -4,32 +4,31 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<!-- Standalone transaction dialog with 3 screens -->
+<!-- Three-screen transaction dialog as StackPane overlay -->
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
-           fx:id="dialogOverlay"
-           visible="false"
-           managed="false"
-           style="-fx-background-color: rgba(0,0,0,0.5);"
+           fx:id="transactionDialogOverlay"
+           visible="false" managed="false"
+           style="-fx-background-color: rgba(0,0,0,0.6);"
            alignment="CENTER">
 
-    <!-- SCREEN 1: Main Transaction Dialog -->
-    <VBox fx:id="mainScreen" styleClass="card" spacing="16"
+    <!-- SCREEN 1: Main Add Transaction Dialog -->
+    <VBox fx:id="mainDialogScreen" styleClass="card" spacing="16"
           style="-fx-max-width: 480; -fx-padding: 0; -fx-background-color: white; -fx-background-radius: 12;">
         
         <!-- Header -->
         <HBox alignment="CENTER" spacing="15" style="-fx-padding: 16 20; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;">
-            <Button fx:id="closeButton" text="✕" onAction="#closeDialog"
+            <Button text="✕" onAction="#closeDialog" 
                     style="-fx-background-color: transparent; -fx-text-fill: #6b7280; -fx-font-size: 20px; -fx-cursor: hand; -fx-padding: 4;"/>
-            <Text text="Add a transaction" style="-fx-font-size: 17px; -fx-font-weight: 600; -fx-fill: #111827;"/>
+            <Text text="Add a transaction" style="-fx-font-size: 17px; -fx-font-weight: 600;"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="saveButton" text="Save" onAction="#saveTransaction"
+            <Button text="Save" onAction="#saveTransaction" 
                     style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 6 16; -fx-cursor: hand; -fx-font-weight: 500;"/>
         </HBox>
 
         <VBox spacing="16" style="-fx-padding: 16 20 20 20;">
             <!-- Participant Summary -->
-            <Text fx:id="participantSummary" text="With you and: Select participants" 
+            <Text fx:id="participantSummaryText" text="With you and: Select participants" 
                   style="-fx-font-size: 13px; -fx-fill: #6b7280;"/>
 
             <!-- Description -->
@@ -49,12 +48,12 @@
                 </HBox>
             </VBox>
 
-            <!-- Summary Row with Chips -->
+            <!-- Payer and Split Mode Chips -->
             <HBox spacing="6" alignment="CENTER_LEFT" style="-fx-padding: 4 0;">
                 <Text text="Paid by" style="-fx-font-size: 13px; -fx-fill: #6b7280;"/>
                 <HBox fx:id="payerChip" onMouseClicked="#showPayerScreen" spacing="6" alignment="CENTER"
                       style="-fx-background-color: #eff6ff; -fx-border-color: #3b82f6; -fx-border-width: 1; -fx-border-radius: 16; -fx-background-radius: 16; -fx-padding: 5 12; -fx-cursor: hand;">
-                    <Text fx:id="payerChipText" text="you" style="-fx-font-size: 13px; -fx-fill: #1e40af; -fx-font-weight: 500;"/>
+                    <Text fx:id="payerChipText" text="select payer" style="-fx-font-size: 13px; -fx-fill: #1e40af; -fx-font-weight: 500;"/>
                 </HBox>
                 <Text text="and split" style="-fx-font-size: 13px; -fx-fill: #6b7280;"/>
                 <HBox fx:id="splitModeChip" onMouseClicked="#showSplitOptionsScreen" spacing="6" alignment="CENTER"
@@ -64,7 +63,7 @@
             </HBox>
 
             <!-- Validation Error -->
-            <Text fx:id="validationError" text="" visible="false" managed="false"
+            <Text fx:id="validationErrorText" text="" visible="false" managed="false"
                   style="-fx-font-size: 12px; -fx-fill: #ef4444;"/>
         </VBox>
     </VBox>
@@ -75,16 +74,16 @@
         
         <!-- Header -->
         <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-padding: 16 20; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;">
-            <Button text="← Cancel" onAction="#returnToMain"
+            <Button text="← Cancel" onAction="#returnToMainDialog" 
                     style="-fx-background-color: transparent; -fx-text-fill: #3b82f6; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 4; -fx-font-weight: 500;"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Text text="Choose payer" style="-fx-font-size: 17px; -fx-font-weight: 600; -fx-fill: #111827;"/>
+            <Text text="Choose payer" style="-fx-font-size: 17px; -fx-font-weight: 600;"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Region prefWidth="80"/>
         </HBox>
 
-        <!-- Payer List -->
-        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background: white;">
+        <!-- Payer list -->
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
             <VBox fx:id="payerListBox" spacing="0" style="-fx-padding: 8;"/>
         </ScrollPane>
     </VBox>
@@ -95,16 +94,16 @@
         
         <!-- Header -->
         <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-padding: 16 20; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;">
-            <Button text="← Cancel" onAction="#returnToMain"
+            <Button text="← Cancel" onAction="#returnToMainDialog" 
                     style="-fx-background-color: transparent; -fx-text-fill: #3b82f6; -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 4; -fx-font-weight: 500;"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Text text="Split options" style="-fx-font-size: 17px; -fx-font-weight: 600; -fx-fill: #111827;"/>
+            <Text text="Split options" style="-fx-font-size: 17px; -fx-font-weight: 600;"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Done" onAction="#returnToMain"
+            <Button text="Done" onAction="#returnToMainDialog" 
                     style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 6 16; -fx-cursor: hand; -fx-font-weight: 500;"/>
         </HBox>
 
-        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background: white;">
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
             <VBox spacing="20" style="-fx-padding: 20;">
                 <!-- Split Mode Selection -->
                 <VBox spacing="12">
