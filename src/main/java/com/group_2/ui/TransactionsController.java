@@ -40,6 +40,10 @@ public class TransactionsController extends Controller {
     @FXML
     private TableColumn<BalanceEntry, String> balanceColumn;
 
+    // Navbar
+    @FXML
+    private NavbarController navbarController;
+
     // Transaction dialog fields will be added here
 
     private DecimalFormat currencyFormat = new DecimalFormat("€#,##0.00");
@@ -53,8 +57,10 @@ public class TransactionsController extends Controller {
 
     @FXML
     public void initialize() {
+        if (navbarController != null) {
+            navbarController.setTitle("💰 Transactions");
+        }
         setupBalanceTable();
-        // Dialog setup will be added here
     }
 
     public void initView() {
@@ -197,15 +203,6 @@ public class TransactionsController extends Controller {
             System.err.println("Error showing transaction dialog: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    @FXML
-    public void backToHome() {
-        loadScene(balanceTable.getScene(), "/main_screen.fxml");
-        javafx.application.Platform.runLater(() -> {
-            MainScreenController mainScreenController = applicationContext.getBean(MainScreenController.class);
-            mainScreenController.initView();
-        });
     }
 
     @FXML

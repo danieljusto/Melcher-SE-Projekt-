@@ -6,7 +6,8 @@ import java.time.DayOfWeek;
 /**
  * Entity representing a template for cleaning tasks.
  * Templates define a default weekly schedule that can be applied to new weeks.
- * Each template specifies a room, default assignee, and day of week.
+ * Each template specifies a room and day of week. Assignees are determined
+ * by the RoomAssignmentQueue for round-robin distribution.
  */
 @Entity
 @Table(name = "cleaning_task_template")
@@ -21,10 +22,6 @@ public class CleaningTaskTemplate {
     private Room room;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "default_assignee_id", nullable = false)
-    private User defaultAssignee;
-
-    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "wg_id", nullable = false)
     private WG wg;
 
@@ -37,16 +34,14 @@ public class CleaningTaskTemplate {
     public CleaningTaskTemplate() {
     }
 
-    public CleaningTaskTemplate(Room room, User defaultAssignee, WG wg, int dayOfWeek) {
+    public CleaningTaskTemplate(Room room, WG wg, int dayOfWeek) {
         this.room = room;
-        this.defaultAssignee = defaultAssignee;
         this.wg = wg;
         this.dayOfWeek = dayOfWeek;
     }
 
-    public CleaningTaskTemplate(Room room, User defaultAssignee, WG wg, DayOfWeek dayOfWeek) {
+    public CleaningTaskTemplate(Room room, WG wg, DayOfWeek dayOfWeek) {
         this.room = room;
-        this.defaultAssignee = defaultAssignee;
         this.wg = wg;
         this.dayOfWeek = dayOfWeek.getValue();
     }
@@ -62,14 +57,6 @@ public class CleaningTaskTemplate {
 
     public void setRoom(Room room) {
         this.room = room;
-    }
-
-    public User getDefaultAssignee() {
-        return defaultAssignee;
-    }
-
-    public void setDefaultAssignee(User defaultAssignee) {
-        this.defaultAssignee = defaultAssignee;
     }
 
     public WG getWg() {

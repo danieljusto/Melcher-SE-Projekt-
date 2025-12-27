@@ -13,8 +13,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.fxml.FXML;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -32,21 +30,9 @@ public class CleaningScheduleController extends Controller {
     private final CleaningScheduleService cleaningScheduleService;
     private final SessionManager sessionManager;
 
-    @Autowired
-    private ApplicationContext applicationContext;
-
     // Current displayed week
     private LocalDate displayedWeekStart;
 
-    // Sidebar elements
-    @FXML
-    private Text avatarInitial;
-    @FXML
-    private Text userNameText;
-    @FXML
-    private Text userEmailText;
-    @FXML
-    private Text weekRangeText;
     @FXML
     private Button generateButton;
 
@@ -66,6 +52,10 @@ public class CleaningScheduleController extends Controller {
     @FXML
     private HBox roomCardsContainer;
 
+    // Navbar
+    @FXML
+    private NavbarController navbarController;
+
     public CleaningScheduleController(CleaningScheduleService cleaningScheduleService, SessionManager sessionManager) {
         this.cleaningScheduleService = cleaningScheduleService;
         this.sessionManager = sessionManager;
@@ -73,22 +63,11 @@ public class CleaningScheduleController extends Controller {
 
     @FXML
     public void initialize() {
-        displayedWeekStart = cleaningScheduleService.getCurrentWeekStart();
-        updateSidebarUserInfo();
-        refreshView();
-    }
-
-    private void updateSidebarUserInfo() {
-        User currentUser = sessionManager.getCurrentUser();
-        if (currentUser != null) {
-            String initial = currentUser.getName() != null && !currentUser.getName().isEmpty()
-                    ? currentUser.getName().substring(0, 1).toUpperCase()
-                    : "?";
-            avatarInitial.setText(initial);
-            userNameText.setText(currentUser.getName() +
-                    (currentUser.getSurname() != null ? " " + currentUser.getSurname() : ""));
-            userEmailText.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "");
+        if (navbarController != null) {
+            navbarController.setTitle("🧹 Cleaning Schedule");
         }
+        displayedWeekStart = cleaningScheduleService.getCurrentWeekStart();
+        refreshView();
     }
 
     private void refreshView() {
@@ -111,10 +90,6 @@ public class CleaningScheduleController extends Controller {
         DateTimeFormatter fullFormatter = DateTimeFormatter.ofPattern("MMMM d");
         String dateRange = displayedWeekStart.format(fullFormatter) + " - " + weekEnd.format(fullFormatter);
         weekDateRange.setText(dateRange);
-
-        // Sidebar short range
-        DateTimeFormatter shortFormatter = DateTimeFormatter.ofPattern("MMM d");
-        weekRangeText.setText(displayedWeekStart.format(shortFormatter) + " - " + weekEnd.format(shortFormatter));
     }
 
     private void loadCalendarDays() {
@@ -337,11 +312,17 @@ public class CleaningScheduleController extends Controller {
             refreshView();
         });
 
-        Button reassignBtn = new Button("👤");
-        reassignBtn.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 8; " +
-                "-fx-padding: 6 10; -fx-cursor: hand;");
-        reassignBtn.setTooltip(new Tooltip("Reassign"));
-        reassignBtn.setOnAction(e -> showReassignDialog(task));
+        actions.getChildren().add(completeBtn);
+
+        // Only show reassign button for your own tasks
+        if (isMyTask) {
+            Button reassignBtn = new Button("👤");
+            reassignBtn.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 8; " +
+                    "-fx-padding: 6 10; -fx-cursor: hand;");
+            reassignBtn.setTooltip(new Tooltip("Reassign to someone else"));
+            reassignBtn.setOnAction(e -> showReassignDialog(task));
+            actions.getChildren().add(reassignBtn);
+        }
 
         Button rescheduleBtn = new Button("📅");
         rescheduleBtn.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 8; " +
@@ -349,7 +330,7 @@ public class CleaningScheduleController extends Controller {
         rescheduleBtn.setTooltip(new Tooltip("Reschedule"));
         rescheduleBtn.setOnAction(e -> showRescheduleDialog(task));
 
-        actions.getChildren().addAll(completeBtn, reassignBtn, rescheduleBtn);
+        actions.getChildren().add(rescheduleBtn);
 
         card.getChildren().addAll(iconPane, roomName, assigneeBox, dueDateText, statusBadge, actions);
         return card;
@@ -439,18 +420,21 @@ public class CleaningScheduleController extends Controller {
     public void generateSchedule() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG to generate a schedule.");
+            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG to generate a schedule.",
+                    getOwnerWindow(weekTitle));
             return;
         }
 
         WG wg = currentUser.getWg();
         if (wg.rooms == null || wg.rooms.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "No Rooms",
-                    "Please add rooms to your WG first before generating a cleaning schedule.");
+                    "Please add rooms to your WG first before generating a cleaning schedule.",
+                    getOwnerWindow(weekTitle));
             return;
         }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirm, getOwnerWindow(weekTitle));
         confirm.setTitle("Generate Schedule");
         confirm.setHeaderText("Generate random cleaning schedule?");
         confirm.setContentText("Tasks will be distributed randomly among WG members.");
@@ -467,17 +451,18 @@ public class CleaningScheduleController extends Controller {
     public void showAddTaskDialog() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG to add tasks.");
+            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG to add tasks.", getOwnerWindow(weekTitle));
             return;
         }
 
         WG wg = currentUser.getWg();
         if (wg.rooms == null || wg.rooms.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Rooms", "Please add rooms first.");
+            showAlert(Alert.AlertType.WARNING, "No Rooms", "Please add rooms first.", getOwnerWindow(weekTitle));
             return;
         }
 
         Dialog<CleaningTask> dialog = new Dialog<>();
+        configureDialogOwner(dialog, getOwnerWindow(weekTitle));
         dialog.setTitle("Add Cleaning Task");
         dialog.setHeaderText("Assign a room to a member");
 
@@ -547,6 +532,7 @@ public class CleaningScheduleController extends Controller {
             return;
 
         Dialog<User> dialog = new Dialog<>();
+        configureDialogOwner(dialog, getOwnerWindow(weekTitle));
         dialog.setTitle("Reassign Task");
         dialog.setHeaderText("Reassign \"" + task.getRoom().getName() + "\"");
 
@@ -585,6 +571,7 @@ public class CleaningScheduleController extends Controller {
 
     private void showRescheduleDialog(CleaningTask task) {
         Dialog<LocalDate> dialog = new Dialog<>();
+        configureDialogOwner(dialog, getOwnerWindow(weekTitle));
         dialog.setTitle("Reschedule Task");
         dialog.setHeaderText("Reschedule \"" + task.getRoom().getName() + "\"");
 
@@ -634,18 +621,19 @@ public class CleaningScheduleController extends Controller {
     public void saveAsTemplate() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.");
+            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.", getOwnerWindow(weekTitle));
             return;
         }
 
         WG wg = currentUser.getWg();
         if (cleaningScheduleService.getTasksForWeek(wg, displayedWeekStart).isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "No Tasks",
-                    "Create a schedule first before saving it as a template.");
+                    "Create a schedule first before saving it as a template.", getOwnerWindow(weekTitle));
             return;
         }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirm, getOwnerWindow(weekTitle));
         confirm.setTitle("Save Template");
         confirm.setHeaderText("Save current week as default template?");
         confirm.setContentText("This will overwrite any existing template.");
@@ -654,7 +642,7 @@ public class CleaningScheduleController extends Controller {
             if (response == ButtonType.OK) {
                 cleaningScheduleService.saveAsTemplate(wg);
                 showAlert(Alert.AlertType.INFORMATION, "Saved",
-                        "Template saved! Use 'Load Default' to apply it to new weeks.");
+                        "Template saved! Use 'Load Default' to apply it to new weeks.", getOwnerWindow(weekTitle));
             }
         });
     }
@@ -663,18 +651,20 @@ public class CleaningScheduleController extends Controller {
     public void loadFromTemplate() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.");
+            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.", getOwnerWindow(weekTitle));
             return;
         }
 
         WG wg = currentUser.getWg();
         if (!cleaningScheduleService.hasTemplate(wg)) {
             showAlert(Alert.AlertType.WARNING, "No Template",
-                    "No default template found. First create a schedule and save it as template.");
+                    "No default template found. First create a schedule and save it as template.",
+                    getOwnerWindow(weekTitle));
             return;
         }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirm, getOwnerWindow(weekTitle));
         confirm.setTitle("Load Template");
         confirm.setHeaderText("Load default template for this week?");
         confirm.setContentText("This will replace any existing tasks for this week.");
@@ -689,21 +679,13 @@ public class CleaningScheduleController extends Controller {
 
     @FXML
     public void openTemplateEditor() {
-        loadScene(avatarInitial.getScene(), "/template_editor.fxml");
+        loadScene(weekTitle.getScene(), "/template_editor.fxml");
     }
 
     @FXML
     public void handleLogout() {
         sessionManager.clear();
-        loadScene(avatarInitial.getScene(), "/login.fxml");
+        loadScene(weekTitle.getScene(), "/login.fxml");
     }
 
-    @FXML
-    public void backToHome() {
-        loadScene(avatarInitial.getScene(), "/main_screen.fxml");
-        javafx.application.Platform.runLater(() -> {
-            MainScreenController controller = applicationContext.getBean(MainScreenController.class);
-            controller.initView();
-        });
-    }
 }

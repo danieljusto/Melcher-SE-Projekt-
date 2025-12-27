@@ -12,103 +12,67 @@
             stylesheets="@/styles.css"
             prefWidth="1200" prefHeight="800">
 
-    <!-- Sidebar -->
-    <left>
-        <VBox styleClass="sidebar" prefWidth="260">
-            <!-- Logo/Header -->
-            <VBox styleClass="sidebar-header" spacing="5">
-                <Text text="🧹 Cleaning" styleClass="sidebar-logo"/>
-                <Text text="Weekly Schedule" styleClass="sidebar-subtitle"/>
-            </VBox>
-
-            <!-- Navigation Menu -->
-            <VBox styleClass="sidebar-menu" VBox.vgrow="ALWAYS">
-                <Text text="NAVIGATION" styleClass="menu-section-label"/>
-                
-                <Button text="🏠  Home" styleClass="menu-item" onAction="#backToHome"/>
-
-                <Region style="-fx-pref-height: 20;"/>
-                
-                <Text text="ACTIONS" styleClass="menu-section-label"/>
-                
-                <Button fx:id="generateButton" text="🎲  Generate Random" 
-                        styleClass="menu-item" onAction="#generateSchedule"/>
-                
-                <Button text="➕  Add Task Manually" 
-                        styleClass="menu-item" onAction="#showAddTaskDialog"/>
-
-                <Region style="-fx-pref-height: 10;"/>
-                
-                <Text text="TEMPLATE" styleClass="menu-section-label"/>
-                
-                <Button text="📝  Edit Template" 
-                        styleClass="menu-item" onAction="#openTemplateEditor"/>
-                
-                <Button fx:id="loadTemplateButton" text="📥  Apply Template" 
-                        styleClass="menu-item" onAction="#loadFromTemplate"/>
-
-                <!-- Spacer -->
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <!-- Week Navigation -->
-                <VBox spacing="10" style="-fx-padding: 15;">
-                    <Text text="CURRENT WEEK" styleClass="menu-section-label"/>
-                    <HBox spacing="10" alignment="CENTER">
-                        <Button text="◀" styleClass="icon-button" onAction="#previousWeek"/>
-                        <Text fx:id="weekRangeText" text="Dec 23 - 29" 
-                              style="-fx-font-size: 12px; -fx-fill: #94a3b8;"/>
-                        <Button text="▶" styleClass="icon-button" onAction="#nextWeek"/>
-                    </HBox>
-                    <Button text="📅 Today" styleClass="secondary-button" 
-                            style="-fx-pref-width: 200;" onAction="#goToCurrentWeek"/>
-                </VBox>
-
-                <!-- User Profile at Bottom -->
-                <HBox styleClass="user-profile-section" spacing="12" alignment="CENTER_LEFT">
-                    <StackPane styleClass="avatar">
-                        <Text fx:id="avatarInitial" text="?" styleClass="avatar-text"/>
-                    </StackPane>
-                    <VBox spacing="2">
-                        <Text fx:id="userNameText" text="User Name" styleClass="user-name"/>
-                        <Text fx:id="userEmailText" text="user@email.com" styleClass="user-email"/>
-                    </VBox>
-                </HBox>
-                
-                <Button text="🚪  Logout" styleClass="menu-item" onAction="#handleLogout"/>
-            </VBox>
-        </VBox>
-    </left>
+    <!-- Top Header -->
+    <top>
+        <fx:include source="navbar.fxml" fx:id="navbar"/>
+    </top>
 
     <!-- Main Content Area - Calendar View -->
     <center>
         <VBox style="-fx-background-color: #f8fafc; -fx-padding: 25;">
             
-            <!-- Header Row -->
-            <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-padding: 0 0 20 0;">
-                <VBox spacing="5">
-                    <Text fx:id="weekTitle" text="Week 52, 2024" 
-                          style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-fill: #1e293b;"/>
-                    <Text fx:id="weekDateRange" text="December 23 - December 29" 
-                          style="-fx-font-size: 14px; -fx-fill: #64748b;"/>
-                </VBox>
+            <!-- Header Row with Week Navigation -->
+            <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-padding: 0 0 15 0;">
+                <!-- Week Navigation -->
+                <HBox spacing="12" alignment="CENTER_LEFT">
+                    <Button text="◀" styleClass="icon-button" onAction="#previousWeek"
+                            style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 8 12; -fx-cursor: hand;"/>
+                    <VBox spacing="2" alignment="CENTER_LEFT">
+                        <Text fx:id="weekTitle" text="Week 52, 2024" 
+                              style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #1e293b;"/>
+                        <Text fx:id="weekDateRange" text="December 23 - December 29" 
+                              style="-fx-font-size: 13px; -fx-fill: #64748b;"/>
+                    </VBox>
+                    <Button text="▶" styleClass="icon-button" onAction="#nextWeek"
+                            style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 8 12; -fx-cursor: hand;"/>
+                    <Button text="📅 Today" styleClass="secondary-button" onAction="#goToCurrentWeek"
+                            style="-fx-background-color: #6366f1; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;"/>
+                </HBox>
+                
                 <Region HBox.hgrow="ALWAYS"/>
                 
                 <!-- Progress Stats -->
                 <HBox spacing="15" alignment="CENTER">
                     <VBox alignment="CENTER" spacing="2" 
-                          style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 12 20;">
+                          style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 12 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);">
                         <Text fx:id="completedTasksText" text="0/0" 
                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-fill: #10b981;"/>
                         <Text text="Completed" style="-fx-font-size: 11px; -fx-fill: #64748b;"/>
                     </VBox>
                     <VBox alignment="CENTER" spacing="2" 
-                          style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 12 20;">
+                          style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 12 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 1);">
                         <Text fx:id="myTasksCountText" text="0" 
                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-fill: #6366f1;"/>
                         <Text text="My Tasks" style="-fx-font-size: 11px; -fx-fill: #64748b;"/>
                     </VBox>
                 </HBox>
             </HBox>
+
+            <!-- Action Toolbar -->
+            <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 0 0 20 0;">
+                <Button fx:id="generateButton" text="🎲 Generate Random" onAction="#generateSchedule"
+                        style="-fx-background-color: #6366f1; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px;"/>
+                <Button text="➕ Add Task" onAction="#showAddTaskDialog"
+                        style="-fx-background-color: white; -fx-text-fill: #475569; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px; -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
+                
+                <Region style="-fx-pref-width: 20;"/>
+                
+                <Button text="📝 Edit Template" onAction="#openTemplateEditor"
+                        style="-fx-background-color: white; -fx-text-fill: #475569; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px; -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
+                <Button fx:id="loadTemplateButton" text="📥 Apply Template" onAction="#loadFromTemplate"
+                        style="-fx-background-color: white; -fx-text-fill: #475569; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px; -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
+            </HBox>
+
 
             <!-- Calendar Grid -->
             <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-pane">

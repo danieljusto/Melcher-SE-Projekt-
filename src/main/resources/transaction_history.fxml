@@ -4,53 +4,68 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.group_2.ui.TransactionHistoryController"
-      spacing="0" style="-fx-background-color: #f9fafb;">
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.group_2.ui.TransactionHistoryController"
+           styleClass="dashboard-root"
+           stylesheets="@/styles.css"
+           prefWidth="1000" prefHeight="700">
 
-    <!-- Header -->
-    <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
-        <Button text="← Back" onAction="#returnToTransactions" styleClass="navbar-back-button"/>
-        <Text text="📜 Transaction History" styleClass="navbar-title"/>
-        <Region HBox.hgrow="ALWAYS"/>
-    </HBox>
-
-    <!-- Main Content -->
-    <VBox spacing="20" style="-fx-padding: 24;" VBox.vgrow="ALWAYS">
-        
-        <!-- Info Card -->
-        <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: white; -fx-padding: 16; -fx-background-radius: 12; -fx-border-color: #e5e7eb; -fx-border-width: 1; -fx-border-radius: 12;">
-            <Text text="📊" style="-fx-font-size: 24px;"/>
-            <VBox spacing="4">
-                <Text text="All Your Transactions" style="-fx-font-size: 14px; -fx-font-weight: 600; -fx-fill: #111827;"/>
-                <Text fx:id="transactionCountText" text="Loading..." style="-fx-font-size: 13px; -fx-fill: #6b7280;"/>
-            </VBox>
-        </HBox>
-
-        <!-- Table Container -->
-        <VBox styleClass="card" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 0;">
-            
-            <!-- Table Header -->
-            <HBox alignment="CENTER_LEFT" style="-fx-padding: 16 20; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;">
-                <Text text="Transaction History" styleClass="card-title"/>
+    <BorderPane>
+        <!-- Top Header -->
+        <top>
+            <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
+                <Button text="← Back" onAction="#returnToTransactions" styleClass="navbar-back-button"/>
+                <Text text="📜 Transaction History" styleClass="navbar-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
             </HBox>
+        </top>
 
-            <!-- Table -->
-            <TableView fx:id="historyTable" VBox.vgrow="ALWAYS" styleClass="table-view">
-                <columnResizePolicy>
-                    <TableView fx:constant="UNCONSTRAINED_RESIZE_POLICY"/>
-                </columnResizePolicy>
-                <columns>
-                    <TableColumn fx:id="dateColumn" text="Date" prefWidth="120" minWidth="100" resizable="false"/>
-                    <TableColumn fx:id="timeColumn" text="Time" prefWidth="100" minWidth="80" resizable="false"/>
-                    <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="250" minWidth="200"/>
-                    <TableColumn fx:id="amountColumn" text="Amount" prefWidth="120" minWidth="100" resizable="false"/>
-                    <TableColumn fx:id="creditorColumn" text="Creditor" prefWidth="150" minWidth="120"/>
-                    <TableColumn fx:id="debtorColumn" text="Debtor(s)" prefWidth="180" minWidth="140"/>
-                </columns>
+        <!-- Main Content -->
+        <center>
+            <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+                <VBox styleClass="main-content" spacing="30" style="-fx-padding: 30;">
+                    
+                    <!-- Page Header -->
+                    <VBox styleClass="content-header" spacing="8">
+                        <Text text="Transaction History" styleClass="page-title"/>
+                        <Text text="View all your past transactions with your flatmates" styleClass="page-subtitle"/>
+                    </VBox>
 
-            </TableView>
-        </VBox>
-    </VBox>
-</VBox>
+                    <!-- Info Card -->
+                    <VBox styleClass="card" spacing="15" style="-fx-background-color: linear-gradient(to bottom right, #3b82f6, #2563eb); -fx-padding: 25;">
+                        <Text text="Transaction Overview" style="-fx-font-size: 14px; -fx-fill: rgba(255,255,255,0.9); -fx-font-weight: 500;"/>
+                        <Text fx:id="transactionCountText" text="Loading..." 
+                              style="-fx-font-size: 42px; -fx-font-weight: bold; -fx-fill: white;"/>
+                        <Text text="Total transactions recorded" style="-fx-font-size: 12px; -fx-fill: rgba(255,255,255,0.7);"/>
+                    </VBox>
+
+                    <!-- Table Container -->
+                    <VBox styleClass="card" spacing="20">
+                        <HBox alignment="CENTER_LEFT">
+                            <Text text="📜 All Transactions" styleClass="card-title"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                        
+                        <Text text="Complete history of all WG transactions" styleClass="card-subtitle"/>
+                        
+                        <TableView fx:id="historyTable" VBox.vgrow="ALWAYS" styleClass="table-view" fixedCellSize="50">
+                            <columnResizePolicy>
+                                <TableView fx:constant="UNCONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
+                            <columns>
+                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="120" minWidth="100" resizable="false"/>
+                                <TableColumn fx:id="timeColumn" text="Time" prefWidth="100" minWidth="80" resizable="false"/>
+                                <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="250" minWidth="200"/>
+                                <TableColumn fx:id="amountColumn" text="Amount" prefWidth="120" minWidth="100" resizable="false"/>
+                                <TableColumn fx:id="creditorColumn" text="Creditor" prefWidth="150" minWidth="120"/>
+                                <TableColumn fx:id="debtorColumn" text="Debtor(s)" prefWidth="180" minWidth="140"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+
+                </VBox>
+            </ScrollPane>
+        </center>
+    </BorderPane>
+</StackPane>

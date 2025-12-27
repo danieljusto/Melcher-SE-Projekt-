@@ -12,8 +12,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.fxml.FXML;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -29,9 +27,6 @@ public class ShoppingListController extends Controller {
 
     private final ShoppingListService shoppingListService;
     private final SessionManager sessionManager;
-
-    @Autowired
-    private ApplicationContext applicationContext;
 
     // Left panel - lists
     @FXML
@@ -57,6 +52,10 @@ public class ShoppingListController extends Controller {
     @FXML
     private Button deleteListButton;
 
+    // Navbar
+    @FXML
+    private NavbarController navbarController;
+
     private ShoppingList selectedList;
 
     public ShoppingListController(ShoppingListService shoppingListService, SessionManager sessionManager) {
@@ -66,6 +65,9 @@ public class ShoppingListController extends Controller {
 
     @FXML
     public void initialize() {
+        if (navbarController != null) {
+            navbarController.setTitle("🛒 Shopping Lists");
+        }
         loadLists();
     }
 
@@ -240,7 +242,8 @@ public class ShoppingListController extends Controller {
 
         String itemName = newItemField.getText().trim();
         if (itemName.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Empty Item", "Please enter an item name.");
+            showAlert(Alert.AlertType.WARNING, "Empty Item", "Please enter an item name.",
+                    getOwnerWindow(newItemField));
             return;
         }
 
@@ -276,12 +279,14 @@ public class ShoppingListController extends Controller {
     public void showCreateListDialog() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG to create shopping lists.");
+            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG to create shopping lists.",
+                    getOwnerWindow(listsContainer));
             return;
         }
 
         // Create dialog
         Dialog<ShoppingList> dialog = new Dialog<>();
+        configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Create New Shopping List");
         dialog.setHeaderText("Enter list details");
 
@@ -359,7 +364,8 @@ public class ShoppingListController extends Controller {
 
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || !selectedList.getCreator().getId().equals(currentUser.getId())) {
-            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the list creator can manage sharing.");
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the list creator can manage sharing.",
+                    getOwnerWindow(listsContainer));
             return;
         }
 
@@ -367,6 +373,7 @@ public class ShoppingListController extends Controller {
             return;
 
         Dialog<List<User>> dialog = new Dialog<>();
+        configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Manage Sharing");
         dialog.setHeaderText("Select members to share with");
 
@@ -430,11 +437,13 @@ public class ShoppingListController extends Controller {
 
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || !selectedList.getCreator().getId().equals(currentUser.getId())) {
-            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the list creator can delete this list.");
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the list creator can delete this list.",
+                    getOwnerWindow(listsContainer));
             return;
         }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirm, getOwnerWindow(listsContainer));
         confirm.setTitle("Delete List");
         confirm.setHeaderText("Delete \"" + selectedList.getName() + "\"?");
         confirm.setContentText("This will permanently delete the list and all its items.");
@@ -455,12 +464,4 @@ public class ShoppingListController extends Controller {
         });
     }
 
-    @FXML
-    public void backToHome() {
-        loadScene(listsContainer.getScene(), "/main_screen.fxml");
-        javafx.application.Platform.runLater(() -> {
-            MainScreenController controller = applicationContext.getBean(MainScreenController.class);
-            controller.initView();
-        });
-    }
 }

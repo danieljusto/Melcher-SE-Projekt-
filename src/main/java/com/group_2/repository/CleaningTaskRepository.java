@@ -1,6 +1,7 @@
 package com.group_2.repository;
 
 import com.model.CleaningTask;
+import com.model.Room;
 import com.model.User;
 import com.model.WG;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,4 +35,19 @@ public interface CleaningTaskRepository extends JpaRepository<CleaningTask, Long
      * Find all cleaning tasks for a WG ordered by week descending.
      */
     List<CleaningTask> findByWgOrderByWeekStartDateDesc(WG wg);
+
+    /**
+     * Find all cleaning tasks for a specific room in a WG (all weeks).
+     */
+    List<CleaningTask> findByWgAndRoom(WG wg, Room room);
+
+    /**
+     * Delete all cleaning tasks for a specific room in a WG.
+     */
+    void deleteByWgAndRoom(WG wg, Room room);
+
+    /**
+     * Delete all cleaning tasks for a WG.
+     */
+    void deleteByWg(WG wg);
 }

@@ -16,12 +16,9 @@
     <BorderPane>
         <!-- Top Header -->
         <top>
-            <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
-                <Button text="← Back" onAction="#backToHome" styleClass="navbar-back-button"/>
-                <Text text="💰 Transactions" styleClass="navbar-title"/>
-                <Region HBox.hgrow="ALWAYS"/>
-            </HBox>
+            <fx:include source="navbar.fxml" fx:id="navbar"/>
         </top>
+
 
         <!-- Main Content -->
         <center>

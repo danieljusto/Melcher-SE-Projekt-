@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "transactions")
+@Table(name = "transactions", indexes = {
+        @Index(name = "idx_transaction_wg", columnList = "wg_id"),
+        @Index(name = "idx_transaction_creditor", columnList = "creditor_id")
+})
 public class Transaction {
 
     @Id

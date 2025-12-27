@@ -1,5 +1,6 @@
 package com.group_2.service;
 
+import com.group_2.repository.UserRepository;
 import com.group_2.repository.WGRepository;
 import com.model.Room;
 import com.model.User;
@@ -16,18 +17,23 @@ import java.util.Optional;
 public class WGService {
 
     private final WGRepository wgRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public WGService(WGRepository wgRepository) {
+    public WGService(WGRepository wgRepository, UserRepository userRepository) {
         this.wgRepository = wgRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public WG createWG(String name, User admin, List<Room> rooms) {
         WG wg = new WG(name, admin, rooms);
-        // Ensure admin has the WG set
+        // Save WG first
+        wg = wgRepository.save(wg);
+        // Ensure admin has the WG set and save the user
         admin.setWg(wg);
-        return wgRepository.save(wg);
+        userRepository.save(admin);
+        return wg;
     }
 
     @Transactional

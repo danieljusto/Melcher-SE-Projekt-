@@ -9,7 +9,11 @@ import java.time.LocalDateTime;
  * Each task is assigned to a user for a specific week.
  */
 @Entity
-@Table(name = "cleaning_task")
+@Table(name = "cleaning_task", indexes = {
+        @Index(name = "idx_cleaning_task_wg_week", columnList = "wg_id, week_start_date"),
+        @Index(name = "idx_cleaning_task_room", columnList = "room_id"),
+        @Index(name = "idx_cleaning_task_assignee", columnList = "assignee_id")
+})
 public class CleaningTask {
 
     @Id

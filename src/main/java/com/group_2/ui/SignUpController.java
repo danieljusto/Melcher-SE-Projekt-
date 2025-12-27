@@ -41,10 +41,16 @@ public class SignUpController extends Controller {
 
     @FXML
     public void handleSignup() {
-        String name = signupNameField.getText();
-        String surname = signupSurnameField.getText();
-        String email = signupEmailField.getText();
+        String name = signupNameField.getText().trim();
+        String surname = signupSurnameField.getText().trim();
+        String email = signupEmailField.getText().trim();
         String password = signupPasswordField.getText();
+
+        // Validate that all fields are filled
+        if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            showAlert(Alert.AlertType.ERROR, "Validation Error", "Please fill in all fields.");
+            return;
+        }
 
         try {
             User user = userService.registerUser(name, surname, email, password);

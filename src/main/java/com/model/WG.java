@@ -65,19 +65,17 @@ public class WG {
 
     public boolean addRoom(Room room) {
         if (rooms.contains(room)) {
-
-            // throw error
             return false;
         }
+        room.setWg(this);
         return rooms.add(room);
     }
 
     public boolean removeRoom(Room room) {
         if (!rooms.contains(room)) {
-
-            // throw error
             return false;
         }
+        room.setWg(null);
         return rooms.remove(room);
     }
 

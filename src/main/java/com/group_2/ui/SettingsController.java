@@ -73,7 +73,8 @@ public class SettingsController extends Controller {
 
         WG wg = currentUser.getWg();
         if (wg == null) {
-            showAlert(Alert.AlertType.WARNING, "No WG", "You are not a member of any WG.");
+            showAlert(Alert.AlertType.WARNING, "No WG", "You are not a member of any WG.",
+                    getOwnerWindow(wgNameHeader));
             return;
         }
 
@@ -214,6 +215,7 @@ public class SettingsController extends Controller {
         String userName = user.getName() + (user.getSurname() != null ? " " + user.getSurname() : "");
 
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirmDialog, getOwnerWindow(membersBox));
         confirmDialog.setTitle("Transfer Admin Rights");
         confirmDialog.setHeaderText("Make " + userName + " the new admin?");
         confirmDialog.setContentText("You will no longer be the admin of this WG.");
@@ -224,9 +226,11 @@ public class SettingsController extends Controller {
                 wgService.updateWG(wg.getId(), wg.name, user);
                 sessionManager.refreshCurrentUser();
                 loadWGData();
-                showAlert(Alert.AlertType.INFORMATION, "Success", userName + " is now the admin!");
+                showAlert(Alert.AlertType.INFORMATION, "Success", userName + " is now the admin!",
+                        getOwnerWindow(membersBox));
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to transfer admin rights: " + e.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to transfer admin rights: " + e.getMessage(),
+                        getOwnerWindow(membersBox));
             }
         }
     }
@@ -240,6 +244,7 @@ public class SettingsController extends Controller {
         String userName = user.getName() + (user.getSurname() != null ? " " + user.getSurname() : "");
 
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirmDialog, getOwnerWindow(membersBox));
         confirmDialog.setTitle("Remove Member");
         confirmDialog.setHeaderText("Remove " + userName + " from the WG?");
         confirmDialog.setContentText("This action cannot be undone.");
@@ -250,9 +255,11 @@ public class SettingsController extends Controller {
                 wgService.removeMitbewohner(wg.getId(), user.getId());
                 sessionManager.refreshCurrentUser();
                 loadWGData();
-                showAlert(Alert.AlertType.INFORMATION, "Success", userName + " has been removed from the WG.");
+                showAlert(Alert.AlertType.INFORMATION, "Success", userName + " has been removed from the WG.",
+                        getOwnerWindow(membersBox));
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to remove member: " + e.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to remove member: " + e.getMessage(),
+                        getOwnerWindow(membersBox));
             }
         }
     }
@@ -266,13 +273,15 @@ public class SettingsController extends Controller {
             ClipboardContent content = new ClipboardContent();
             content.putString(code);
             clipboard.setContent(content);
-            showAlert(Alert.AlertType.INFORMATION, "Copied!", "Invitation code copied to clipboard: " + code);
+            showAlert(Alert.AlertType.INFORMATION, "Copied!", "Invitation code copied to clipboard: " + code,
+                    getOwnerWindow(inviteCodeText));
         }
     }
 
     @FXML
     public void addRoom() {
         TextInputDialog dialog = new TextInputDialog();
+        configureDialogOwner(dialog, getOwnerWindow(roomsBox));
         dialog.setTitle("Add Room");
         dialog.setHeaderText("Add a new room to your WG");
         dialog.setContentText("Room name:");
@@ -287,10 +296,12 @@ public class SettingsController extends Controller {
                         wgService.addRoom(currentUser.getWg().getId(), newRoom);
                         sessionManager.refreshCurrentUser();
                         loadWGData();
-                        showAlert(Alert.AlertType.INFORMATION, "Success", "Room '" + roomName + "' added!");
+                        showAlert(Alert.AlertType.INFORMATION, "Success", "Room '" + roomName + "' added!",
+                                getOwnerWindow(roomsBox));
                     }
                 } catch (Exception e) {
-                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to add room: " + e.getMessage());
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to add room: " + e.getMessage(),
+                            getOwnerWindow(roomsBox));
                 }
             }
         });
@@ -303,6 +314,7 @@ public class SettingsController extends Controller {
             return;
 
         TextInputDialog dialog = new TextInputDialog(currentUser.getWg().name);
+        configureDialogOwner(dialog, getOwnerWindow(wgNameHeader));
         dialog.setTitle("Edit WG Name");
         dialog.setHeaderText("Change your WG name");
         dialog.setContentText("New name:");
@@ -315,9 +327,10 @@ public class SettingsController extends Controller {
                     wgService.updateWG(wg.getId(), newName.trim(), wg.admin);
                     sessionManager.refreshCurrentUser();
                     loadWGData();
-                    showAlert(Alert.AlertType.INFORMATION, "Success", "WG name updated!");
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "WG name updated!", getOwnerWindow(wgNameHeader));
                 } catch (Exception e) {
-                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to update WG name: " + e.getMessage());
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to update WG name: " + e.getMessage(),
+                            getOwnerWindow(wgNameHeader));
                 }
             }
         });
@@ -330,6 +343,7 @@ public class SettingsController extends Controller {
             return;
 
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirmDialog, getOwnerWindow(wgNameHeader));
         confirmDialog.setTitle("Delete WG");
         confirmDialog.setHeaderText("Are you sure you want to delete this WG?");
         confirmDialog.setContentText("This action cannot be undone. All members will be removed.");
@@ -340,10 +354,11 @@ public class SettingsController extends Controller {
                 Long wgId = currentUser.getWg().getId();
                 wgService.deleteWG(wgId);
                 sessionManager.refreshCurrentUser();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "WG deleted.");
+                showAlert(Alert.AlertType.INFORMATION, "Success", "WG deleted.", getOwnerWindow(wgNameHeader));
                 loadScene(wgNameHeader.getScene(), "/no_wg.fxml");
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete WG: " + e.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete WG: " + e.getMessage(),
+                        getOwnerWindow(wgNameHeader));
             }
         }
     }

@@ -21,8 +21,16 @@ public class StageInitializer implements ApplicationListener<StageInitializer.St
         try {
             Stage stage = event.getStage();
             Parent root = fxmlLoader.load("/login.fxml");
-            stage.setScene(new Scene(root));
+
+            // Set appropriate initial window size
+            Scene scene = new Scene(root, 1200, 800);
+            stage.setScene(scene);
             stage.setTitle("Melcher SE Projekt - Login");
+
+            // Set minimum window size for usability
+            stage.setMinWidth(800);
+            stage.setMinHeight(600);
+
             stage.show();
         } catch (Exception e) {
             e.printStackTrace();

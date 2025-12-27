@@ -344,6 +344,9 @@ public class TransactionDialogController {
         if (!state.isValid()) {
             // Show error in alert dialog
             Alert alert = new Alert(Alert.AlertType.ERROR);
+            if (dialogOverlay.getScene() != null) {
+                alert.initOwner(dialogOverlay.getScene().getWindow());
+            }
             alert.setTitle("Validation Error");
             alert.setHeaderText("Cannot save transaction");
             alert.setContentText(state.getValidationError());
@@ -393,6 +396,9 @@ public class TransactionDialogController {
 
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
+            if (dialogOverlay.getScene() != null) {
+                alert.initOwner(dialogOverlay.getScene().getWindow());
+            }
             alert.setTitle("Error");
             alert.setHeaderText("Failed to save transaction");
             alert.setContentText(e.getMessage());

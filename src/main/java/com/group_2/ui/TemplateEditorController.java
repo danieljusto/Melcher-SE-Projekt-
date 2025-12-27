@@ -23,6 +23,7 @@ import java.util.List;
 /**
  * Controller for the template editor view.
  * Allows users to define a default weekly schedule template.
+ * Uses round-robin queue for automatic assignee rotation.
  */
 @Component
 public class TemplateEditorController extends Controller {
@@ -34,13 +35,13 @@ public class TemplateEditorController extends Controller {
     private ApplicationContext applicationContext;
 
     @FXML
-    private Text avatarInitial;
-    @FXML
-    private Text userNameText;
-    @FXML
-    private Text userEmailText;
+    private Text headerTitle;
     @FXML
     private Text templateCountText;
+
+    // Navbar
+    @FXML
+    private NavbarController navbarController;
 
     // Day columns
     @FXML
@@ -65,21 +66,11 @@ public class TemplateEditorController extends Controller {
 
     @FXML
     public void initialize() {
-        updateSidebarUserInfo();
-        loadTemplates();
-    }
-
-    private void updateSidebarUserInfo() {
-        User currentUser = sessionManager.getCurrentUser();
-        if (currentUser != null) {
-            String initial = currentUser.getName() != null && !currentUser.getName().isEmpty()
-                    ? currentUser.getName().substring(0, 1).toUpperCase()
-                    : "?";
-            avatarInitial.setText(initial);
-            userNameText.setText(currentUser.getName() +
-                    (currentUser.getSurname() != null ? " " + currentUser.getSurname() : ""));
-            userEmailText.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "");
+        if (navbarController != null) {
+            navbarController.setTitle("📝 Template Editor");
+            navbarController.setBackDestination("/cleaning_schedule.fxml", false);
         }
+        loadTemplates();
     }
 
     private void loadTemplates() {
@@ -98,7 +89,7 @@ public class TemplateEditorController extends Controller {
         for (CleaningTaskTemplate template : templates) {
             VBox column = getColumnForDay(template.getDayOfWeek());
             if (column != null) {
-                column.getChildren().add(createTemplateCard(template));
+                column.getChildren().add(createTemplateCard(template, wg));
             }
         }
     }
@@ -135,46 +126,69 @@ public class TemplateEditorController extends Controller {
         }
     }
 
-    private VBox createTemplateCard(CleaningTaskTemplate template) {
-        VBox card = new VBox(5);
-        card.setPadding(new Insets(10));
-        card.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 8;");
+    private VBox createTemplateCard(CleaningTaskTemplate template, WG wg) {
+        VBox card = new VBox(8);
+        card.setPadding(new Insets(12));
+        card.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 10;");
 
+        // Room name header
         Text roomName = new Text(template.getRoom().getName());
-        roomName.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-fill: #1e293b;");
+        roomName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: #1e293b;");
+        roomName.setWrappingWidth(130);
 
+        // Show next assignee from round-robin queue
         HBox assigneeRow = new HBox(5);
         assigneeRow.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane avatar = new StackPane();
-        avatar.setStyle("-fx-background-color: #e2e8f0; -fx-background-radius: 8; " +
-                "-fx-pref-width: 16; -fx-pref-height: 16;");
-        Text avatarText = new Text(template.getDefaultAssignee().getName().substring(0, 1).toUpperCase());
-        avatarText.setStyle("-fx-font-size: 8px; -fx-fill: #64748b;");
-        avatar.getChildren().add(avatarText);
+        User nextAssignee = cleaningScheduleService.getNextAssigneeForRoom(wg, template.getRoom());
 
-        Text assigneeName = new Text(template.getDefaultAssignee().getName());
-        assigneeName.setStyle("-fx-font-size: 10px; -fx-fill: #64748b;");
+        if (nextAssignee != null) {
+            StackPane avatar = new StackPane();
+            avatar.setStyle("-fx-background-color: #ddd6fe; -fx-background-radius: 10; " +
+                    "-fx-pref-width: 20; -fx-pref-height: 20; -fx-min-width: 20; -fx-min-height: 20;");
+            Text avatarText = new Text(nextAssignee.getName().substring(0, 1).toUpperCase());
+            avatarText.setStyle("-fx-font-size: 10px; -fx-fill: #7c3aed;");
+            avatar.getChildren().add(avatarText);
 
-        assigneeRow.getChildren().addAll(avatar, assigneeName);
+            Text nextLabel = new Text("Next: ");
+            nextLabel.setStyle("-fx-font-size: 11px; -fx-fill: #64748b;");
 
-        // Action buttons
-        HBox actions = new HBox(5);
-        actions.setAlignment(Pos.CENTER_RIGHT);
+            Text assigneeName = new Text(nextAssignee.getName());
+            assigneeName.setStyle("-fx-font-size: 11px; -fx-fill: #7c3aed; -fx-font-weight: bold;");
 
-        Button editBtn = new Button("✏");
-        editBtn.setStyle("-fx-background-color: transparent; -fx-font-size: 10px; -fx-cursor: hand; -fx-padding: 2;");
-        editBtn.setTooltip(new Tooltip("Edit"));
+            assigneeRow.getChildren().addAll(avatar, nextLabel, assigneeName);
+        } else {
+            Text rotationInfo = new Text("🔄 Round-robin");
+            rotationInfo.setStyle("-fx-font-size: 11px; -fx-fill: #64748b;");
+            assigneeRow.getChildren().add(rotationInfo);
+        }
+
+        // Separator
+        Region separator = new Region();
+        separator.setPrefHeight(1);
+        separator.setStyle("-fx-background-color: #e2e8f0;");
+
+        // Action buttons - stacked vertically for better visibility
+        VBox actions = new VBox(6);
+        actions.setAlignment(Pos.CENTER);
+
+        Button editBtn = new Button("✏️ Edit Day");
+        editBtn.setMaxWidth(Double.MAX_VALUE);
+        editBtn.setStyle("-fx-background-color: #e0e7ff; -fx-text-fill: #4338ca; -fx-font-size: 12px; " +
+                "-fx-cursor: hand; -fx-padding: 8 12; -fx-background-radius: 6;");
+        editBtn.setTooltip(new Tooltip("Edit day of week"));
         editBtn.setOnAction(e -> showEditTemplateDialog(template));
 
-        Button deleteBtn = new Button("🗑");
-        deleteBtn.setStyle("-fx-background-color: transparent; -fx-font-size: 10px; -fx-cursor: hand; -fx-padding: 2;");
-        deleteBtn.setTooltip(new Tooltip("Delete"));
+        Button deleteBtn = new Button("🗑️ Delete");
+        deleteBtn.setMaxWidth(Double.MAX_VALUE);
+        deleteBtn.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-font-size: 12px; " +
+                "-fx-cursor: hand; -fx-padding: 8 12; -fx-background-radius: 6;");
+        deleteBtn.setTooltip(new Tooltip("Delete this task"));
         deleteBtn.setOnAction(e -> deleteTemplate(template));
 
         actions.getChildren().addAll(editBtn, deleteBtn);
 
-        card.getChildren().addAll(roomName, assigneeRow, actions);
+        card.getChildren().addAll(roomName, assigneeRow, separator, actions);
         return card;
     }
 
@@ -182,19 +196,27 @@ public class TemplateEditorController extends Controller {
     public void showAddTemplateDialog() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.");
+            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.", getOwnerWindow(headerTitle));
             return;
         }
 
         WG wg = currentUser.getWg();
         if (wg.rooms == null || wg.rooms.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Rooms", "Please add rooms first in the Dashboard.");
+            showAlert(Alert.AlertType.WARNING, "No Rooms", "Please add rooms first in the Dashboard.",
+                    getOwnerWindow(headerTitle));
+            return;
+        }
+
+        if (wg.getMitbewohner().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Members", "WG has no members.",
+                    getOwnerWindow(headerTitle));
             return;
         }
 
         Dialog<CleaningTaskTemplate> dialog = new Dialog<>();
+        configureDialogOwner(dialog, getOwnerWindow(headerTitle));
         dialog.setTitle("Add Template Task");
-        dialog.setHeaderText("Add a task to the default schedule");
+        dialog.setHeaderText("Add a room to the cleaning schedule");
 
         ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
@@ -218,22 +240,6 @@ public class TemplateEditorController extends Controller {
             }
         });
 
-        // Assignee selection
-        ComboBox<User> assigneeCombo = new ComboBox<>();
-        assigneeCombo.getItems().addAll(wg.getMitbewohner());
-        assigneeCombo.setPromptText("Default assignee");
-        assigneeCombo.setConverter(new javafx.util.StringConverter<User>() {
-            @Override
-            public String toString(User user) {
-                return user != null ? user.getName() + (user.getSurname() != null ? " " + user.getSurname() : "") : "";
-            }
-
-            @Override
-            public User fromString(String s) {
-                return null;
-            }
-        });
-
         // Day selection
         ComboBox<DayOfWeek> dayCombo = new ComboBox<>();
         dayCombo.getItems().addAll(DayOfWeek.values());
@@ -252,25 +258,33 @@ public class TemplateEditorController extends Controller {
             }
         });
 
+        // Info about round-robin
+        HBox infoBox = new HBox(8);
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+        infoBox.setStyle("-fx-background-color: #f0fdf4; -fx-background-radius: 8; -fx-padding: 10;");
+        Text infoIcon = new Text("🔄");
+        infoIcon.setStyle("-fx-font-size: 14px;");
+        Text infoText = new Text("Assignees rotate automatically each week");
+        infoText.setStyle("-fx-font-size: 12px; -fx-fill: #166534;");
+        infoBox.getChildren().addAll(infoIcon, infoText);
+
         content.getChildren().addAll(
                 new Text("Room:"), roomCombo,
-                new Text("Default Assignee:"), assigneeCombo,
-                new Text("Day:"), dayCombo);
+                new Text("Day:"), dayCombo,
+                infoBox);
 
         dialog.getDialogPane().setContent(content);
 
         dialog.getDialogPane().lookupButton(addButtonType).setDisable(true);
         roomCombo.valueProperty().addListener(
-                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, assigneeCombo, dayCombo));
-        assigneeCombo.valueProperty().addListener(
-                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, assigneeCombo, dayCombo));
+                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
         dayCombo.valueProperty().addListener(
-                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, assigneeCombo, dayCombo));
+                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
                 return cleaningScheduleService.addTemplate(
-                        wg, roomCombo.getValue(), assigneeCombo.getValue(), dayCombo.getValue());
+                        wg, roomCombo.getValue(), dayCombo.getValue());
             }
             return null;
         });
@@ -278,10 +292,10 @@ public class TemplateEditorController extends Controller {
         dialog.showAndWait().ifPresent(t -> loadTemplates());
     }
 
-    private void updateAddButton(Dialog<?> dialog, ButtonType btnType, ComboBox<Room> room, ComboBox<User> user,
+    private void updateAddButton(Dialog<?> dialog, ButtonType btnType, ComboBox<Room> room,
             ComboBox<DayOfWeek> day) {
         dialog.getDialogPane().lookupButton(btnType).setDisable(
-                room.getValue() == null || user.getValue() == null || day.getValue() == null);
+                room.getValue() == null || day.getValue() == null);
     }
 
     private void showEditTemplateDialog(CleaningTaskTemplate template) {
@@ -289,9 +303,8 @@ public class TemplateEditorController extends Controller {
         if (currentUser == null || currentUser.getWg() == null)
             return;
 
-        WG wg = currentUser.getWg();
-
         Dialog<Void> dialog = new Dialog<>();
+        configureDialogOwner(dialog, getOwnerWindow(headerTitle));
         dialog.setTitle("Edit Template");
         dialog.setHeaderText("Edit \"" + template.getRoom().getName() + "\"");
 
@@ -300,22 +313,6 @@ public class TemplateEditorController extends Controller {
 
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
-
-        // Assignee selection
-        ComboBox<User> assigneeCombo = new ComboBox<>();
-        assigneeCombo.getItems().addAll(wg.getMitbewohner());
-        assigneeCombo.setValue(template.getDefaultAssignee());
-        assigneeCombo.setConverter(new javafx.util.StringConverter<User>() {
-            @Override
-            public String toString(User user) {
-                return user != null ? user.getName() + (user.getSurname() != null ? " " + user.getSurname() : "") : "";
-            }
-
-            @Override
-            public User fromString(String s) {
-                return null;
-            }
-        });
 
         // Day selection
         ComboBox<DayOfWeek> dayCombo = new ComboBox<>();
@@ -335,15 +332,25 @@ public class TemplateEditorController extends Controller {
             }
         });
 
+        // Info about round-robin
+        HBox infoBox = new HBox(8);
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+        infoBox.setStyle("-fx-background-color: #f0fdf4; -fx-background-radius: 8; -fx-padding: 10;");
+        Text infoIcon = new Text("🔄");
+        infoIcon.setStyle("-fx-font-size: 14px;");
+        Text infoText = new Text("Assignees rotate automatically - no need to change");
+        infoText.setStyle("-fx-font-size: 12px; -fx-fill: #166534;");
+        infoBox.getChildren().addAll(infoIcon, infoText);
+
         content.getChildren().addAll(
-                new Text("Assignee:"), assigneeCombo,
-                new Text("Day:"), dayCombo);
+                new Text("Day of Week:"), dayCombo,
+                infoBox);
 
         dialog.getDialogPane().setContent(content);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                cleaningScheduleService.updateTemplate(template, assigneeCombo.getValue(), dayCombo.getValue());
+                cleaningScheduleService.updateTemplate(template, dayCombo.getValue());
             }
             return null;
         });
@@ -354,6 +361,7 @@ public class TemplateEditorController extends Controller {
 
     private void deleteTemplate(CleaningTaskTemplate template) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirm, getOwnerWindow(headerTitle));
         confirm.setTitle("Delete Template");
         confirm.setHeaderText("Delete \"" + template.getRoom().getName() + "\"?");
         confirm.setContentText("This will remove it from the default schedule.");
@@ -373,6 +381,7 @@ public class TemplateEditorController extends Controller {
             return;
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirm, getOwnerWindow(headerTitle));
         confirm.setTitle("Clear All");
         confirm.setHeaderText("Clear all template tasks?");
         confirm.setContentText("This will remove the entire default schedule.");
@@ -387,7 +396,7 @@ public class TemplateEditorController extends Controller {
 
     @FXML
     public void backToHome() {
-        loadScene(avatarInitial.getScene(), "/main_screen.fxml");
+        loadScene(headerTitle.getScene(), "/main_screen.fxml");
         javafx.application.Platform.runLater(() -> {
             MainScreenController controller = applicationContext.getBean(MainScreenController.class);
             controller.initView();
@@ -396,6 +405,6 @@ public class TemplateEditorController extends Controller {
 
     @FXML
     public void goToCleaningSchedule() {
-        loadScene(avatarInitial.getScene(), "/cleaning_schedule.fxml");
+        loadScene(headerTitle.getScene(), "/cleaning_schedule.fxml");
     }
 }
