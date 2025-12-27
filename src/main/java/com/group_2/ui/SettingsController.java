@@ -35,7 +35,6 @@ public class SettingsController extends Controller {
     private final SessionManager sessionManager;
     private final WGService wgService;
     private final RoomService roomService;
-    private final com.group_2.service.CleaningScheduleService cleaningScheduleService;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -58,12 +57,10 @@ public class SettingsController extends Controller {
     private javafx.scene.control.Button addRoomButton;
 
     @Autowired
-    public SettingsController(SessionManager sessionManager, WGService wgService, RoomService roomService,
-            com.group_2.service.CleaningScheduleService cleaningScheduleService) {
+    public SettingsController(SessionManager sessionManager, WGService wgService, RoomService roomService) {
         this.sessionManager = sessionManager;
         this.wgService = wgService;
         this.roomService = roomService;
-        this.cleaningScheduleService = cleaningScheduleService;
     }
 
     public void initView() {
@@ -397,12 +394,9 @@ public class SettingsController extends Controller {
         Optional<ButtonType> result = confirmDialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-                // First delete all cleaning-related data for this room
-                cleaningScheduleService.deleteRoomData(room);
-                // Then remove the room from the WG
-                wgService.removeRoom(currentUser.getWg().getId(), room);
-                // Finally delete the room itself
-                roomService.deleteRoom(room.getId());
+                // Use the consolidated deletion method that handles everything in one
+                // transaction
+                roomService.deleteRoom(room, currentUser.getWg());
                 sessionManager.refreshCurrentUser();
                 loadWGData();
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Room '" + room.getName() + "' deleted!",

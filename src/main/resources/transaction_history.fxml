@@ -50,17 +50,17 @@
                         <Text text="Complete history of all WG transactions" styleClass="card-subtitle"/>
                         
                         <TableView fx:id="historyTable" VBox.vgrow="ALWAYS" styleClass="table-view" fixedCellSize="50">
-                            <columnResizePolicy>
-                                <TableView fx:constant="UNCONSTRAINED_RESIZE_POLICY"/>
-                            </columnResizePolicy>
                             <columns>
-                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="120" minWidth="100" resizable="false"/>
-                                <TableColumn fx:id="timeColumn" text="Time" prefWidth="100" minWidth="80" resizable="false"/>
-                                <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="250" minWidth="200"/>
-                                <TableColumn fx:id="amountColumn" text="Amount" prefWidth="120" minWidth="100" resizable="false"/>
-                                <TableColumn fx:id="creditorColumn" text="Creditor" prefWidth="150" minWidth="120"/>
-                                <TableColumn fx:id="debtorColumn" text="Debtor(s)" prefWidth="180" minWidth="140"/>
+                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="120"/>
+                                <TableColumn fx:id="timeColumn" text="Time" prefWidth="100"/>
+                                <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="250"/>
+                                <TableColumn fx:id="amountColumn" text="Amount" prefWidth="120"/>
+                                <TableColumn fx:id="creditorColumn" text="Creditor" prefWidth="150"/>
+                                <TableColumn fx:id="debtorColumn" text="Debtor(s)" prefWidth="180"/>
                             </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
                         </TableView>
                     </VBox>
 

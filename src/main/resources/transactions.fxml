@@ -56,19 +56,13 @@
                         <Text text="Your balances with each WG member" styleClass="card-subtitle"/>
                         
                         <TableView fx:id="balanceTable" fixedCellSize="50" styleClass="table-view">
-                            <columnResizePolicy>
-                                <TableView fx:constant="UNCONSTRAINED_RESIZE_POLICY"/>
-                            </columnResizePolicy>
-
-
-    
                             <columns>
-                                <TableColumn fx:id="memberColumn" text="Member" prefWidth="400" minWidth="300" maxWidth="500" 
-                                             resizable="false"/>
-                                <TableColumn fx:id="balanceColumn" text="Balance" prefWidth="200" minWidth="150" maxWidth="250" 
-                                             resizable="false"/>
+                                <TableColumn fx:id="memberColumn" text="Member" prefWidth="400"/>
+                                <TableColumn fx:id="balanceColumn" text="Balance" prefWidth="200"/>
                             </columns>
-
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
                         </TableView>
                     </VBox>
 
