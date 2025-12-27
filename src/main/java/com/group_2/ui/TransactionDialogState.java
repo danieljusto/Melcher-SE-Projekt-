@@ -1,6 +1,8 @@
 package com.group_2.ui;
 
+import com.model.StandingOrderFrequency;
 import com.model.User;
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -22,6 +24,13 @@ public class TransactionDialogState {
     private double totalAmount;
     private String description;
 
+    // Standing order fields
+    private boolean isStandingOrder = false;
+    private StandingOrderFrequency standingOrderFrequency = null;
+    private LocalDate standingOrderStartDate = null;
+    private Integer monthlyDay = 1; // 1-31 for fixed day of month
+    private boolean monthlyLastDay = false; // True = always last day of month
+
     // Mode-specific data
     private Map<User, Double> customValues; // For percentage or custom amounts
 
@@ -38,11 +47,17 @@ public class TransactionDialogState {
      */
     public void reset(User currentUser, List<User> allWgMembers) {
         this.payer = currentUser;
-        this.participants = new HashSet<>(allWgMembers);
+        this.participants = new HashSet<>(); // No participants selected by default
         this.splitMode = SplitMode.EQUAL;
         this.customValues.clear();
         this.totalAmount = 0.0;
         this.description = "";
+        // Reset standing order fields
+        this.isStandingOrder = false;
+        this.standingOrderFrequency = null;
+        this.standingOrderStartDate = null;
+        this.monthlyDay = 1;
+        this.monthlyLastDay = false;
     }
 
     // Getters and setters
@@ -108,6 +123,47 @@ public class TransactionDialogState {
         this.customValues.put(user, value);
     }
 
+    // Standing order getters and setters
+    public boolean isStandingOrder() {
+        return isStandingOrder;
+    }
+
+    public void setStandingOrder(boolean standingOrder) {
+        isStandingOrder = standingOrder;
+    }
+
+    public StandingOrderFrequency getStandingOrderFrequency() {
+        return standingOrderFrequency;
+    }
+
+    public void setStandingOrderFrequency(StandingOrderFrequency standingOrderFrequency) {
+        this.standingOrderFrequency = standingOrderFrequency;
+    }
+
+    public LocalDate getStandingOrderStartDate() {
+        return standingOrderStartDate;
+    }
+
+    public void setStandingOrderStartDate(LocalDate standingOrderStartDate) {
+        this.standingOrderStartDate = standingOrderStartDate;
+    }
+
+    public Integer getMonthlyDay() {
+        return monthlyDay;
+    }
+
+    public void setMonthlyDay(Integer monthlyDay) {
+        this.monthlyDay = monthlyDay;
+    }
+
+    public boolean isMonthlyLastDay() {
+        return monthlyLastDay;
+    }
+
+    public void setMonthlyLastDay(boolean monthlyLastDay) {
+        this.monthlyLastDay = monthlyLastDay;
+    }
+
     public Double getCustomValue(User user) {
         return this.customValues.get(user);
     }
@@ -146,20 +202,26 @@ public class TransactionDialogState {
                 return true; // Just need participants
 
             case PERCENTAGE:
-                // Sum must equal 100% (empty fields count as 0)
+                // Sum must equal 100% and all participants must have a value > 0
                 double sum = 0.0;
                 for (User participant : participants) {
                     Double value = customValues.get(participant);
-                    sum += (value != null) ? value : 0.0;
+                    if (value == null || value <= 0) {
+                        return false; // All participants must have a value > 0
+                    }
+                    sum += value;
                 }
                 return Math.abs(sum - 100.0) < 0.01;
 
             case CUSTOM_AMOUNT:
-                // Sum must equal total amount (empty fields count as 0)
+                // Sum must equal total amount and all participants must have a value > 0
                 double totalCustom = 0.0;
                 for (User participant : participants) {
                     Double value = customValues.get(participant);
-                    totalCustom += (value != null) ? value : 0.0;
+                    if (value == null || value <= 0) {
+                        return false; // All participants must have a value > 0
+                    }
+                    totalCustom += value;
                 }
                 return Math.abs(totalCustom - totalAmount) < 0.01;
 
@@ -188,9 +250,17 @@ public class TransactionDialogState {
 
             case PERCENTAGE:
                 double sum = 0.0;
+                boolean hasZeroPercentage = false;
                 for (User participant : participants) {
                     Double value = customValues.get(participant);
-                    sum += (value != null) ? value : 0.0;
+                    if (value == null || value <= 0) {
+                        hasZeroPercentage = true;
+                    } else {
+                        sum += value;
+                    }
+                }
+                if (hasZeroPercentage) {
+                    return "All participants must have a percentage greater than 0. Remove participants with the X button if they shouldn't be included.";
                 }
                 if (Math.abs(sum - 100.0) >= 0.01) {
                     return String.format("Percentages must sum to 100%% (current: %.1f%%)", sum);
@@ -199,9 +269,17 @@ public class TransactionDialogState {
 
             case CUSTOM_AMOUNT:
                 double totalCustom = 0.0;
+                boolean hasZeroAmount = false;
                 for (User participant : participants) {
                     Double value = customValues.get(participant);
-                    totalCustom += (value != null) ? value : 0.0;
+                    if (value == null || value <= 0) {
+                        hasZeroAmount = true;
+                    } else {
+                        totalCustom += value;
+                    }
+                }
+                if (hasZeroAmount) {
+                    return "All participants must have an amount greater than 0. Remove participants with the X button if they shouldn't be included.";
                 }
                 if (Math.abs(totalCustom - totalAmount) >= 0.01) {
                     return String.format("Custom amounts must sum to €%.2f (current: €%.2f)",

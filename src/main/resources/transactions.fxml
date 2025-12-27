@@ -44,6 +44,9 @@
                         <HBox alignment="CENTER_LEFT">
                             <Text text="💳 Balance Sheet" styleClass="card-title"/>
                             <Region HBox.hgrow="ALWAYS"/>
+                            <Button text="🔄 Standing Orders" onAction="#showStandingOrders" 
+                                    style="-fx-background-color: #f3f4f6; -fx-text-fill: #374151; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-weight: 600; -fx-font-size: 13px;"/>
+                            <Region prefWidth="10"/>
                             <Button text="📜 History" onAction="#navigateToHistory" 
                                     style="-fx-background-color: #f3f4f6; -fx-text-fill: #374151; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-weight: 600; -fx-font-size: 13px;"/>
                             <Region prefWidth="10"/>
@@ -77,6 +80,9 @@
 
     <!-- Transaction Dialog Overlay -->
     <fx:include source="transaction_dialog.fxml" fx:id="transactionDialog"/>
+
+    <!-- Standing Orders Dialog Overlay -->
+    <fx:include source="standing_orders_dialog.fxml" fx:id="standingOrdersDialog"/>
 
 </StackPane>
 

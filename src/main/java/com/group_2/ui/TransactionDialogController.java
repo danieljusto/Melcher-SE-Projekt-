@@ -1,12 +1,17 @@
 package com.group_2.ui;
 
+import com.group_2.service.StandingOrderService;
 import com.group_2.service.TransactionService;
 import com.group_2.util.SessionManager;
+import com.model.StandingOrderFrequency;
 import com.model.User;
 import com.model.WG;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -14,12 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 @Component
 public class TransactionDialogController {
 
     private final TransactionService transactionService;
+    private final StandingOrderService standingOrderService;
     private final SessionManager sessionManager;
     private final TransactionDialogState state;
 
@@ -39,6 +46,8 @@ public class TransactionDialogController {
     @FXML
     private VBox debtorListBox;
     @FXML
+    private Button selectAllDebtorsButton;
+    @FXML
     private Text step1ValidationError;
 
     // Step 2: Description & Amount
@@ -50,6 +59,24 @@ public class TransactionDialogController {
     private TextField amountField;
     @FXML
     private Text step2ValidationError;
+
+    // Step 2: Standing order controls
+    @FXML
+    private CheckBox standingOrderCheckbox;
+    @FXML
+    private HBox standingOrderOptionsBox;
+    @FXML
+    private ComboBox<String> frequencyComboBox;
+    @FXML
+    private VBox startDateBox;
+    @FXML
+    private Text startDateLabel;
+    @FXML
+    private DatePicker startDatePicker;
+    @FXML
+    private VBox monthlyLastDayBox;
+    @FXML
+    private CheckBox monthlyLastDayCheckbox;
 
     // Step 3: Split options
     @FXML
@@ -83,8 +110,10 @@ public class TransactionDialogController {
 
     @Autowired
     public TransactionDialogController(TransactionService transactionService,
+            StandingOrderService standingOrderService,
             SessionManager sessionManager) {
         this.transactionService = transactionService;
+        this.standingOrderService = standingOrderService;
         this.sessionManager = sessionManager;
         this.state = new TransactionDialogState();
     }
@@ -102,6 +131,23 @@ public class TransactionDialogController {
         customAmountSplitRadio.setToggleGroup(splitModeToggleGroup);
 
         creditorToggleGroup = new ToggleGroup();
+
+        // Setup standing order frequency options
+        frequencyComboBox.setItems(FXCollections.observableArrayList(
+                "Weekly", "Bi-weekly", "Monthly"));
+
+        // Block past dates in DatePicker - standing orders can only start from today
+        startDatePicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                LocalDate today = LocalDate.now();
+                if (date.isBefore(today)) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: #e0e0e0; -fx-text-fill: #999999;");
+                }
+            }
+        });
     }
 
     public void showDialog() {
@@ -124,8 +170,120 @@ public class TransactionDialogController {
 
     @FXML
     public void closeDialog() {
+        // Clear input fields for next time
+        descriptionField.clear();
+        amountField.clear();
+
+        // Reset split option to equal (default)
+        equalSplitRadio.setSelected(true);
+        percentageSplitRadio.setSelected(false);
+        customAmountSplitRadio.setSelected(false);
+        state.setSplitMode(TransactionDialogState.SplitMode.EQUAL);
+
+        // Reset split content visibility
+        equalSplitContent.setVisible(true);
+        equalSplitContent.setManaged(true);
+        percentageSplitContent.setVisible(false);
+        percentageSplitContent.setManaged(false);
+        customAmountSplitContent.setVisible(false);
+        customAmountSplitContent.setManaged(false);
+
+        // Reset standing order options
+        standingOrderCheckbox.setSelected(false);
+        standingOrderOptionsBox.setVisible(false);
+        standingOrderOptionsBox.setManaged(false);
+        frequencyComboBox.getSelectionModel().clearSelection();
+        startDateBox.setVisible(false);
+        startDateBox.setManaged(false);
+        startDatePicker.setValue(null);
+        monthlyLastDayBox.setVisible(false);
+        monthlyLastDayBox.setManaged(false);
+        monthlyLastDayCheckbox.setSelected(false);
+        state.setStandingOrder(false);
+        state.setStandingOrderFrequency(null);
+        state.setStandingOrderStartDate(null);
+        state.setMonthlyDay(1);
+        state.setMonthlyLastDay(false);
+
         dialogOverlay.setVisible(false);
         dialogOverlay.setManaged(false);
+    }
+
+    @FXML
+    public void handleStandingOrderToggle() {
+        boolean isStanding = standingOrderCheckbox.isSelected();
+        standingOrderOptionsBox.setVisible(isStanding);
+        standingOrderOptionsBox.setManaged(isStanding);
+        state.setStandingOrder(isStanding);
+
+        if (!isStanding) {
+            frequencyComboBox.getSelectionModel().clearSelection();
+            startDatePicker.setValue(null);
+            state.setStandingOrderFrequency(null);
+            state.setStandingOrderStartDate(null);
+        }
+    }
+
+    @FXML
+    public void handleFrequencyChange() {
+        String selected = frequencyComboBox.getValue();
+        if (selected == null) {
+            state.setStandingOrderFrequency(null);
+            startDateBox.setVisible(false);
+            startDateBox.setManaged(false);
+            monthlyLastDayBox.setVisible(false);
+            monthlyLastDayBox.setManaged(false);
+            return;
+        }
+
+        StandingOrderFrequency freq;
+        switch (selected) {
+            case "Weekly":
+                freq = StandingOrderFrequency.WEEKLY;
+                break;
+            case "Bi-weekly":
+                freq = StandingOrderFrequency.BI_WEEKLY;
+                break;
+            case "Monthly":
+                freq = StandingOrderFrequency.MONTHLY;
+                break;
+            default:
+                freq = null;
+        }
+        state.setStandingOrderFrequency(freq);
+
+        boolean isMonthly = freq == StandingOrderFrequency.MONTHLY;
+
+        // Always show date picker (used for all frequencies)
+        startDateBox.setVisible(true);
+        startDateBox.setManaged(true);
+
+        // Update label based on frequency
+        if (isMonthly) {
+            startDateLabel.setText("Day of Month (select any date)");
+        } else {
+            startDateLabel.setText("Start Date");
+        }
+
+        // Show "last day of month" checkbox only for monthly
+        monthlyLastDayBox.setVisible(isMonthly);
+        monthlyLastDayBox.setManaged(isMonthly);
+
+        // Reset fields
+        startDatePicker.setValue(null);
+        state.setStandingOrderStartDate(null);
+        monthlyLastDayCheckbox.setSelected(false);
+        state.setMonthlyLastDay(false);
+    }
+
+    @FXML
+    public void handleMonthlyLastDayToggle() {
+        boolean lastDay = monthlyLastDayCheckbox.isSelected();
+        state.setMonthlyLastDay(lastDay);
+
+        // Hide date picker when "last day" is checked (day is auto-determined)
+        startDateBox.setVisible(!lastDay);
+        startDateBox.setManaged(!lastDay);
     }
 
     @FXML
@@ -173,6 +331,32 @@ public class TransactionDialogController {
             return;
         }
 
+        // If standing order is enabled, show confirmation dialog
+        if (state.isStandingOrder()) {
+            String scheduleDescription = buildStandingOrderDescription();
+
+            Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+            if (dialogOverlay.getScene() != null) {
+                confirmDialog.initOwner(dialogOverlay.getScene().getWindow());
+            }
+            confirmDialog.setTitle("Confirm Standing Order");
+            confirmDialog.setHeaderText("Standing Order Confirmation");
+            confirmDialog.setContentText(scheduleDescription);
+
+            Optional<ButtonType> result = confirmDialog.showAndWait();
+            if (result.isEmpty() || result.get() != ButtonType.OK) {
+                return; // User cancelled
+            }
+        }
+
+        // If only one debtor is selected, skip split options and save directly
+        if (state.getParticipants().size() == 1) {
+            // Force equal split mode (100% to single debtor)
+            state.setSplitMode(TransactionDialogState.SplitMode.EQUAL);
+            saveTransaction();
+            return;
+        }
+
         // Hide all screens
         step1Screen.setVisible(false);
         step1Screen.setManaged(false);
@@ -183,6 +367,80 @@ public class TransactionDialogController {
 
         // Populate Step 3
         populateStep3();
+    }
+
+    /**
+     * Build a human-readable description of the standing order schedule
+     */
+    private String buildStandingOrderDescription() {
+        StandingOrderFrequency freq = state.getStandingOrderFrequency();
+        LocalDate startDate = startDatePicker.getValue();
+
+        StringBuilder sb = new StringBuilder("The standing order will be executed ");
+
+        switch (freq) {
+            case WEEKLY:
+                String dayOfWeek = startDate.getDayOfWeek().toString().toLowerCase();
+                dayOfWeek = dayOfWeek.substring(0, 1).toUpperCase() + dayOfWeek.substring(1);
+                sb.append("every ").append(dayOfWeek);
+                sb.append(" starting ").append(startDate.toString());
+                break;
+            case BI_WEEKLY:
+                String biWeeklyDay = startDate.getDayOfWeek().toString().toLowerCase();
+                biWeeklyDay = biWeeklyDay.substring(0, 1).toUpperCase() + biWeeklyDay.substring(1);
+                sb.append("every second ").append(biWeeklyDay);
+                sb.append(" starting ").append(startDate.toString());
+                break;
+            case MONTHLY:
+                if (state.isMonthlyLastDay()) {
+                    sb.append("on the last day of every month");
+                    // Calculate first execution (last day of current or next month)
+                    LocalDate now = LocalDate.now();
+                    LocalDate firstExec = now.withDayOfMonth(now.lengthOfMonth());
+                    if (firstExec.isBefore(now) || firstExec.equals(now)) {
+                        firstExec = now.plusMonths(1).withDayOfMonth(now.plusMonths(1).lengthOfMonth());
+                    }
+                    sb.append(" starting ").append(firstExec.toString());
+                } else {
+                    int day = startDate.getDayOfMonth();
+                    String suffix = getDaySuffix(day);
+                    sb.append("on the ").append(day).append(suffix).append(" of every month");
+                    // Set the monthly day from the selected date
+                    state.setMonthlyDay(day);
+                    // Calculate first execution
+                    LocalDate now = LocalDate.now();
+                    LocalDate firstExec;
+                    if (day <= now.lengthOfMonth()) {
+                        firstExec = now.withDayOfMonth(day);
+                        if (firstExec.isBefore(now) || firstExec.equals(now)) {
+                            firstExec = now.plusMonths(1)
+                                    .withDayOfMonth(Math.min(day, now.plusMonths(1).lengthOfMonth()));
+                        }
+                    } else {
+                        firstExec = now.withDayOfMonth(now.lengthOfMonth());
+                    }
+                    sb.append(" starting ").append(firstExec.toString());
+                }
+                break;
+        }
+
+        return sb.toString();
+    }
+
+    private String getDaySuffix(int day) {
+        if (day >= 11 && day <= 13) {
+            return "th";
+        }
+        switch (day % 10) {
+            case 1:
+                return "st";
+            case 2:
+                return "nd";
+            case 3:
+                return "rd";
+            default:
+                return "th";
+        }
     }
 
     private boolean validateStep1() {
@@ -275,9 +533,57 @@ public class TransactionDialogController {
                 }
                 step1ValidationError.setVisible(false);
                 step1ValidationError.setManaged(false);
+                // Update select all button text when individual checkbox changes
+                updateSelectAllButtonText();
             });
 
             debtorListBox.getChildren().add(checkbox);
+        }
+
+        // Update button text based on current selection state
+        updateSelectAllButtonText();
+    }
+
+    @FXML
+    public void handleSelectAllDebtors() {
+        boolean allSelected = state.getParticipants().size() == allWgMembers.size();
+
+        if (allSelected) {
+            // Deselect all
+            state.getParticipants().clear();
+        } else {
+            // Select all
+            for (User member : allWgMembers) {
+                state.addParticipant(member);
+            }
+        }
+
+        // Update the checkboxes to reflect the new state
+        for (javafx.scene.Node node : debtorListBox.getChildren()) {
+            if (node instanceof CheckBox) {
+                CheckBox checkbox = (CheckBox) node;
+                checkbox.setSelected(!allSelected);
+            }
+        }
+
+        // Update button text
+        updateSelectAllButtonText();
+
+        // Hide validation error
+        step1ValidationError.setVisible(false);
+        step1ValidationError.setManaged(false);
+    }
+
+    private void updateSelectAllButtonText() {
+        boolean allSelected = state.getParticipants().size() == allWgMembers.size();
+        if (allSelected) {
+            selectAllDebtorsButton.setText("Deselect All");
+            selectAllDebtorsButton.setStyle(
+                    "-fx-background-color: #fef2f2; -fx-text-fill: #ef4444; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand; -fx-font-weight: 500; -fx-font-size: 12px; -fx-border-color: #ef4444; -fx-border-radius: 6;");
+        } else {
+            selectAllDebtorsButton.setText("Select All");
+            selectAllDebtorsButton.setStyle(
+                    "-fx-background-color: #eff6ff; -fx-text-fill: #3b82f6; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand; -fx-font-weight: 500; -fx-font-size: 12px; -fx-border-color: #3b82f6; -fx-border-radius: 6;");
         }
     }
 
@@ -354,6 +660,49 @@ public class TransactionDialogController {
             return;
         }
 
+        // Validate standing order fields if enabled
+        if (state.isStandingOrder()) {
+            if (state.getStandingOrderFrequency() == null) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                if (dialogOverlay.getScene() != null) {
+                    alert.initOwner(dialogOverlay.getScene().getWindow());
+                }
+                alert.setTitle("Validation Error");
+                alert.setHeaderText("Cannot save standing order");
+                alert.setContentText("Please select a frequency for the standing order");
+                alert.showAndWait();
+                return;
+            }
+
+            // For monthly with "last day" checkbox, no date needed
+            boolean needsDate = state.getStandingOrderFrequency() != StandingOrderFrequency.MONTHLY
+                    || !state.isMonthlyLastDay();
+
+            if (needsDate) {
+                LocalDate startDate = startDatePicker.getValue();
+                if (startDate == null) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    if (dialogOverlay.getScene() != null) {
+                        alert.initOwner(dialogOverlay.getScene().getWindow());
+                    }
+                    alert.setTitle("Validation Error");
+                    alert.setHeaderText("Cannot save standing order");
+                    String message = state.getStandingOrderFrequency() == StandingOrderFrequency.MONTHLY
+                            ? "Please select a date to determine the day of month"
+                            : "Please select a start date for the standing order";
+                    alert.setContentText(message);
+                    alert.showAndWait();
+                    return;
+                }
+                state.setStandingOrderStartDate(startDate);
+
+                // For monthly, extract day from the date
+                if (state.getStandingOrderFrequency() == StandingOrderFrequency.MONTHLY) {
+                    state.setMonthlyDay(startDate.getDayOfMonth());
+                }
+            }
+        }
+
         // Prepare data for service
         List<Long> debtorIds = new ArrayList<>();
         List<Double> percentages = new ArrayList<>();
@@ -378,13 +727,30 @@ public class TransactionDialogController {
         }
 
         try {
-            // Create transaction
-            transactionService.createTransaction(
-                    state.getPayer().getId(),
-                    debtorIds,
-                    state.getSplitMode() == TransactionDialogState.SplitMode.EQUAL ? null : percentages,
-                    state.getTotalAmount(),
-                    state.getDescription());
+            if (state.isStandingOrder()) {
+                // Create standing order
+                User currentUser = sessionManager.getCurrentUser();
+                WG wg = currentUser.getWg();
+                standingOrderService.createStandingOrder(
+                        state.getPayer(),
+                        wg,
+                        state.getTotalAmount(),
+                        state.getDescription(),
+                        state.getStandingOrderFrequency(),
+                        state.getStandingOrderStartDate(),
+                        debtorIds,
+                        state.getSplitMode() == TransactionDialogState.SplitMode.EQUAL ? null : percentages,
+                        state.getMonthlyDay(),
+                        state.isMonthlyLastDay());
+            } else {
+                // Create immediate transaction
+                transactionService.createTransaction(
+                        state.getPayer().getId(),
+                        debtorIds,
+                        state.getSplitMode() == TransactionDialogState.SplitMode.EQUAL ? null : percentages,
+                        state.getTotalAmount(),
+                        state.getDescription());
+            }
 
             // Close dialog
             closeDialog();
@@ -400,7 +766,7 @@ public class TransactionDialogController {
                 alert.initOwner(dialogOverlay.getScene().getWindow());
             }
             alert.setTitle("Error");
-            alert.setHeaderText("Failed to save transaction");
+            alert.setHeaderText("Failed to save " + (state.isStandingOrder() ? "standing order" : "transaction"));
             alert.setContentText(e.getMessage());
             alert.showAndWait();
         }
@@ -413,14 +779,34 @@ public class TransactionDialogController {
         Text nameText = new Text(user.getName() +
                 (user.getSurname() != null ? " " + user.getSurname() : ""));
         nameText.setStyle("-fx-font-size: 14px;");
+        nameText.setWrappingWidth(150);
 
         TextField percentField = new TextField();
-        percentField.setPromptText("0");
+        percentField.setPromptText("%");
         percentField.setPrefWidth(80);
         percentField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8;");
 
         Text percentSign = new Text("%");
+
+        // X button to remove participant
+        Button removeButton = new Button("X");
+        removeButton.setStyle(
+                "-fx-background-color: #fef2f2; -fx-text-fill: #ef4444; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 2 6; -fx-background-radius: 4; -fx-border-color: #fecaca; -fx-border-radius: 4;");
+        removeButton.setOnAction(e -> {
+            state.removeParticipant(user);
+            percentageSplitParticipantsBox.getChildren().remove(row);
+            // Also remove from custom amount list
+            customAmountSplitParticipantsBox.getChildren().removeIf(node -> {
+                if (node instanceof HBox) {
+                    HBox hbox = (HBox) node;
+                    return hbox.getUserData() != null && hbox.getUserData().equals(user.getId());
+                }
+                return false;
+            });
+            updatePercentageSummary();
+            updateEqualSplitSummary();
+        });
 
         percentField.textProperty().addListener((obs, old, newVal) -> {
             if (newVal == null || newVal.trim().isEmpty()) {
@@ -438,7 +824,13 @@ public class TransactionDialogController {
             }
         });
 
-        row.getChildren().addAll(nameText, percentField, percentSign);
+        // Store user ID for cross-referencing
+        row.setUserData(user.getId());
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        row.getChildren().addAll(nameText, spacer, percentField, percentSign, removeButton);
         return row;
     }
 
@@ -449,14 +841,34 @@ public class TransactionDialogController {
         Text nameText = new Text(user.getName() +
                 (user.getSurname() != null ? " " + user.getSurname() : ""));
         nameText.setStyle("-fx-font-size: 14px;");
+        nameText.setWrappingWidth(150);
 
         Text euroSign = new Text("€");
 
         TextField amountField = new TextField();
-        amountField.setPromptText("0.00");
+        amountField.setPromptText("€");
         amountField.setPrefWidth(100);
         amountField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8;");
+
+        // X button to remove participant
+        Button removeButton = new Button("X");
+        removeButton.setStyle(
+                "-fx-background-color: #fef2f2; -fx-text-fill: #ef4444; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 2 6; -fx-background-radius: 4; -fx-border-color: #fecaca; -fx-border-radius: 4;");
+        removeButton.setOnAction(e -> {
+            state.removeParticipant(user);
+            customAmountSplitParticipantsBox.getChildren().remove(row);
+            // Also remove from percentage list
+            percentageSplitParticipantsBox.getChildren().removeIf(node -> {
+                if (node instanceof HBox) {
+                    HBox hbox = (HBox) node;
+                    return hbox.getUserData() != null && hbox.getUserData().equals(user.getId());
+                }
+                return false;
+            });
+            updateCustomAmountSummary();
+            updateEqualSplitSummary();
+        });
 
         amountField.textProperty().addListener((obs, old, newVal) -> {
             if (newVal == null || newVal.trim().isEmpty()) {
@@ -474,7 +886,13 @@ public class TransactionDialogController {
             }
         });
 
-        row.getChildren().addAll(nameText, euroSign, amountField);
+        // Store user ID for cross-referencing
+        row.setUserData(user.getId());
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        row.getChildren().addAll(nameText, spacer, euroSign, amountField, removeButton);
         return row;
     }
 

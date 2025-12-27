@@ -215,6 +215,18 @@ public class TransactionsController extends Controller {
         });
     }
 
+    @FXML
+    public void showStandingOrders() {
+        try {
+            StandingOrdersDialogController dialogController = applicationContext
+                    .getBean(StandingOrdersDialogController.class);
+            dialogController.showDialog();
+        } catch (Exception e) {
+            System.err.println("Error showing standing orders dialog: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     public static class BalanceEntry {
         private final String memberName;
         private final double balance;
