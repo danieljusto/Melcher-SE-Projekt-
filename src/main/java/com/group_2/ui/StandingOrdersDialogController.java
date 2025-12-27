@@ -108,11 +108,19 @@ public class StandingOrdersDialogController {
         nextExecutionColumn.setCellValueFactory(
                 cellData -> new SimpleStringProperty(cellData.getValue().getNextExecution().format(dateFormatter)));
 
-        // Actions column with delete button
+        // Actions column with edit and delete buttons
         actionsColumn.setCellFactory(col -> new TableCell<>() {
+            private final Button editBtn = new Button("✏️ Edit");
             private final Button deleteBtn = new Button("🗑️ Delete");
 
             {
+                editBtn.setStyle(
+                        "-fx-background-color: #dbeafe; -fx-text-fill: #2563eb; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 10;");
+                editBtn.setOnAction(e -> {
+                    StandingOrder order = getTableView().getItems().get(getIndex());
+                    showEditDialog(order);
+                });
+
                 deleteBtn.setStyle(
                         "-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 10;");
                 deleteBtn.setOnAction(e -> {
@@ -127,8 +135,17 @@ public class StandingOrdersDialogController {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    HBox buttons = new HBox(5, deleteBtn);
-                    setGraphic(buttons);
+                    StandingOrder order = getTableView().getItems().get(getIndex());
+                    User currentUser = sessionManager.getCurrentUser();
+
+                    // Only show edit/delete for orders created by current user
+                    if (currentUser != null && order.getCreditor().getId().equals(currentUser.getId())) {
+                        HBox buttons = new HBox(5, editBtn, deleteBtn);
+                        setGraphic(buttons);
+                    } else {
+                        // Show only a view indicator for others' orders
+                        setGraphic(null);
+                    }
                 }
             }
         });
@@ -258,5 +275,215 @@ public class StandingOrdersDialogController {
 
     public void setOnOrdersChanged(Runnable callback) {
         this.onOrdersChanged = callback;
+    }
+
+    private void showEditDialog(StandingOrder order) {
+        // Create edit dialog
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Standing Order");
+        if (dialogOverlay.getScene() != null) {
+            dialog.initOwner(dialogOverlay.getScene().getWindow());
+        }
+
+        // Create dialog content
+        VBox content = new VBox(15);
+        content.setPadding(new javafx.geometry.Insets(20));
+        content.setStyle("-fx-background-color: white;");
+        content.setPrefWidth(450);
+
+        // Description field
+        javafx.scene.text.Text descLabel = new javafx.scene.text.Text("Description");
+        descLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        TextField descField = new TextField(order.getDescription());
+        descField.setStyle(
+                "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
+
+        // Amount field
+        javafx.scene.text.Text amountLabel = new javafx.scene.text.Text("Amount (€)");
+        amountLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        TextField amountField = new TextField(String.format("%.2f", order.getTotalAmount()));
+        amountField.setStyle(
+                "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
+
+        // Frequency selection
+        javafx.scene.text.Text freqLabel = new javafx.scene.text.Text("Frequency");
+        freqLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        ComboBox<String> freqComboBox = new ComboBox<>();
+        freqComboBox.getItems().addAll("Weekly", "Bi-weekly", "Monthly");
+        freqComboBox.setStyle(
+                "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6;");
+
+        // Set current frequency
+        switch (order.getFrequency()) {
+            case WEEKLY -> freqComboBox.setValue("Weekly");
+            case BI_WEEKLY -> freqComboBox.setValue("Bi-weekly");
+            case MONTHLY -> freqComboBox.setValue("Monthly");
+        }
+
+        // Monthly options
+        VBox monthlyOptions = new VBox(10);
+        CheckBox lastDayCheckbox = new CheckBox("Execute on last day of month");
+        lastDayCheckbox.setSelected(Boolean.TRUE.equals(order.getMonthlyLastDay()));
+
+        javafx.scene.text.Text dayLabel = new javafx.scene.text.Text("Day of month (1-31):");
+        dayLabel.setStyle("-fx-font-size: 12px;");
+        TextField dayField = new TextField(order.getMonthlyDay() != null ? order.getMonthlyDay().toString() : "1");
+        dayField.setPrefWidth(60);
+        dayField.setStyle(
+                "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8;");
+
+        HBox dayBox = new HBox(10, dayLabel, dayField);
+        dayBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        monthlyOptions.getChildren().addAll(lastDayCheckbox, dayBox);
+        monthlyOptions.setVisible("Monthly".equals(freqComboBox.getValue()));
+        monthlyOptions.setManaged("Monthly".equals(freqComboBox.getValue()));
+
+        freqComboBox.setOnAction(e -> {
+            boolean isMonthly = "Monthly".equals(freqComboBox.getValue());
+            monthlyOptions.setVisible(isMonthly);
+            monthlyOptions.setManaged(isMonthly);
+        });
+
+        lastDayCheckbox.setOnAction(e -> {
+            dayBox.setVisible(!lastDayCheckbox.isSelected());
+            dayBox.setManaged(!lastDayCheckbox.isSelected());
+        });
+        dayBox.setVisible(!lastDayCheckbox.isSelected());
+        dayBox.setManaged(!lastDayCheckbox.isSelected());
+
+        // Current debtors info
+        javafx.scene.text.Text debtorsLabel = new javafx.scene.text.Text(
+                "Debtors: " + parseDebtorNames(order.getDebtorData()));
+        debtorsLabel.setStyle("-fx-font-size: 12px; -fx-fill: #6b7280;");
+
+        content.getChildren().addAll(
+                descLabel, descField,
+                amountLabel, amountField,
+                freqLabel, freqComboBox,
+                monthlyOptions,
+                debtorsLabel);
+
+        dialog.getDialogPane().setContent(content);
+
+        // Add buttons
+        ButtonType saveButton = new ButtonType("💾 Save Changes", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButton, cancelButton);
+
+        // Style the save button
+        Button saveBtn = (Button) dialog.getDialogPane().lookupButton(saveButton);
+        saveBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; " +
+                "-fx-padding: 10 24; -fx-font-weight: bold; -fx-cursor: hand;");
+
+        // Handle result
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isPresent() && result.get() == saveButton) {
+            try {
+                // Parse updated values
+                String newDescription = descField.getText().trim();
+                double newAmount = Double.parseDouble(amountField.getText().replace(",", "."));
+
+                StandingOrderFrequency newFrequency = switch (freqComboBox.getValue()) {
+                    case "Weekly" -> StandingOrderFrequency.WEEKLY;
+                    case "Bi-weekly" -> StandingOrderFrequency.BI_WEEKLY;
+                    case "Monthly" -> StandingOrderFrequency.MONTHLY;
+                    default -> order.getFrequency();
+                };
+
+                Integer newMonthlyDay = null;
+                Boolean newMonthlyLastDay = false;
+
+                if (newFrequency == StandingOrderFrequency.MONTHLY) {
+                    newMonthlyLastDay = lastDayCheckbox.isSelected();
+                    if (!newMonthlyLastDay) {
+                        newMonthlyDay = Integer.parseInt(dayField.getText().trim());
+                        if (newMonthlyDay < 1 || newMonthlyDay > 31) {
+                            throw new IllegalArgumentException("Day must be between 1 and 31");
+                        }
+                    }
+                }
+
+                // Parse existing debtor data to get IDs and percentages
+                List<Long> debtorIds = new java.util.ArrayList<>();
+                List<Double> percentages = new java.util.ArrayList<>();
+                parseDebtorDataForEdit(order.getDebtorData(), debtorIds, percentages);
+
+                // Update the standing order
+                standingOrderService.updateStandingOrder(
+                        order.getId(),
+                        sessionManager.getCurrentUser().getId(),
+                        order.getCreditor(), // Keep same creditor
+                        newAmount,
+                        newDescription,
+                        newFrequency,
+                        debtorIds,
+                        percentages.isEmpty() ? null : percentages,
+                        newMonthlyDay,
+                        newMonthlyLastDay);
+
+                // Refresh the table
+                loadStandingOrders();
+
+                if (onOrdersChanged != null) {
+                    onOrdersChanged.run();
+                }
+
+                // Show success message
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                if (dialogOverlay.getScene() != null) {
+                    success.initOwner(dialogOverlay.getScene().getWindow());
+                }
+                success.setTitle("Success");
+                success.setHeaderText(null);
+                success.setContentText("Standing order updated successfully.");
+                success.showAndWait();
+
+            } catch (NumberFormatException e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                if (dialogOverlay.getScene() != null) {
+                    error.initOwner(dialogOverlay.getScene().getWindow());
+                }
+                error.setTitle("Error");
+                error.setHeaderText("Invalid input");
+                error.setContentText("Please enter valid numbers for amount and day.");
+                error.showAndWait();
+            } catch (Exception e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                if (dialogOverlay.getScene() != null) {
+                    error.initOwner(dialogOverlay.getScene().getWindow());
+                }
+                error.setTitle("Error");
+                error.setHeaderText("Failed to update standing order");
+                error.setContentText(e.getMessage());
+                error.showAndWait();
+            }
+        }
+    }
+
+    private void parseDebtorDataForEdit(String json, List<Long> debtorIds, List<Double> percentages) {
+        if (json == null || json.isEmpty()) {
+            return;
+        }
+        try {
+            List<Map<String, Object>> debtorList = objectMapper.readValue(json,
+                    new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {
+                    });
+
+            for (Map<String, Object> entry : debtorList) {
+                Object userIdObj = entry.get("userId");
+                Object percentageObj = entry.get("percentage");
+
+                Long userId = userIdObj instanceof Number ? ((Number) userIdObj).longValue()
+                        : Long.parseLong(userIdObj.toString());
+                Double percentage = percentageObj instanceof Number ? ((Number) percentageObj).doubleValue()
+                        : Double.parseDouble(percentageObj.toString());
+
+                debtorIds.add(userId);
+                percentages.add(percentage);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse debtor data", e);
+        }
     }
 }

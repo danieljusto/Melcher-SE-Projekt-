@@ -212,7 +212,7 @@ public class TransactionsController extends Controller {
         User otherUser = entry.getUser();
 
         // Create dialog
-        Dialog<ButtonType> dialog = new Dialog<>();
+        Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Settle Balance");
 
         // Set owner window
@@ -224,7 +224,7 @@ public class TransactionsController extends Controller {
         content.setPadding(new Insets(30));
         content.setAlignment(Pos.CENTER);
         content.setStyle("-fx-background-color: white;");
-        content.setPrefWidth(400);
+        content.setPrefWidth(500);
 
         // Header icon
         Text headerIcon = new Text(balance < 0 ? "💸" : "💰");
@@ -246,78 +246,204 @@ public class TransactionsController extends Controller {
         amountText.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-fill: " +
                 (balance < 0 ? "#ef4444" : "#10b981") + ";");
 
-        // Payment method selection
-        Text paymentLabel = new Text("Select payment method:");
-        paymentLabel.setStyle("-fx-font-size: 14px; -fx-fill: #6b7280;");
+        // Payment method selection label
+        Text paymentLabel = new Text("Select payment method to settle:");
+        paymentLabel.setStyle("-fx-font-size: 14px; -fx-fill: #6b7280; -fx-font-weight: 500;");
 
-        ToggleGroup paymentGroup = new ToggleGroup();
+        // Create payment method buttons
+        // Cash button
+        Button cashButton = new Button("💵  Cash");
+        cashButton.setStyle("-fx-background-color: linear-gradient(to bottom right, #10b981, #059669); " +
+                "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;");
+        cashButton.setOnMouseEntered(
+                e -> cashButton.setStyle("-fx-background-color: linear-gradient(to bottom right, #059669, #047857); " +
+                        "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                        "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;"));
+        cashButton.setOnMouseExited(
+                e -> cashButton.setStyle("-fx-background-color: linear-gradient(to bottom right, #10b981, #059669); " +
+                        "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                        "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;"));
 
-        // Cash option
-        RadioButton cashOption = new RadioButton("Cash");
-        cashOption.setToggleGroup(paymentGroup);
-        cashOption.setSelected(true);
-        cashOption.setStyle("-fx-font-size: 14px;");
-        HBox cashBox = new HBox(10, new Text("💵"), cashOption);
-        cashBox.setAlignment(Pos.CENTER_LEFT);
+        // Bank transfer button
+        Button bankButton = new Button("🏦  Bank Transfer");
+        bankButton.setStyle("-fx-background-color: linear-gradient(to bottom right, #3b82f6, #2563eb); " +
+                "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;");
+        bankButton.setOnMouseEntered(
+                e -> bankButton.setStyle("-fx-background-color: linear-gradient(to bottom right, #2563eb, #1d4ed8); " +
+                        "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                        "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;"));
+        bankButton.setOnMouseExited(
+                e -> bankButton.setStyle("-fx-background-color: linear-gradient(to bottom right, #3b82f6, #2563eb); " +
+                        "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                        "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;"));
 
-        // Bank transfer option
-        RadioButton bankOption = new RadioButton("Bank Transfer");
-        bankOption.setToggleGroup(paymentGroup);
-        bankOption.setStyle("-fx-font-size: 14px;");
-        HBox bankBox = new HBox(10, new Text("🏦"), bankOption);
-        bankBox.setAlignment(Pos.CENTER_LEFT);
-
-        // PayPal option
-        RadioButton paypalOption = new RadioButton("PayPal");
-        paypalOption.setToggleGroup(paymentGroup);
-        paypalOption.setStyle("-fx-font-size: 14px;");
-
-        // Load PayPal icon
-        ImageView paypalIcon;
+        // PayPal button with icon
+        Button paypalButton = new Button("PayPal");
         try {
             Image paypalImage = new Image(getClass().getResourceAsStream("/icon_paypal.png"));
-            paypalIcon = new ImageView(paypalImage);
+            ImageView paypalIcon = new ImageView(paypalImage);
             paypalIcon.setFitWidth(20);
             paypalIcon.setFitHeight(20);
             paypalIcon.setPreserveRatio(true);
+            paypalButton.setGraphic(paypalIcon);
         } catch (Exception e) {
-            paypalIcon = new ImageView();
+            paypalButton.setText("💳  PayPal");
         }
-        HBox paypalBox = new HBox(10, paypalIcon, paypalOption);
-        paypalBox.setAlignment(Pos.CENTER_LEFT);
+        paypalButton.setStyle("-fx-background-color: linear-gradient(to bottom right, #0070ba, #003087); " +
+                "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;");
+        paypalButton.setOnMouseEntered(e -> paypalButton
+                .setStyle("-fx-background-color: linear-gradient(to bottom right, #003087, #001f5f); " +
+                        "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                        "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;"));
+        paypalButton.setOnMouseExited(e -> paypalButton
+                .setStyle("-fx-background-color: linear-gradient(to bottom right, #0070ba, #003087); " +
+                        "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                        "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 140;"));
 
-        VBox paymentMethods = new VBox(12, cashBox, bankBox, paypalBox);
-        paymentMethods.setAlignment(Pos.CENTER_LEFT);
-        paymentMethods.setPadding(new Insets(10, 0, 10, 40));
-        paymentMethods.setStyle("-fx-background-color: #f9fafb; -fx-background-radius: 8; -fx-padding: 15;");
+        // Set up button actions to show confirmation
+        cashButton.setOnAction(e -> {
+            dialog.setResult("Cash");
+            dialog.close();
+        });
+        bankButton.setOnAction(e -> {
+            dialog.setResult("Bank Transfer");
+            dialog.close();
+        });
+        paypalButton.setOnAction(e -> {
+            dialog.setResult("PayPal");
+            dialog.close();
+        });
 
-        content.getChildren().addAll(headerIcon, messageText, amountText, paymentLabel, paymentMethods);
+        // Arrange buttons in first row
+        HBox paymentButtons = new HBox(15, cashButton, bankButton, paypalButton);
+        paymentButtons.setAlignment(Pos.CENTER);
+        paymentButtons.setPadding(new Insets(10, 0, 0, 0));
+
+        // Credit Transfer button (only show when user owes someone - negative balance)
+        // This allows using credit from another roommate to pay this debt
+        VBox creditTransferSection = new VBox(10);
+        creditTransferSection.setAlignment(Pos.CENTER);
+
+        if (balance < 0) {
+            // Find roommates who owe the current user (positive balances = they owe us)
+            Map<Long, Double> allBalances = transactionService.calculateAllBalances(currentUser.getId());
+            List<BalanceEntry> availableCredits = new ArrayList<>();
+
+            WG wg = currentUser.getWg();
+            if (wg != null && wg.mitbewohner != null) {
+                for (User member : wg.mitbewohner) {
+                    if (!member.getId().equals(currentUser.getId()) && !member.getId().equals(otherUser.getId())) {
+                        double memberBalance = allBalances.getOrDefault(member.getId(), 0.0);
+                        if (memberBalance > 0) { // They owe us money
+                            String name = member.getName() +
+                                    (member.getSurname() != null ? " " + member.getSurname() : "");
+                            availableCredits.add(new BalanceEntry(name, memberBalance, member));
+                        }
+                    }
+                }
+            }
+
+            if (!availableCredits.isEmpty()) {
+                // Add separator
+                Text orText = new Text("— or —");
+                orText.setStyle("-fx-font-size: 12px; -fx-fill: #9ca3af;");
+
+                // Credit Transfer button
+                Button creditTransferButton = new Button("🔄  Credit Transfer");
+                creditTransferButton
+                        .setStyle("-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #7c3aed); " +
+                                "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                                "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 200;");
+                creditTransferButton.setOnMouseEntered(e -> creditTransferButton
+                        .setStyle("-fx-background-color: linear-gradient(to bottom right, #7c3aed, #6d28d9); " +
+                                "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                                "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 200;"));
+                creditTransferButton.setOnMouseExited(e -> creditTransferButton
+                        .setStyle("-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #7c3aed); " +
+                                "-fx-text-fill: white; -fx-background-radius: 12; -fx-padding: 15 30; " +
+                                "-fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand; -fx-min-width: 200;"));
+
+                creditTransferButton.setOnAction(e -> {
+                    dialog.setResult("CreditTransfer");
+                    dialog.close();
+                });
+
+                Text creditHint = new Text("Use credit from another roommate to settle this debt");
+                creditHint.setStyle("-fx-font-size: 11px; -fx-fill: #9ca3af;");
+
+                creditTransferSection.getChildren().addAll(orText, creditTransferButton, creditHint);
+            }
+        }
+
+        content.getChildren().addAll(headerIcon, messageText, amountText, paymentLabel, paymentButtons);
+        if (!creditTransferSection.getChildren().isEmpty()) {
+            content.getChildren().add(creditTransferSection);
+        }
 
         dialog.getDialogPane().setContent(content);
 
-        // Add buttons
-        ButtonType settleButton = new ButtonType("✓ Confirm Settlement", ButtonBar.ButtonData.OK_DONE);
+        // Add only cancel button (payment method buttons handle selection)
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-        dialog.getDialogPane().getButtonTypes().addAll(settleButton, cancelButton);
+        dialog.getDialogPane().getButtonTypes().add(cancelButton);
 
-        // Style the settle button
-        Button settleBtn = (Button) dialog.getDialogPane().lookupButton(settleButton);
-        settleBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; " +
-                "-fx-padding: 10 24; -fx-font-weight: bold; -fx-cursor: hand;");
+        // Store data needed for credit transfer
+        final double finalAbsBalance = absBalance;
+        final boolean finalCurrentUserPays = balance < 0;
 
         // Handle result
-        Optional<ButtonType> result = dialog.showAndWait();
-        if (result.isPresent() && result.get() == settleButton) {
-            // Get selected payment method
-            String paymentMethod = "Cash";
-            if (bankOption.isSelected()) {
-                paymentMethod = "Bank Transfer";
-            } else if (paypalOption.isSelected()) {
-                paymentMethod = "PayPal";
-            }
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent() && !result.get().equals("Cancel")) {
+            String paymentMethod = result.get();
 
+            if (paymentMethod.equals("CreditTransfer")) {
+                // Show credit transfer selection dialog
+                showCreditTransferDialog(currentUser, otherUser, finalAbsBalance, memberName);
+            } else {
+                // Show confirmation dialog for regular payment methods
+                showSettlementConfirmation(currentUser, otherUser, finalAbsBalance, paymentMethod,
+                        finalCurrentUserPays, memberName);
+            }
+        }
+    }
+
+    private void showSettlementConfirmation(User currentUser, User otherUser, double amount,
+            String paymentMethod, boolean currentUserPays, String memberName) {
+
+        // Create confirmation dialog
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmDialog.setTitle("Confirm Settlement");
+        confirmDialog.setHeaderText("Confirm your settlement");
+
+        String action = currentUserPays ? "pay" : "mark as received from";
+        String message = String.format("You are about to %s %s to %s via %s.\n\nDo you want to proceed?",
+                action, currencyFormat.format(amount), memberName, paymentMethod);
+        confirmDialog.setContentText(message);
+
+        // Set owner window
+        Window owner = balanceTable.getScene().getWindow();
+        confirmDialog.initOwner(owner);
+
+        // Style the dialog
+        confirmDialog.getDialogPane().setStyle("-fx-background-color: white;");
+
+        // Add custom buttons
+        ButtonType confirmButton = new ButtonType("✓ Confirm", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirmDialog.getButtonTypes().setAll(confirmButton, cancelButton);
+
+        // Style the confirm button
+        Button confirmBtn = (Button) confirmDialog.getDialogPane().lookupButton(confirmButton);
+        confirmBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; " +
+                "-fx-padding: 8 20; -fx-font-weight: bold; -fx-cursor: hand;");
+
+        // Handle result
+        Optional<ButtonType> confirmResult = confirmDialog.showAndWait();
+        if (confirmResult.isPresent() && confirmResult.get() == confirmButton) {
             // Create settlement transaction
-            createSettlementTransaction(currentUser, otherUser, absBalance, paymentMethod, balance < 0);
+            createSettlementTransaction(currentUser, otherUser, amount, paymentMethod, currentUserPays);
         }
     }
 
@@ -367,6 +493,181 @@ public class TransactionsController extends Controller {
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Settlement Failed",
                     "Could not create settlement: " + e.getMessage(),
+                    balanceTable.getScene().getWindow());
+        }
+    }
+
+    private void showCreditTransferDialog(User currentUser, User debtorTo, double debtAmount, String debtorName) {
+        // Find roommates who owe the current user
+        Map<Long, Double> allBalances = transactionService.calculateAllBalances(currentUser.getId());
+        List<BalanceEntry> availableCredits = new ArrayList<>();
+
+        WG wg = currentUser.getWg();
+        if (wg != null && wg.mitbewohner != null) {
+            for (User member : wg.mitbewohner) {
+                if (!member.getId().equals(currentUser.getId()) && !member.getId().equals(debtorTo.getId())) {
+                    double memberBalance = allBalances.getOrDefault(member.getId(), 0.0);
+                    if (memberBalance > 0) {
+                        String name = member.getName() +
+                                (member.getSurname() != null ? " " + member.getSurname() : "");
+                        availableCredits.add(new BalanceEntry(name, memberBalance, member));
+                    }
+                }
+            }
+        }
+
+        if (availableCredits.isEmpty()) {
+            showAlert(Alert.AlertType.INFORMATION, "No Credits Available",
+                    "There are no roommates who currently owe you money.",
+                    balanceTable.getScene().getWindow());
+            return;
+        }
+
+        // Create dialog to select credit source
+        Dialog<BalanceEntry> dialog = new Dialog<>();
+        dialog.setTitle("Credit Transfer");
+        dialog.initOwner(balanceTable.getScene().getWindow());
+
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(30));
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: white;");
+        content.setPrefWidth(450);
+
+        // Header
+        Text headerIcon = new Text("🔄");
+        headerIcon.setStyle("-fx-font-size: 48px;");
+
+        Text titleText = new Text("Select Credit Source");
+        titleText.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-fill: #1f2937;");
+
+        Text subtitleText = new Text("Choose a roommate's credit to transfer to " + debtorName);
+        subtitleText.setStyle("-fx-font-size: 13px; -fx-fill: #6b7280;");
+
+        Text debtInfo = new Text("Debt to settle: " + currencyFormat.format(debtAmount));
+        debtInfo.setStyle("-fx-font-size: 14px; -fx-fill: #ef4444; -fx-font-weight: 500;");
+
+        // Create buttons for each available credit
+        VBox creditButtons = new VBox(10);
+        creditButtons.setAlignment(Pos.CENTER);
+        creditButtons.setPadding(new Insets(10, 0, 0, 0));
+
+        for (BalanceEntry credit : availableCredits) {
+            double availableAmount = credit.getBalance();
+            double transferAmount = Math.min(availableAmount, debtAmount);
+
+            Button creditButton = new Button();
+            creditButton.setText(credit.getMemberName() + " owes you " + currencyFormat.format(availableAmount) +
+                    "\n→ Transfer " + currencyFormat.format(transferAmount));
+            creditButton.setStyle("-fx-background-color: #f3f4f6; -fx-text-fill: #374151; " +
+                    "-fx-background-radius: 12; -fx-padding: 15 25; -fx-font-size: 13px; " +
+                    "-fx-cursor: hand; -fx-min-width: 350; -fx-alignment: center-left;");
+            creditButton.setOnMouseEntered(e -> creditButton.setStyle(
+                    "-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #7c3aed); -fx-text-fill: white; " +
+                            "-fx-background-radius: 12; -fx-padding: 15 25; -fx-font-size: 13px; " +
+                            "-fx-cursor: hand; -fx-min-width: 350; -fx-alignment: center-left;"));
+            creditButton.setOnMouseExited(e -> creditButton.setStyle(
+                    "-fx-background-color: #f3f4f6; -fx-text-fill: #374151; " +
+                            "-fx-background-radius: 12; -fx-padding: 15 25; -fx-font-size: 13px; " +
+                            "-fx-cursor: hand; -fx-min-width: 350; -fx-alignment: center-left;"));
+
+            final BalanceEntry selectedCredit = credit;
+            creditButton.setOnAction(e -> {
+                dialog.setResult(selectedCredit);
+                dialog.close();
+            });
+
+            creditButtons.getChildren().add(creditButton);
+        }
+
+        content.getChildren().addAll(headerIcon, titleText, subtitleText, debtInfo, creditButtons);
+        dialog.getDialogPane().setContent(content);
+
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().add(cancelButton);
+
+        Optional<BalanceEntry> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            BalanceEntry selectedCredit = result.get();
+            double transferAmount = Math.min(selectedCredit.getBalance(), debtAmount);
+
+            // Show confirmation for credit transfer
+            showCreditTransferConfirmation(currentUser, selectedCredit.getUser(), debtorTo,
+                    transferAmount, selectedCredit.getMemberName(), debtorName);
+        }
+    }
+
+    private void showCreditTransferConfirmation(User currentUser, User creditSource, User debtorTo,
+            double amount, String creditSourceName, String debtorName) {
+
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmDialog.setTitle("Confirm Credit Transfer");
+        confirmDialog.setHeaderText("Confirm credit transfer");
+
+        String message = String.format(
+                "Transfer %s of credit from %s to settle your debt with %s.\n\n" +
+                        "This will:\n" +
+                        "• Reduce %s's credit with you by %s\n" +
+                        "• Reduce your debt to %s by %s\n\n" +
+                        "Do you want to proceed?",
+                currencyFormat.format(amount), creditSourceName, debtorName,
+                creditSourceName, currencyFormat.format(amount),
+                debtorName, currencyFormat.format(amount));
+        confirmDialog.setContentText(message);
+
+        confirmDialog.initOwner(balanceTable.getScene().getWindow());
+        confirmDialog.getDialogPane().setStyle("-fx-background-color: white;");
+
+        ButtonType confirmButton = new ButtonType("✓ Confirm Transfer", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirmDialog.getButtonTypes().setAll(confirmButton, cancelButton);
+
+        Button confirmBtn = (Button) confirmDialog.getDialogPane().lookupButton(confirmButton);
+        confirmBtn.setStyle("-fx-background-color: #8b5cf6; -fx-text-fill: white; -fx-background-radius: 8; " +
+                "-fx-padding: 8 20; -fx-font-weight: bold; -fx-cursor: hand;");
+
+        Optional<ButtonType> confirmResult = confirmDialog.showAndWait();
+        if (confirmResult.isPresent() && confirmResult.get() == confirmButton) {
+            executeCreditTransfer(currentUser, creditSource, debtorTo, amount, creditSourceName, debtorName);
+        }
+    }
+
+    private void executeCreditTransfer(User currentUser, User creditSource, User debtorTo,
+            double amount, String creditSourceName, String debtorName) {
+        try {
+            // Create a transaction that represents: creditSource pays debtorTo on behalf of
+            // currentUser
+            // This is recorded as: currentUser pays debtorTo (settling the debt)
+            // And: creditSource's credit with currentUser is reduced
+
+            // Transaction 1: Current user settles debt with debtorTo
+            transactionService.createTransaction(
+                    currentUser.getId(),
+                    List.of(debtorTo.getId()),
+                    null,
+                    amount,
+                    "Credit Transfer from " + creditSourceName + " (settled debt)");
+
+            // Transaction 2: Credit source settles their debt with current user
+            transactionService.createTransaction(
+                    creditSource.getId(),
+                    List.of(currentUser.getId()),
+                    null,
+                    amount,
+                    "Credit Transfer to " + debtorName + " (used credit)");
+
+            // Refresh displays
+            updateBalanceDisplay();
+            updateBalanceSheet();
+
+            showAlert(Alert.AlertType.INFORMATION, "Credit Transfer Complete",
+                    String.format("Successfully transferred %s of credit from %s to settle debt with %s.",
+                            currencyFormat.format(amount), creditSourceName, debtorName),
+                    balanceTable.getScene().getWindow());
+
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Transfer Failed",
+                    "Could not complete credit transfer: " + e.getMessage(),
                     balanceTable.getScene().getWindow());
         }
     }

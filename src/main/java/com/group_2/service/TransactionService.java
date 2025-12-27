@@ -219,4 +219,118 @@ public class TransactionService {
         Map<Long, Double> allBalances = calculateAllBalances(userId);
         return allBalances.values().stream().mapToDouble(Double::doubleValue).sum();
     }
+
+    /**
+     * Update an existing transaction
+     * Only the creditor (creator) can update a transaction
+     * 
+     * @param transactionId ID of the transaction to update
+     * @param currentUserId ID of the user attempting the update (must be the
+     *                      creditor)
+     * @param newCreditorId New creditor ID (can be different from current)
+     * @param debtorIds     Updated list of debtor IDs
+     * @param percentages   Updated percentages (null for equal split)
+     * @param totalAmount   Updated total amount
+     * @param description   Updated description
+     * @return The updated transaction
+     */
+    @Transactional
+    public Transaction updateTransaction(Long transactionId, Long currentUserId, Long newCreditorId,
+            List<Long> debtorIds, List<Double> percentages, Double totalAmount, String description) {
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        // Only the original creditor can edit the transaction
+        if (!transaction.getCreditor().getId().equals(currentUserId)) {
+            throw new RuntimeException("Only the creator of the transaction can edit it");
+        }
+
+        // Validate inputs
+        if (debtorIds == null || debtorIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one debtor is required");
+        }
+        if (totalAmount == null || totalAmount <= 0) {
+            throw new IllegalArgumentException("Total amount must be positive");
+        }
+
+        // Fetch the new creditor
+        User newCreditor = userRepository.findById(newCreditorId)
+                .orElseThrow(() -> new RuntimeException("Creditor not found"));
+
+        // Handle percentages - default to equal split if not provided
+        List<Double> finalPercentages = percentages;
+        if (percentages == null || percentages.isEmpty()) {
+            double equalPercentage = 100.0 / debtorIds.size();
+            finalPercentages = debtorIds.stream()
+                    .map(id -> equalPercentage)
+                    .toList();
+        } else {
+            // Validate percentages sum to 100
+            double sum = percentages.stream().mapToDouble(Double::doubleValue).sum();
+            if (Math.abs(sum - 100.0) > 0.01) {
+                throw new IllegalArgumentException("Percentages must sum to 100");
+            }
+            if (percentages.size() != debtorIds.size()) {
+                throw new IllegalArgumentException("Number of percentages must match number of debtors");
+            }
+        }
+
+        // Update transaction fields
+        transaction.setCreditor(newCreditor);
+        transaction.setTotalAmount(totalAmount);
+        transaction.setDescription(description);
+
+        // Clear old splits
+        transactionSplitRepository.deleteAll(transaction.getSplits());
+        transaction.getSplits().clear();
+
+        // Create new splits
+        for (int i = 0; i < debtorIds.size(); i++) {
+            Long debtorId = debtorIds.get(i);
+            Double percentage = finalPercentages.get(i);
+
+            User debtor = userRepository.findById(debtorId)
+                    .orElseThrow(() -> new RuntimeException("Debtor not found: " + debtorId));
+
+            double amount = (percentage / 100.0) * totalAmount;
+            TransactionSplit split = new TransactionSplit(transaction, debtor, percentage, amount);
+            transaction.addSplit(split);
+            transactionSplitRepository.save(split);
+        }
+
+        return transactionRepository.save(transaction);
+    }
+
+    /**
+     * Delete a transaction
+     * Only the creditor (creator) can delete a transaction
+     * 
+     * @param transactionId ID of the transaction to delete
+     * @param currentUserId ID of the user attempting the deletion
+     */
+    @Transactional
+    public void deleteTransaction(Long transactionId, Long currentUserId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        // Only the original creditor can delete the transaction
+        if (!transaction.getCreditor().getId().equals(currentUserId)) {
+            throw new RuntimeException("Only the creator of the transaction can delete it");
+        }
+
+        // Delete all splits first (cascade should handle this, but being explicit)
+        transactionSplitRepository.deleteAll(transaction.getSplits());
+
+        // Delete the transaction
+        transactionRepository.delete(transaction);
+    }
+
+    /**
+     * Get a transaction by ID
+     */
+    public Transaction getTransactionById(Long transactionId) {
+        return transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+    }
 }

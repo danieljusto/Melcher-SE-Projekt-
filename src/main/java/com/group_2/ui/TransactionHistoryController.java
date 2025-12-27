@@ -8,10 +8,10 @@ import com.model.User;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,9 @@ import org.springframework.stereotype.Component;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -47,6 +49,8 @@ public class TransactionHistoryController extends Controller {
     private TableColumn<Transaction, String> creditorColumn;
     @FXML
     private TableColumn<Transaction, String> debtorColumn;
+    @FXML
+    private TableColumn<Transaction, Void> actionsColumn;
 
     private DecimalFormat currencyFormat = new DecimalFormat("€#,##0.00");
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -135,14 +139,58 @@ public class TransactionHistoryController extends Controller {
             }
         });
 
-        // Setup row factory for future edit functionality
+        // Setup actions column with edit and delete buttons
+        actionsColumn.setCellFactory(col -> new TableCell<>() {
+            private final Button editBtn = new Button("✏️ Edit");
+            private final Button deleteBtn = new Button("🗑️");
+
+            {
+                editBtn.setStyle(
+                        "-fx-background-color: #dbeafe; -fx-text-fill: #2563eb; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 8;");
+                editBtn.setOnAction(e -> {
+                    Transaction transaction = getTableView().getItems().get(getIndex());
+                    showEditTransactionDialog(transaction);
+                });
+
+                deleteBtn.setStyle(
+                        "-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 8;");
+                deleteBtn.setOnAction(e -> {
+                    Transaction transaction = getTableView().getItems().get(getIndex());
+                    confirmAndDeleteTransaction(transaction);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    Transaction transaction = getTableView().getItems().get(getIndex());
+                    User currentUser = sessionManager.getCurrentUser();
+
+                    // Only show edit/delete for transactions created by current user
+                    if (currentUser != null && transaction.getCreditor().getId().equals(currentUser.getId())) {
+                        HBox buttons = new HBox(5, editBtn, deleteBtn);
+                        setGraphic(buttons);
+                    } else {
+                        setGraphic(null);
+                    }
+                }
+            }
+        });
+
+        // Setup row factory for double-click edit
         historyTable.setRowFactory(tv -> {
             TableRow<Transaction> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     Transaction transaction = row.getItem();
-                    // TODO: Open edit dialog for transaction
-                    System.out.println("Double-clicked transaction: " + transaction.getId());
+                    User currentUser = sessionManager.getCurrentUser();
+                    // Only allow edit if current user is the creditor
+                    if (currentUser != null && transaction.getCreditor().getId().equals(currentUser.getId())) {
+                        showEditTransactionDialog(transaction);
+                    }
                 }
             });
             return row;
@@ -203,5 +251,165 @@ public class TransactionHistoryController extends Controller {
             TransactionsController controller = applicationContext.getBean(TransactionsController.class);
             controller.initView();
         });
+    }
+
+    private void showEditTransactionDialog(Transaction transaction) {
+        User currentUser = sessionManager.getCurrentUser();
+        if (currentUser == null)
+            return;
+
+        // Create edit dialog
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Transaction");
+        dialog.initOwner(historyTable.getScene().getWindow());
+
+        // Create dialog content
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: white;");
+        content.setPrefWidth(450);
+
+        // Description field
+        Text descLabel = new Text("Description");
+        descLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        TextField descField = new TextField(transaction.getDescription());
+        descField.setStyle(
+                "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
+
+        // Amount field
+        Text amountLabel = new Text("Amount (€)");
+        amountLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
+        TextField amountField = new TextField(String.format("%.2f", transaction.getTotalAmount()));
+        amountField.setStyle(
+                "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
+
+        // Current info display
+        Text creditorInfo = new Text("Creditor: " + transaction.getCreditor().getName() +
+                (transaction.getCreditor().getSurname() != null ? " " + transaction.getCreditor().getSurname() : ""));
+        creditorInfo.setStyle("-fx-font-size: 12px; -fx-fill: #6b7280;");
+
+        String debtorNames = transaction.getSplits().stream()
+                .map(s -> s.getDebtor().getName())
+                .collect(Collectors.joining(", "));
+        Text debtorInfo = new Text("Debtors: " + debtorNames);
+        debtorInfo.setStyle("-fx-font-size: 12px; -fx-fill: #6b7280;");
+
+        Text dateInfo = new Text("Created: " + transaction.getTimestamp().format(dateFormatter) +
+                " at " + transaction.getTimestamp().format(timeFormatter));
+        dateInfo.setStyle("-fx-font-size: 11px; -fx-fill: #9ca3af;");
+
+        content.getChildren().addAll(
+                descLabel, descField,
+                amountLabel, amountField,
+                creditorInfo, debtorInfo, dateInfo);
+
+        dialog.getDialogPane().setContent(content);
+
+        // Add buttons
+        ButtonType saveButton = new ButtonType("💾 Save Changes", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButton, cancelButton);
+
+        // Style the save button
+        Button saveBtn = (Button) dialog.getDialogPane().lookupButton(saveButton);
+        saveBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; " +
+                "-fx-padding: 10 24; -fx-font-weight: bold; -fx-cursor: hand;");
+
+        // Handle result
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isPresent() && result.get() == saveButton) {
+            try {
+                String newDescription = descField.getText().trim();
+                double newAmount = Double.parseDouble(amountField.getText().replace(",", "."));
+
+                if (newAmount <= 0) {
+                    throw new IllegalArgumentException("Amount must be positive");
+                }
+
+                // Get existing debtor IDs and recalculate percentages
+                List<Long> debtorIds = new ArrayList<>();
+                List<Double> percentages = new ArrayList<>();
+                for (TransactionSplit split : transaction.getSplits()) {
+                    debtorIds.add(split.getDebtor().getId());
+                    percentages.add(split.getPercentage());
+                }
+
+                // Update the transaction
+                transactionService.updateTransaction(
+                        transaction.getId(),
+                        currentUser.getId(),
+                        transaction.getCreditor().getId(),
+                        debtorIds,
+                        percentages,
+                        newAmount,
+                        newDescription);
+
+                // Refresh the view
+                initView();
+
+                // Show success
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                success.initOwner(historyTable.getScene().getWindow());
+                success.setTitle("Success");
+                success.setHeaderText(null);
+                success.setContentText("Transaction updated successfully.");
+                success.showAndWait();
+
+            } catch (NumberFormatException e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.initOwner(historyTable.getScene().getWindow());
+                error.setTitle("Error");
+                error.setHeaderText("Invalid input");
+                error.setContentText("Please enter a valid amount.");
+                error.showAndWait();
+            } catch (Exception e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.initOwner(historyTable.getScene().getWindow());
+                error.setTitle("Error");
+                error.setHeaderText("Failed to update transaction");
+                error.setContentText(e.getMessage());
+                error.showAndWait();
+            }
+        }
+    }
+
+    private void confirmAndDeleteTransaction(Transaction transaction) {
+        User currentUser = sessionManager.getCurrentUser();
+        if (currentUser == null)
+            return;
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.initOwner(historyTable.getScene().getWindow());
+        confirm.setTitle("Delete Transaction");
+        confirm.setHeaderText("Are you sure you want to delete this transaction?");
+        confirm.setContentText("Transaction: " + transaction.getDescription() +
+                "\nAmount: " + currencyFormat.format(transaction.getTotalAmount()) +
+                "\n\nThis action cannot be undone and will affect all balances.");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                transactionService.deleteTransaction(transaction.getId(), currentUser.getId());
+
+                // Refresh the view
+                initView();
+
+                // Show success
+                Alert success = new Alert(Alert.AlertType.INFORMATION);
+                success.initOwner(historyTable.getScene().getWindow());
+                success.setTitle("Success");
+                success.setHeaderText(null);
+                success.setContentText("Transaction deleted successfully.");
+                success.showAndWait();
+
+            } catch (Exception e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.initOwner(historyTable.getScene().getWindow());
+                error.setTitle("Error");
+                error.setHeaderText("Failed to delete transaction");
+                error.setContentText(e.getMessage());
+                error.showAndWait();
+            }
+        }
     }
 }

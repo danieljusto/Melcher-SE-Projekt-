@@ -182,6 +182,84 @@ public class StandingOrderService {
         return standingOrderRepository.findByWgAndIsActiveTrue(wg);
     }
 
+    /**
+     * Get a standing order by ID
+     */
+    public StandingOrder getStandingOrderById(Long id) {
+        return standingOrderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Standing order not found"));
+    }
+
+    /**
+     * Update an existing standing order
+     * Only the creditor (creator) can update a standing order
+     * 
+     * @param id             The ID of the standing order to update
+     * @param currentUserId  The ID of the user attempting the update
+     * @param newCreditor    The new creditor (can be different)
+     * @param totalAmount    Updated amount
+     * @param description    Updated description
+     * @param frequency      Updated frequency
+     * @param debtorIds      Updated list of debtor IDs
+     * @param percentages    Updated percentages (null for equal split)
+     * @param monthlyDay     Updated monthly day (for monthly frequency)
+     * @param monthlyLastDay Updated monthly last day flag
+     * @return The updated standing order
+     */
+    @Transactional
+    public StandingOrder updateStandingOrder(Long id, Long currentUserId, User newCreditor,
+            Double totalAmount, String description, StandingOrderFrequency frequency,
+            List<Long> debtorIds, List<Double> percentages,
+            Integer monthlyDay, Boolean monthlyLastDay) {
+
+        StandingOrder order = standingOrderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Standing order not found"));
+
+        // Only the original creditor can edit the standing order
+        if (!order.getCreditor().getId().equals(currentUserId)) {
+            throw new RuntimeException("Only the creator of the standing order can edit it");
+        }
+
+        // Update basic fields
+        order.setCreditor(newCreditor);
+        order.setTotalAmount(totalAmount);
+        order.setDescription(description);
+        order.setFrequency(frequency);
+        order.setMonthlyDay(monthlyDay);
+        order.setMonthlyLastDay(monthlyLastDay != null ? monthlyLastDay : false);
+
+        // Build new debtor data JSON
+        String debtorData = buildDebtorDataJson(debtorIds, percentages);
+        order.setDebtorData(debtorData);
+
+        // Recalculate next execution if frequency changed
+        LocalDate now = LocalDate.now();
+        LocalDate currentNext = order.getNextExecution();
+
+        // If next execution is in the past or today, recalculate based on new frequency
+        if (!currentNext.isAfter(now)) {
+            LocalDate newNextExecution;
+            if (frequency == StandingOrderFrequency.MONTHLY) {
+                if (Boolean.TRUE.equals(monthlyLastDay)) {
+                    newNextExecution = now.plusMonths(1).withDayOfMonth(now.plusMonths(1).lengthOfMonth());
+                } else if (monthlyDay != null && monthlyDay >= 1 && monthlyDay <= 31) {
+                    LocalDate nextMonth = now.plusMonths(1);
+                    int daysNextMonth = nextMonth.lengthOfMonth();
+                    newNextExecution = nextMonth.withDayOfMonth(Math.min(monthlyDay, daysNextMonth));
+                } else {
+                    newNextExecution = now.plusMonths(1).withDayOfMonth(1);
+                }
+            } else if (frequency == StandingOrderFrequency.WEEKLY) {
+                newNextExecution = now.plusWeeks(1);
+            } else { // BI_WEEKLY
+                newNextExecution = now.plusWeeks(2);
+            }
+            order.setNextExecution(newNextExecution);
+        }
+
+        return standingOrderRepository.save(order);
+    }
+
     private String buildDebtorDataJson(List<Long> debtorIds, List<Double> percentages) {
         List<Map<String, Object>> debtorList = new ArrayList<>();
 
