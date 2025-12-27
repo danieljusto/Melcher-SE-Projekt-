@@ -65,7 +65,7 @@
                             <Text text="Rooms" styleClass="card-title"/>
                         </HBox>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Button text="+ Add Room" onAction="#addRoom"
+                        <Button fx:id="addRoomButton" text="+ Add Room" onAction="#addRoom"
                                 styleClass="primary-button" style="-fx-padding: 8 16;"/>
                     </HBox>
                     <Text fx:id="roomCountText" text="0 rooms in your home" styleClass="card-subtitle"/>

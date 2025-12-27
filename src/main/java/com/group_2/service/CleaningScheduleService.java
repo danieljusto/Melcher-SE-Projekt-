@@ -64,28 +64,29 @@ public class CleaningScheduleService {
 
     /**
      * Get all cleaning tasks for a specific week for a WG.
-     * If no tasks exist for the week and a template exists, automatically generates
-     * tasks from the template using round-robin assignment.
+     * Ensures all applicable templates have corresponding tasks for the week,
+     * generating missing ones automatically using round-robin assignment.
      */
     @Transactional
     public List<CleaningTask> getTasksForWeek(WG wg, LocalDate weekStart) {
         List<CleaningTask> tasks = cleaningTaskRepository.findByWgAndWeekStartDate(wg, weekStart);
 
-        // If no tasks exist for this week, auto-generate from template
-        if (tasks.isEmpty() && hasTemplate(wg)) {
-            tasks = generateFromTemplateForWeek(wg, weekStart);
+        // Always check if there are missing tasks from templates
+        if (hasTemplate(wg)) {
+            List<CleaningTask> generatedTasks = generateMissingTasksFromTemplate(wg, weekStart, tasks);
+            tasks.addAll(generatedTasks);
         }
 
         return tasks;
     }
 
     /**
-     * Generate tasks from template for a specific week using round-robin
-     * assignment.
-     * Each room's queue determines the assignee, then the queue rotates.
+     * Generate only the missing tasks from templates for a specific week.
+     * Checks which templates don't have a corresponding task yet and creates them.
      */
     @Transactional
-    public List<CleaningTask> generateFromTemplateForWeek(WG wg, LocalDate weekStart) {
+    public List<CleaningTask> generateMissingTasksFromTemplate(WG wg, LocalDate weekStart,
+            List<CleaningTask> existingTasks) {
         List<CleaningTaskTemplate> templates = templateRepository.findByWg(wg);
         if (templates.isEmpty()) {
             return new ArrayList<>();
@@ -96,8 +97,19 @@ public class CleaningScheduleService {
             return new ArrayList<>();
         }
 
+        // Build a set of room IDs that already have tasks for this week
+        java.util.Set<Long> existingRoomIds = new java.util.HashSet<>();
+        for (CleaningTask task : existingTasks) {
+            existingRoomIds.add(task.getRoom().getId());
+        }
+
         List<CleaningTask> newTasks = new ArrayList<>();
         for (CleaningTaskTemplate template : templates) {
+            // Skip if this room already has a task for this week
+            if (existingRoomIds.contains(template.getRoom().getId())) {
+                continue;
+            }
+
             // Check if this task should be generated this week based on recurrence
             if (!shouldGenerateTaskThisWeek(template, weekStart)) {
                 continue;
@@ -127,6 +139,17 @@ public class CleaningScheduleService {
         }
 
         return newTasks;
+    }
+
+    /**
+     * Generate tasks from template for a specific week using round-robin
+     * assignment. This replaces any existing tasks for the week.
+     * Each room's queue determines the assignee, then the queue rotates.
+     */
+    @Transactional
+    public List<CleaningTask> generateFromTemplateForWeek(WG wg, LocalDate weekStart) {
+        List<CleaningTask> existingTasks = cleaningTaskRepository.findByWgAndWeekStartDate(wg, weekStart);
+        return generateMissingTasksFromTemplate(wg, weekStart, existingTasks);
     }
 
     /**
@@ -458,6 +481,28 @@ public class CleaningScheduleService {
         cleaningTaskRepository.deleteByWg(wg);
         queueRepository.deleteByWg(wg);
         templateRepository.deleteByWg(wg);
+    }
+
+    /**
+     * Delete all cleaning-related data for a specific room.
+     * This must be called before deleting the room itself.
+     */
+    @Transactional
+    public void deleteRoomData(Room room) {
+        // Delete all tasks for this room
+        List<CleaningTask> tasks = cleaningTaskRepository.findAll().stream()
+                .filter(t -> t.getRoom().getId().equals(room.getId()))
+                .collect(java.util.stream.Collectors.toList());
+        cleaningTaskRepository.deleteAll(tasks);
+
+        // Delete all templates for this room
+        List<CleaningTaskTemplate> templates = templateRepository.findAll().stream()
+                .filter(t -> t.getRoom().getId().equals(room.getId()))
+                .collect(java.util.stream.Collectors.toList());
+        templateRepository.deleteAll(templates);
+
+        // Delete all queues for this room
+        queueRepository.deleteByRoom(room);
     }
 
     /**

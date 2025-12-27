@@ -19,12 +19,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Controller for the template editor view.
  * Allows users to define a default weekly schedule template.
- * Uses round-robin queue for automatic assignee rotation.
+ * Uses a working copy that is only saved when "Save & Apply" is clicked.
  */
 @Component
 public class TemplateEditorController extends Controller {
@@ -60,6 +61,32 @@ public class TemplateEditorController extends Controller {
     @FXML
     private VBox sundayColumn;
 
+    // Working copy of templates (not saved until Save & Apply)
+    private List<WorkingTemplate> workingTemplates = new ArrayList<>();
+    private boolean hasUnsavedChanges = false;
+
+    /**
+     * A working copy of a template that may or may not exist in the database yet.
+     */
+    private static class WorkingTemplate {
+        Room room;
+        int dayOfWeek;
+        RecurrenceInterval recurrenceInterval;
+        boolean isDeleted = false; // marks for deletion on save
+
+        WorkingTemplate(CleaningTaskTemplate template) {
+            this.room = template.getRoom();
+            this.dayOfWeek = template.getDayOfWeek();
+            this.recurrenceInterval = template.getRecurrenceInterval();
+        }
+
+        WorkingTemplate(Room room, DayOfWeek day, RecurrenceInterval interval) {
+            this.room = room;
+            this.dayOfWeek = day.getValue();
+            this.recurrenceInterval = interval;
+        }
+    }
+
     public TemplateEditorController(CleaningScheduleService cleaningScheduleService, SessionManager sessionManager) {
         this.cleaningScheduleService = cleaningScheduleService;
         this.sessionManager = sessionManager;
@@ -70,15 +97,18 @@ public class TemplateEditorController extends Controller {
         if (navbarController != null) {
             navbarController.setTitle("📝 Template Editor");
             navbarController.setBackDestination("/cleaning_schedule.fxml", false);
-            // Sync when back button is clicked
             navbarController.getBackButton().setOnAction(e -> backToCleaningSchedule());
         }
-        loadTemplates();
+        loadWorkingCopy();
+        refreshView();
     }
 
-    private void loadTemplates() {
-        // Clear all columns (keep headers)
-        clearColumns();
+    /**
+     * Load templates from database into working copy.
+     */
+    private void loadWorkingCopy() {
+        workingTemplates.clear();
+        hasUnsavedChanges = false;
 
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null)
@@ -87,10 +117,32 @@ public class TemplateEditorController extends Controller {
         WG wg = currentUser.getWg();
         List<CleaningTaskTemplate> templates = cleaningScheduleService.getTemplates(wg);
 
-        templateCountText.setText(String.valueOf(templates.size()));
-
         for (CleaningTaskTemplate template : templates) {
-            VBox column = getColumnForDay(template.getDayOfWeek());
+            workingTemplates.add(new WorkingTemplate(template));
+        }
+    }
+
+    /**
+     * Refresh the UI from the working copy.
+     */
+    private void refreshView() {
+        clearColumns();
+
+        User currentUser = sessionManager.getCurrentUser();
+        if (currentUser == null || currentUser.getWg() == null)
+            return;
+
+        WG wg = currentUser.getWg();
+
+        // Count non-deleted templates
+        long count = workingTemplates.stream().filter(t -> !t.isDeleted).count();
+        templateCountText.setText(String.valueOf(count));
+
+        for (WorkingTemplate template : workingTemplates) {
+            if (template.isDeleted)
+                continue;
+
+            VBox column = getColumnForDay(template.dayOfWeek);
             if (column != null) {
                 column.getChildren().add(createTemplateCard(template, wg));
             }
@@ -101,7 +153,6 @@ public class TemplateEditorController extends Controller {
         VBox[] columns = { mondayColumn, tuesdayColumn, wednesdayColumn,
                 thursdayColumn, fridayColumn, saturdayColumn, sundayColumn };
         for (VBox column : columns) {
-            // Keep only the header (first child)
             if (column.getChildren().size() > 1) {
                 column.getChildren().subList(1, column.getChildren().size()).clear();
             }
@@ -129,49 +180,29 @@ public class TemplateEditorController extends Controller {
         }
     }
 
-    private VBox createTemplateCard(CleaningTaskTemplate template, WG wg) {
+    private VBox createTemplateCard(WorkingTemplate template, WG wg) {
         VBox card = new VBox(8);
         card.setPadding(new Insets(12));
         card.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 10;");
 
         // Room name header
-        Text roomName = new Text(template.getRoom().getName());
+        Text roomName = new Text(template.room.getName());
         roomName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: #1e293b;");
         roomName.setWrappingWidth(130);
 
-        // Show next assignee from round-robin queue
+        // Show round-robin info
         HBox assigneeRow = new HBox(5);
         assigneeRow.setAlignment(Pos.CENTER_LEFT);
-
-        User nextAssignee = cleaningScheduleService.getNextAssigneeForRoom(wg, template.getRoom());
-
-        if (nextAssignee != null) {
-            StackPane avatar = new StackPane();
-            avatar.setStyle("-fx-background-color: #ddd6fe; -fx-background-radius: 10; " +
-                    "-fx-pref-width: 20; -fx-pref-height: 20; -fx-min-width: 20; -fx-min-height: 20;");
-            Text avatarText = new Text(nextAssignee.getName().substring(0, 1).toUpperCase());
-            avatarText.setStyle("-fx-font-size: 10px; -fx-fill: #7c3aed;");
-            avatar.getChildren().add(avatarText);
-
-            Text nextLabel = new Text("Next: ");
-            nextLabel.setStyle("-fx-font-size: 11px; -fx-fill: #64748b;");
-
-            Text assigneeName = new Text(nextAssignee.getName());
-            assigneeName.setStyle("-fx-font-size: 11px; -fx-fill: #7c3aed; -fx-font-weight: bold;");
-
-            assigneeRow.getChildren().addAll(avatar, nextLabel, assigneeName);
-        } else {
-            Text rotationInfo = new Text("🔄 Round-robin");
-            rotationInfo.setStyle("-fx-font-size: 11px; -fx-fill: #64748b;");
-            assigneeRow.getChildren().add(rotationInfo);
-        }
+        Text rotationInfo = new Text("🔄 Round-robin");
+        rotationInfo.setStyle("-fx-font-size: 11px; -fx-fill: #64748b;");
+        assigneeRow.getChildren().add(rotationInfo);
 
         // Frequency display
         HBox frequencyRow = new HBox(5);
         frequencyRow.setAlignment(Pos.CENTER_LEFT);
         Text freqIcon = new Text("📅");
         freqIcon.setStyle("-fx-font-size: 11px;");
-        Text freqText = new Text(template.getRecurrenceInterval().getDisplayName());
+        Text freqText = new Text(template.recurrenceInterval.getDisplayName());
         freqText.setStyle("-fx-font-size: 11px; -fx-fill: #64748b;");
         frequencyRow.getChildren().addAll(freqIcon, freqText);
 
@@ -180,7 +211,7 @@ public class TemplateEditorController extends Controller {
         separator.setPrefHeight(1);
         separator.setStyle("-fx-background-color: #e2e8f0;");
 
-        // Action buttons - stacked vertically for better visibility
+        // Action buttons
         VBox actions = new VBox(6);
         actions.setAlignment(Pos.CENTER);
 
@@ -225,7 +256,7 @@ public class TemplateEditorController extends Controller {
             return;
         }
 
-        Dialog<CleaningTaskTemplate> dialog = new Dialog<>();
+        Dialog<WorkingTemplate> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(headerTitle));
         dialog.setTitle("Add Template Task");
         dialog.setHeaderText("Add a room to the cleaning schedule");
@@ -302,13 +333,16 @@ public class TemplateEditorController extends Controller {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
-                return cleaningScheduleService.addTemplate(
-                        wg, roomCombo.getValue(), dayCombo.getValue(), freqCombo.getValue());
+                return new WorkingTemplate(roomCombo.getValue(), dayCombo.getValue(), freqCombo.getValue());
             }
             return null;
         });
 
-        dialog.showAndWait().ifPresent(t -> loadTemplates());
+        dialog.showAndWait().ifPresent(t -> {
+            workingTemplates.add(t);
+            hasUnsavedChanges = true;
+            refreshView();
+        });
     }
 
     private void updateAddButton(Dialog<?> dialog, ButtonType btnType, ComboBox<Room> room,
@@ -317,7 +351,7 @@ public class TemplateEditorController extends Controller {
                 room.getValue() == null || day.getValue() == null);
     }
 
-    private void showEditTemplateDialog(CleaningTaskTemplate template) {
+    private void showEditTemplateDialog(WorkingTemplate template) {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null)
             return;
@@ -325,7 +359,7 @@ public class TemplateEditorController extends Controller {
         Dialog<Void> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(headerTitle));
         dialog.setTitle("Edit Template");
-        dialog.setHeaderText("Edit \"" + template.getRoom().getName() + "\"");
+        dialog.setHeaderText("Edit \"" + template.room.getName() + "\"");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
@@ -336,7 +370,7 @@ public class TemplateEditorController extends Controller {
         // Day selection
         ComboBox<DayOfWeek> dayCombo = new ComboBox<>();
         dayCombo.getItems().addAll(DayOfWeek.values());
-        dayCombo.setValue(DayOfWeek.of(template.getDayOfWeek()));
+        dayCombo.setValue(DayOfWeek.of(template.dayOfWeek));
         dayCombo.setConverter(new javafx.util.StringConverter<DayOfWeek>() {
             @Override
             public String toString(DayOfWeek d) {
@@ -354,7 +388,7 @@ public class TemplateEditorController extends Controller {
         // Frequency selection
         ComboBox<RecurrenceInterval> freqCombo = new ComboBox<>();
         freqCombo.getItems().addAll(RecurrenceInterval.values());
-        freqCombo.setValue(template.getRecurrenceInterval());
+        freqCombo.setValue(template.recurrenceInterval);
 
         // Info about round-robin
         HBox infoBox = new HBox(8);
@@ -375,28 +409,60 @@ public class TemplateEditorController extends Controller {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                cleaningScheduleService.updateTemplate(template, dayCombo.getValue(), freqCombo.getValue());
+                template.dayOfWeek = dayCombo.getValue().getValue();
+                template.recurrenceInterval = freqCombo.getValue();
+                hasUnsavedChanges = true;
             }
             return null;
         });
 
         dialog.showAndWait();
-        loadTemplates();
+        refreshView();
     }
 
-    private void deleteTemplate(CleaningTaskTemplate template) {
+    private void deleteTemplate(WorkingTemplate template) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         configureDialogOwner(confirm, getOwnerWindow(headerTitle));
         confirm.setTitle("Delete Template");
-        confirm.setHeaderText("Delete \"" + template.getRoom().getName() + "\"?");
-        confirm.setContentText("This will remove it from the default schedule.");
+        confirm.setHeaderText("Delete \"" + template.room.getName() + "\"?");
+        confirm.setContentText("This change will be applied when you click 'Save & Apply'.");
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                cleaningScheduleService.deleteTemplate(template);
-                loadTemplates();
+                template.isDeleted = true;
+                hasUnsavedChanges = true;
+                refreshView();
             }
         });
+    }
+
+    @FXML
+    public void saveAndApplyTemplate() {
+        User currentUser = sessionManager.getCurrentUser();
+        if (currentUser == null || currentUser.getWg() == null) {
+            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.", getOwnerWindow(headerTitle));
+            return;
+        }
+
+        WG wg = currentUser.getWg();
+
+        // First, clear all existing templates and tasks
+        cleaningScheduleService.clearTemplates(wg);
+
+        // Then, add all non-deleted templates from working copy
+        for (WorkingTemplate wt : workingTemplates) {
+            if (wt.isDeleted)
+                continue;
+            cleaningScheduleService.addTemplate(wg, wt.room, DayOfWeek.of(wt.dayOfWeek), wt.recurrenceInterval);
+        }
+
+        hasUnsavedChanges = false;
+
+        showAlert(Alert.AlertType.INFORMATION, "Template Applied",
+                "The template has been saved and applied to the schedule.", getOwnerWindow(headerTitle));
+
+        // Navigate back to cleaning schedule to show the result
+        loadScene(headerTitle.getScene(), "/cleaning_schedule.fxml");
     }
 
     @FXML
@@ -409,23 +475,27 @@ public class TemplateEditorController extends Controller {
         configureDialogOwner(confirm, getOwnerWindow(headerTitle));
         confirm.setTitle("Clear All");
         confirm.setHeaderText("Clear all template tasks?");
-        confirm.setContentText("This will remove the entire default schedule.");
+        confirm.setContentText("This change will be applied when you click 'Save & Apply'.");
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                cleaningScheduleService.clearTemplates(currentUser.getWg());
-                loadTemplates();
+                // Mark all as deleted
+                for (WorkingTemplate wt : workingTemplates) {
+                    wt.isDeleted = true;
+                }
+                hasUnsavedChanges = true;
+                refreshView();
             }
         });
     }
 
     @FXML
     public void backToHome() {
-        User currentUser = sessionManager.getCurrentUser();
-        if (currentUser != null && currentUser.getWg() != null) {
-            cleaningScheduleService.syncCurrentWeekWithTemplate(currentUser.getWg());
+        if (hasUnsavedChanges) {
+            if (!confirmDiscardChanges()) {
+                return;
+            }
         }
-
         loadScene(headerTitle.getScene(), "/main_screen.fxml");
         javafx.application.Platform.runLater(() -> {
             MainScreenController controller = applicationContext.getBean(MainScreenController.class);
@@ -435,11 +505,26 @@ public class TemplateEditorController extends Controller {
 
     @FXML
     public void backToCleaningSchedule() {
-        User currentUser = sessionManager.getCurrentUser();
-        if (currentUser != null && currentUser.getWg() != null) {
-            cleaningScheduleService.syncCurrentWeekWithTemplate(currentUser.getWg());
+        if (hasUnsavedChanges) {
+            if (!confirmDiscardChanges()) {
+                return;
+            }
         }
         loadScene(headerTitle.getScene(), "/cleaning_schedule.fxml");
+    }
+
+    private boolean confirmDiscardChanges() {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirm, getOwnerWindow(headerTitle));
+        confirm.setTitle("Unsaved Changes");
+        confirm.setHeaderText("You have unsaved changes");
+        confirm.setContentText("Do you want to discard your changes and go back?");
+
+        ButtonType discardButton = new ButtonType("Discard Changes", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirm.getButtonTypes().setAll(discardButton, cancelButton);
+
+        return confirm.showAndWait().orElse(cancelButton) == discardButton;
     }
 
     @FXML

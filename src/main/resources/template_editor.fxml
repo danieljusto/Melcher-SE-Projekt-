@@ -48,6 +48,9 @@
                 
                 <Region HBox.hgrow="ALWAYS"/>
                 
+                <Button text="✅ Save \&amp; Apply" onAction="#saveAndApplyTemplate"
+                        style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 24; -fx-cursor: hand; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                
                 <!-- Info Badge -->
                 <HBox spacing="8" alignment="CENTER" 
                       style="-fx-background-color: #eef2ff; -fx-background-radius: 8; -fx-padding: 10 16;">

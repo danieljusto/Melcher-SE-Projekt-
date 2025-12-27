@@ -35,6 +35,7 @@ public class SettingsController extends Controller {
     private final SessionManager sessionManager;
     private final WGService wgService;
     private final RoomService roomService;
+    private final com.group_2.service.CleaningScheduleService cleaningScheduleService;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -53,12 +54,16 @@ public class SettingsController extends Controller {
     private VBox membersBox;
     @FXML
     private VBox adminCard;
+    @FXML
+    private javafx.scene.control.Button addRoomButton;
 
     @Autowired
-    public SettingsController(SessionManager sessionManager, WGService wgService, RoomService roomService) {
+    public SettingsController(SessionManager sessionManager, WGService wgService, RoomService roomService,
+            com.group_2.service.CleaningScheduleService cleaningScheduleService) {
         this.sessionManager = sessionManager;
         this.wgService = wgService;
         this.roomService = roomService;
+        this.cleaningScheduleService = cleaningScheduleService;
     }
 
     public void initView() {
@@ -87,6 +92,12 @@ public class SettingsController extends Controller {
         adminCard.setVisible(isAdmin);
         adminCard.setManaged(isAdmin);
 
+        // Show/hide Add Room button based on admin status
+        if (addRoomButton != null) {
+            addRoomButton.setVisible(isAdmin);
+            addRoomButton.setManaged(isAdmin);
+        }
+
         // Load rooms
         loadRooms(wg);
 
@@ -96,14 +107,17 @@ public class SettingsController extends Controller {
 
     private void loadRooms(WG wg) {
         roomsBox.getChildren().clear();
+        User currentUser = sessionManager.getCurrentUser();
+        boolean isAdmin = wg.admin != null && currentUser != null && wg.admin.getId().equals(currentUser.getId());
+
         if (wg.rooms != null && !wg.rooms.isEmpty()) {
             roomCountText.setText(wg.rooms.size() + " room" + (wg.rooms.size() > 1 ? "s" : "") + " in your WG");
             for (Room room : wg.rooms) {
-                roomsBox.getChildren().add(createRoomListItem(room));
+                roomsBox.getChildren().add(createRoomListItem(room, isAdmin));
             }
         } else {
             roomCountText.setText("No rooms yet");
-            Text noRooms = new Text("Add your first room above!");
+            Text noRooms = new Text(isAdmin ? "Add your first room above!" : "No rooms have been added yet.");
             noRooms.setStyle("-fx-fill: #64748b;");
             roomsBox.getChildren().add(noRooms);
         }
@@ -122,7 +136,7 @@ public class SettingsController extends Controller {
         }
     }
 
-    private HBox createRoomListItem(Room room) {
+    private HBox createRoomListItem(Room room, boolean isAdmin) {
         HBox item = new HBox(15);
         item.setAlignment(Pos.CENTER_LEFT);
         item.getStyleClass().add("list-item");
@@ -136,6 +150,7 @@ public class SettingsController extends Controller {
         iconPane.getChildren().add(iconText);
 
         VBox info = new VBox(3);
+        javafx.scene.layout.HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
         Text nameText = new Text(room.getName());
         nameText.getStyleClass().add("list-item-title");
         Text idText = new Text("Room ID: " + room.getId());
@@ -143,6 +158,29 @@ public class SettingsController extends Controller {
         info.getChildren().addAll(nameText, idText);
 
         item.getChildren().addAll(iconPane, info);
+
+        // Admin actions for rooms
+        if (isAdmin) {
+            HBox actions = new HBox(8);
+            actions.setAlignment(Pos.CENTER_RIGHT);
+
+            javafx.scene.control.Button editBtn = new javafx.scene.control.Button("✏️");
+            editBtn.setTooltip(new javafx.scene.control.Tooltip("Edit Room"));
+            editBtn.setStyle(
+                    "-fx-background-color: #dbeafe; -fx-text-fill: #1d4ed8; -fx-background-radius: 6; -fx-padding: 6 10; -fx-cursor: hand;");
+            editBtn.setOnAction(e -> editRoom(room));
+            actions.getChildren().add(editBtn);
+
+            javafx.scene.control.Button deleteBtn = new javafx.scene.control.Button("🗑️");
+            deleteBtn.setTooltip(new javafx.scene.control.Tooltip("Delete Room"));
+            deleteBtn.setStyle(
+                    "-fx-background-color: #fef2f2; -fx-text-fill: #dc2626; -fx-background-radius: 6; -fx-padding: 6 10; -fx-cursor: hand;");
+            deleteBtn.setOnAction(e -> deleteRoom(room));
+            actions.getChildren().add(deleteBtn);
+
+            item.getChildren().add(actions);
+        }
+
         return item;
     }
 
@@ -280,6 +318,18 @@ public class SettingsController extends Controller {
 
     @FXML
     public void addRoom() {
+        User currentUser = sessionManager.getCurrentUser();
+        if (currentUser == null || currentUser.getWg() == null)
+            return;
+
+        // Only admin can add rooms
+        WG wg = currentUser.getWg();
+        if (wg.admin == null || !wg.admin.getId().equals(currentUser.getId())) {
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the admin can add rooms.",
+                    getOwnerWindow(roomsBox));
+            return;
+        }
+
         TextInputDialog dialog = new TextInputDialog();
         configureDialogOwner(dialog, getOwnerWindow(roomsBox));
         dialog.setTitle("Add Room");
@@ -290,21 +340,78 @@ public class SettingsController extends Controller {
         result.ifPresent(roomName -> {
             if (!roomName.trim().isEmpty()) {
                 try {
-                    User currentUser = sessionManager.getCurrentUser();
-                    if (currentUser != null && currentUser.getWg() != null) {
-                        Room newRoom = roomService.createRoom(roomName.trim());
-                        wgService.addRoom(currentUser.getWg().getId(), newRoom);
-                        sessionManager.refreshCurrentUser();
-                        loadWGData();
-                        showAlert(Alert.AlertType.INFORMATION, "Success", "Room '" + roomName + "' added!",
-                                getOwnerWindow(roomsBox));
-                    }
+                    Room newRoom = roomService.createRoom(roomName.trim());
+                    wgService.addRoom(currentUser.getWg().getId(), newRoom);
+                    sessionManager.refreshCurrentUser();
+                    loadWGData();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Room '" + roomName + "' added!",
+                            getOwnerWindow(roomsBox));
                 } catch (Exception e) {
                     showAlert(Alert.AlertType.ERROR, "Error", "Failed to add room: " + e.getMessage(),
                             getOwnerWindow(roomsBox));
                 }
             }
         });
+    }
+
+    private void editRoom(Room room) {
+        User currentUser = sessionManager.getCurrentUser();
+        if (currentUser == null || currentUser.getWg() == null)
+            return;
+
+        TextInputDialog dialog = new TextInputDialog(room.getName());
+        configureDialogOwner(dialog, getOwnerWindow(roomsBox));
+        dialog.setTitle("Edit Room");
+        dialog.setHeaderText("Edit room name");
+        dialog.setContentText("Room name:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(newName -> {
+            if (!newName.trim().isEmpty()) {
+                try {
+                    roomService.updateRoom(room.getId(), newName.trim());
+                    sessionManager.refreshCurrentUser();
+                    loadWGData();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Room renamed to '" + newName + "'!",
+                            getOwnerWindow(roomsBox));
+                } catch (Exception e) {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to rename room: " + e.getMessage(),
+                            getOwnerWindow(roomsBox));
+                }
+            }
+        });
+    }
+
+    private void deleteRoom(Room room) {
+        User currentUser = sessionManager.getCurrentUser();
+        if (currentUser == null || currentUser.getWg() == null)
+            return;
+
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        configureDialogOwner(confirmDialog, getOwnerWindow(roomsBox));
+        confirmDialog.setTitle("Delete Room");
+        confirmDialog.setHeaderText("Delete room '" + room.getName() + "'?");
+        confirmDialog
+                .setContentText("This will also remove any cleaning tasks and templates associated with this room.");
+
+        Optional<ButtonType> result = confirmDialog.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                // First delete all cleaning-related data for this room
+                cleaningScheduleService.deleteRoomData(room);
+                // Then remove the room from the WG
+                wgService.removeRoom(currentUser.getWg().getId(), room);
+                // Finally delete the room itself
+                roomService.deleteRoom(room.getId());
+                sessionManager.refreshCurrentUser();
+                loadWGData();
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Room '" + room.getName() + "' deleted!",
+                        getOwnerWindow(roomsBox));
+            } catch (Exception e) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete room: " + e.getMessage(),
+                        getOwnerWindow(roomsBox));
+            }
+        }
     }
 
     @FXML

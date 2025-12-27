@@ -68,8 +68,6 @@
                 
                 <Button text="📝 Edit Template" onAction="#openTemplateEditor"
                         style="-fx-background-color: white; -fx-text-fill: #475569; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px; -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
-                <Button fx:id="loadTemplateButton" text="📥 Apply Template" onAction="#loadFromTemplate"
-                        style="-fx-background-color: white; -fx-text-fill: #475569; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px; -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
             </HBox>
 
 

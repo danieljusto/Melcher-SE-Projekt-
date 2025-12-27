@@ -22,6 +22,9 @@ public class StageInitializer implements ApplicationListener<StageInitializer.St
             Stage stage = event.getStage();
             Parent root = fxmlLoader.load("/login.fxml");
 
+            // Set application icon
+            stage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/SE_Hommunity.png")));
+
             // Set appropriate initial window size
             Scene scene = new Scene(root, 1200, 800);
             stage.setScene(scene);
