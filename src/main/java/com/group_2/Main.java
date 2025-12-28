@@ -1,9 +1,10 @@
 package com.group_2;
 
-import com.group_2.service.DatabaseCleanupService;
-import com.group_2.service.RoomService;
-import com.group_2.service.UserService;
-import com.group_2.service.WGService;
+import com.group_2.service.cleaning.RoomService;
+import com.group_2.service.core.DatabaseCleanupService;
+import com.group_2.service.core.UserService;
+import com.group_2.service.core.WGService;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -26,7 +27,7 @@ public class Main {
         return (args) -> {
 
             System.out.println("All operations completed successfully.");
-            System.out.println("Access H2 Console at: http://localdahost:8080/h2-console");
+            System.out.println("Access H2 Console at: http://localhost:8080/h2-console");
         };
     }
 }

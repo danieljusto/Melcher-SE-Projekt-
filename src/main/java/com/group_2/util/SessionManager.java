@@ -1,8 +1,9 @@
 package com.group_2.util;
 
-import com.group_2.service.UserService;
-import com.model.User;
-import com.model.WG;
+import com.group_2.model.User;
+import com.group_2.model.WG;
+import com.group_2.service.core.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
