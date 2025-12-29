@@ -1,8 +1,8 @@
 package com.group_2.ui.cleaning;
 
+import com.group_2.dto.cleaning.CleaningTaskTemplateDTO;
 import com.group_2.model.User;
 import com.group_2.model.WG;
-import com.group_2.model.cleaning.CleaningTaskTemplate;
 import com.group_2.model.cleaning.RecurrenceInterval;
 import com.group_2.model.cleaning.Room;
 import com.group_2.service.cleaning.CleaningScheduleService;
@@ -70,21 +70,26 @@ public class TemplateEditorController extends Controller {
 
     /**
      * A working copy of a template that may or may not exist in the database yet.
+     * Uses IDs and names instead of entity references to avoid JPA entity leaking
+     * into UI.
      */
     private static class WorkingTemplate {
-        Room room;
+        Long roomId;
+        String roomName;
         int dayOfWeek;
         RecurrenceInterval recurrenceInterval;
         boolean isDeleted = false; // marks for deletion on save
 
-        WorkingTemplate(CleaningTaskTemplate template) {
-            this.room = template.getRoom();
-            this.dayOfWeek = template.getDayOfWeek();
-            this.recurrenceInterval = template.getRecurrenceInterval();
+        WorkingTemplate(CleaningTaskTemplateDTO dto) {
+            this.roomId = dto.roomId();
+            this.roomName = dto.roomName();
+            this.dayOfWeek = dto.dayOfWeek();
+            this.recurrenceInterval = dto.recurrenceInterval();
         }
 
-        WorkingTemplate(Room room, DayOfWeek day, RecurrenceInterval interval) {
-            this.room = room;
+        WorkingTemplate(Long roomId, String roomName, DayOfWeek day, RecurrenceInterval interval) {
+            this.roomId = roomId;
+            this.roomName = roomName;
             this.dayOfWeek = day.getValue();
             this.recurrenceInterval = interval;
         }
@@ -118,10 +123,10 @@ public class TemplateEditorController extends Controller {
             return;
 
         WG wg = currentUser.getWg();
-        List<CleaningTaskTemplate> templates = cleaningScheduleService.getTemplates(wg);
+        List<CleaningTaskTemplateDTO> templates = cleaningScheduleService.getTemplatesDTO(wg);
 
-        for (CleaningTaskTemplate template : templates) {
-            workingTemplates.add(new WorkingTemplate(template));
+        for (CleaningTaskTemplateDTO dto : templates) {
+            workingTemplates.add(new WorkingTemplate(dto));
         }
     }
 
@@ -189,7 +194,7 @@ public class TemplateEditorController extends Controller {
         card.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 10;");
 
         // Room name header
-        Text roomName = new Text(template.room.getName());
+        Text roomName = new Text(template.roomName);
         roomName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: #1e293b;");
         roomName.setWrappingWidth(130);
 
@@ -331,7 +336,9 @@ public class TemplateEditorController extends Controller {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
-                return new WorkingTemplate(roomCombo.getValue(), dayCombo.getValue(), freqCombo.getValue());
+                Room selectedRoom = roomCombo.getValue();
+                return new WorkingTemplate(selectedRoom.getId(), selectedRoom.getName(), dayCombo.getValue(),
+                        freqCombo.getValue());
             }
             return null;
         });
@@ -355,7 +362,7 @@ public class TemplateEditorController extends Controller {
         Dialog<Void> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(headerTitle));
         dialog.setTitle("Edit Template");
-        dialog.setHeaderText("Edit \"" + template.room.getName() + "\"");
+        dialog.setHeaderText("Edit \"" + template.roomName + "\"");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
@@ -414,7 +421,7 @@ public class TemplateEditorController extends Controller {
     }
 
     private void deleteTemplate(WorkingTemplate template) {
-        boolean confirmed = showConfirmDialog("Delete Template", "Delete \"" + template.room.getName() + "\"?",
+        boolean confirmed = showConfirmDialog("Delete Template", "Delete \"" + template.roomName + "\"?",
                 "This change will be applied when you click 'Save & Apply'.", getOwnerWindow(headerTitle));
 
         if (confirmed) {
@@ -441,7 +448,8 @@ public class TemplateEditorController extends Controller {
         for (WorkingTemplate wt : workingTemplates) {
             if (wt.isDeleted)
                 continue;
-            cleaningScheduleService.addTemplate(wg, wt.room, DayOfWeek.of(wt.dayOfWeek), wt.recurrenceInterval);
+            cleaningScheduleService.addTemplateByRoomId(wg, wt.roomId, DayOfWeek.of(wt.dayOfWeek),
+                    wt.recurrenceInterval);
         }
 
         hasUnsavedChanges = false;

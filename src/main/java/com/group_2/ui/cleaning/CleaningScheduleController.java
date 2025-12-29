@@ -2,12 +2,12 @@ package com.group_2.ui.cleaning;
 
 import com.group_2.model.User;
 import com.group_2.model.WG;
-import com.group_2.model.cleaning.CleaningTask;
 import com.group_2.model.cleaning.Room;
 import com.group_2.service.cleaning.CleaningScheduleService;
 import com.group_2.ui.core.Controller;
 import com.group_2.ui.core.NavbarController;
 import com.group_2.util.SessionManager;
+import com.group_2.dto.cleaning.CleaningTaskDTO;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -99,7 +99,7 @@ public class CleaningScheduleController extends Controller {
             return;
 
         WG wg = currentUser.getWg();
-        List<CleaningTask> weekTasks = cleaningScheduleService.getTasksForWeek(wg, displayedWeekStart);
+        List<CleaningTaskDTO> weekTasks = cleaningScheduleService.getTasksForWeekDTO(wg, displayedWeekStart);
         LocalDate today = LocalDate.now();
 
         // Create 7 day cells
@@ -110,7 +110,7 @@ public class CleaningScheduleController extends Controller {
         }
     }
 
-    private VBox createDayCell(LocalDate day, List<CleaningTask> weekTasks, LocalDate today, User currentUser) {
+    private VBox createDayCell(LocalDate day, List<CleaningTaskDTO> weekTasks, LocalDate today, User currentUser) {
         VBox cell = new VBox(8);
         cell.setPrefWidth(130);
         cell.setMinHeight(150);
@@ -145,11 +145,11 @@ public class CleaningScheduleController extends Controller {
         cell.getChildren().add(header);
 
         // Show tasks that are due on this specific day
-        for (CleaningTask task : weekTasks) {
-            LocalDate taskDueDate = task.getDueDate();
+        for (CleaningTaskDTO task : weekTasks) {
+            LocalDate taskDueDate = task.dueDate();
             // If no dueDate is set, fall back to weekStartDate
             if (taskDueDate == null) {
-                taskDueDate = task.getWeekStartDate();
+                taskDueDate = task.weekStartDate();
             }
             if (taskDueDate.equals(day)) {
                 HBox taskPill = createTaskPill(task, currentUser);
@@ -160,36 +160,36 @@ public class CleaningScheduleController extends Controller {
         return cell;
     }
 
-    private HBox createTaskPill(CleaningTask task, User currentUser) {
+    private HBox createTaskPill(CleaningTaskDTO task, User currentUser) {
         HBox pill = new HBox(5);
         pill.setAlignment(Pos.CENTER_LEFT);
         pill.setPadding(new Insets(4, 8, 4, 8));
         pill.setCursor(javafx.scene.Cursor.HAND);
 
-        boolean isMyTask = task.getAssignee().getId().equals(currentUser.getId());
+        boolean isMyTask = task.assigneeId() != null && task.assigneeId().equals(currentUser.getId());
         // User's own tasks get a distinct orange/amber highlight
-        String bgColor = task.isCompleted() ? "#dcfce7" : (isMyTask ? "#fef3c7" : "#f1f5f9");
-        String textColor = task.isCompleted() ? "#15803d" : (isMyTask ? "#b45309" : "#475569");
+        String bgColor = task.completed() ? "#dcfce7" : (isMyTask ? "#fef3c7" : "#f1f5f9");
+        String textColor = task.completed() ? "#15803d" : (isMyTask ? "#b45309" : "#475569");
 
         pill.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 6;"
-                + (isMyTask && !task.isCompleted()
+                + (isMyTask && !task.completed()
                         ? " -fx-border-color: #f59e0b; -fx-border-width: 1.5; -fx-border-radius: 6;"
                         : ""));
 
-        Text roomIcon = new Text(task.isCompleted() ? "✓" : "🚪");
+        Text roomIcon = new Text(task.completed() ? "✓" : "🚪");
         roomIcon.setStyle("-fx-font-size: 10px;");
 
-        Text roomName = new Text(truncate(task.getRoom().getName(), 10));
+        Text roomName = new Text(truncate(task.roomName(), 10));
         roomName.setStyle("-fx-font-size: 10px; -fx-fill: " + textColor + ";");
 
         pill.getChildren().addAll(roomIcon, roomName);
 
         // Click to toggle complete
         pill.setOnMouseClicked(e -> {
-            if (task.isCompleted()) {
-                cleaningScheduleService.markTaskIncomplete(task);
+            if (task.completed()) {
+                cleaningScheduleService.markTaskIncomplete(task.id());
             } else {
-                cleaningScheduleService.markTaskComplete(task);
+                cleaningScheduleService.markTaskComplete(task.id());
             }
             refreshView();
         });
@@ -207,7 +207,7 @@ public class CleaningScheduleController extends Controller {
         }
 
         WG wg = currentUser.getWg();
-        List<CleaningTask> weekTasks = cleaningScheduleService.getTasksForWeek(wg, displayedWeekStart);
+        List<CleaningTaskDTO> weekTasks = cleaningScheduleService.getTasksForWeekDTO(wg, displayedWeekStart);
 
         if (weekTasks.isEmpty()) {
             showEmptyState();
@@ -215,20 +215,20 @@ public class CleaningScheduleController extends Controller {
         }
 
         // Create a card for each task
-        for (CleaningTask task : weekTasks) {
+        for (CleaningTaskDTO task : weekTasks) {
             VBox card = createRoomCard(task, currentUser);
             roomCardsContainer.getChildren().add(card);
         }
     }
 
-    private VBox createRoomCard(CleaningTask task, User currentUser) {
+    private VBox createRoomCard(CleaningTaskDTO task, User currentUser) {
         VBox card = new VBox(12);
         card.setPadding(new Insets(20, 15, 20, 15));
         card.setPrefWidth(220);
         card.setAlignment(Pos.TOP_CENTER);
 
-        boolean isCompleted = task.isCompleted();
-        boolean isMyTask = task.getAssignee().getId().equals(currentUser.getId());
+        boolean isCompleted = task.completed();
+        boolean isMyTask = task.assigneeId() != null && task.assigneeId().equals(currentUser.getId());
 
         // User's own tasks get a distinct orange/amber highlight
         String bgColor = isCompleted ? "#f0fdf4" : (isMyTask ? "#fffbeb" : "white");
@@ -250,7 +250,7 @@ public class CleaningScheduleController extends Controller {
         iconPane.getChildren().add(iconText);
 
         // Room name
-        Text roomName = new Text(task.getRoom().getName());
+        Text roomName = new Text(task.roomName());
         roomName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-fill: #1e293b;");
         if (isCompleted) {
             roomName.setStyle(roomName.getStyle() + " -fx-strikethrough: true;");
@@ -263,12 +263,14 @@ public class CleaningScheduleController extends Controller {
         StackPane assigneeAvatar = new StackPane();
         assigneeAvatar.setStyle("-fx-background-color: #e2e8f0; -fx-background-radius: 10; "
                 + "-fx-pref-width: 20; -fx-pref-height: 20;");
-        String assigneeInitial = task.getAssignee().getName().substring(0, 1).toUpperCase();
+        String assigneeInitial = task.assigneeName() != null && !task.assigneeName().isEmpty()
+                ? task.assigneeName().substring(0, 1).toUpperCase()
+                : "?";
         Text avatarText = new Text(assigneeInitial);
         avatarText.setStyle("-fx-font-size: 10px; -fx-fill: #64748b;");
         assigneeAvatar.getChildren().add(avatarText);
 
-        String assigneeName = isMyTask ? "You" : task.getAssignee().getName();
+        String assigneeName = isMyTask ? "You" : task.assigneeName();
         Text assigneeText = new Text(assigneeName);
         assigneeText.setStyle("-fx-font-size: 12px; -fx-fill: " + (isMyTask ? "#4338ca" : "#64748b") + "; "
                 + (isMyTask ? "-fx-font-weight: bold;" : ""));
@@ -276,7 +278,7 @@ public class CleaningScheduleController extends Controller {
         assigneeBox.getChildren().addAll(assigneeAvatar, assigneeText);
 
         // Due date
-        LocalDate dueDate = task.getDueDate() != null ? task.getDueDate() : task.getWeekStartDate();
+        LocalDate dueDate = task.dueDate() != null ? task.dueDate() : task.weekStartDate();
         String dayName = dueDate.getDayOfWeek().toString().substring(0, 1)
                 + dueDate.getDayOfWeek().toString().substring(1).toLowerCase();
         Text dueDateText = new Text("📅 " + dayName + ", " + dueDate.getDayOfMonth());
@@ -304,9 +306,9 @@ public class CleaningScheduleController extends Controller {
                 + "-fx-background-radius: 8; -fx-padding: 6 12; -fx-font-size: 11px; -fx-cursor: hand;");
         completeBtn.setOnAction(e -> {
             if (isCompleted) {
-                cleaningScheduleService.markTaskIncomplete(task);
+                cleaningScheduleService.markTaskIncomplete(task.id());
             } else {
-                cleaningScheduleService.markTaskComplete(task);
+                cleaningScheduleService.markTaskComplete(task.id());
             }
             refreshView();
         });
@@ -373,11 +375,12 @@ public class CleaningScheduleController extends Controller {
         }
 
         WG wg = currentUser.getWg();
-        List<CleaningTask> weekTasks = cleaningScheduleService.getTasksForWeek(wg, displayedWeekStart);
+        List<CleaningTaskDTO> weekTasks = cleaningScheduleService.getTasksForWeekDTO(wg, displayedWeekStart);
 
         int total = weekTasks.size();
-        int completed = (int) weekTasks.stream().filter(CleaningTask::isCompleted).count();
-        int myTasks = (int) weekTasks.stream().filter(t -> t.getAssignee().getId().equals(currentUser.getId())).count();
+        int completed = (int) weekTasks.stream().filter(CleaningTaskDTO::completed).count();
+        int myTasks = (int) weekTasks.stream()
+                .filter(t -> t.assigneeId() != null && t.assigneeId().equals(currentUser.getId())).count();
 
         completedTasksText.setText(completed + "/" + total);
         myTasksCountText.setText(String.valueOf(myTasks));
@@ -422,7 +425,7 @@ public class CleaningScheduleController extends Controller {
             return;
         }
 
-        Dialog<CleaningTask> dialog = new Dialog<>();
+        Dialog<CleaningTaskDTO> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(weekTitle));
         dialog.setTitle("Add Cleaning Task");
         dialog.setHeaderText("Assign a room to a member");
@@ -477,7 +480,7 @@ public class CleaningScheduleController extends Controller {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
-                return cleaningScheduleService.assignTask(roomCombo.getValue(), assigneeCombo.getValue(), wg);
+                return cleaningScheduleService.assignTaskDTO(roomCombo.getValue(), assigneeCombo.getValue(), wg);
             }
             return null;
         });
@@ -485,7 +488,7 @@ public class CleaningScheduleController extends Controller {
         dialog.showAndWait().ifPresent(task -> refreshView());
     }
 
-    private void showReassignDialog(CleaningTask task) {
+    private void showReassignDialog(CleaningTaskDTO task) {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null)
             return;
@@ -493,7 +496,7 @@ public class CleaningScheduleController extends Controller {
         Dialog<User> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(weekTitle));
         dialog.setTitle("Reassign Task");
-        dialog.setHeaderText("Reassign \"" + task.getRoom().getName() + "\"");
+        dialog.setHeaderText("Reassign \"" + task.roomName() + "\"");
 
         ButtonType assignButtonType = new ButtonType("Reassign", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(assignButtonType, ButtonType.CANCEL);
@@ -507,7 +510,7 @@ public class CleaningScheduleController extends Controller {
                     member.getName() + (member.getSurname() != null ? " " + member.getSurname() : ""));
             rb.setUserData(member);
             rb.setToggleGroup(group);
-            if (member.getId().equals(task.getAssignee().getId())) {
+            if (task.assigneeId() != null && member.getId().equals(task.assigneeId())) {
                 rb.setSelected(true);
             }
             content.getChildren().add(rb);
@@ -523,16 +526,16 @@ public class CleaningScheduleController extends Controller {
         });
 
         dialog.showAndWait().ifPresent(newAssignee -> {
-            cleaningScheduleService.reassignTask(task, newAssignee);
+            cleaningScheduleService.reassignTask(task.id(), newAssignee.getId());
             refreshView();
         });
     }
 
-    private void showRescheduleDialog(CleaningTask task) {
+    private void showRescheduleDialog(CleaningTaskDTO task) {
         Dialog<LocalDate> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(weekTitle));
         dialog.setTitle("Reschedule Task");
-        dialog.setHeaderText("Reschedule \"" + task.getRoom().getName() + "\"");
+        dialog.setHeaderText("Reschedule \"" + task.roomName() + "\"");
 
         ButtonType rescheduleButtonType = new ButtonType("Reschedule", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(rescheduleButtonType, ButtonType.CANCEL);
@@ -547,7 +550,7 @@ public class CleaningScheduleController extends Controller {
         ToggleGroup group = new ToggleGroup();
         String[] dayNames = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
 
-        LocalDate currentDueDate = task.getDueDate() != null ? task.getDueDate() : displayedWeekStart;
+        LocalDate currentDueDate = task.dueDate() != null ? task.dueDate() : displayedWeekStart;
         int currentDayIndex = currentDueDate.getDayOfWeek().getValue() - 1;
 
         for (int i = 0; i < 7; i++) {
@@ -571,7 +574,7 @@ public class CleaningScheduleController extends Controller {
         });
 
         dialog.showAndWait().ifPresent(newDueDate -> {
-            cleaningScheduleService.rescheduleTask(task, newDueDate);
+            cleaningScheduleService.rescheduleTask(task.id(), newDueDate);
             refreshView();
         });
     }
@@ -585,7 +588,7 @@ public class CleaningScheduleController extends Controller {
         }
 
         WG wg = currentUser.getWg();
-        if (cleaningScheduleService.getTasksForWeek(wg, displayedWeekStart).isEmpty()) {
+        if (cleaningScheduleService.getTasksForWeekDTO(wg, displayedWeekStart).isEmpty()) {
             showWarningAlert("No Tasks", "Create a schedule first before saving it as a template.",
                     getOwnerWindow(weekTitle));
             return;

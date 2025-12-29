@@ -6,14 +6,13 @@ Scope: tracking incremental cleanup against `REFACTORING_PLAYBOOK.md`.
 
 ## Open Findings
 
+### Domains Not Yet Migrated to DTOs
+- [x] ~~Shopping domain~~ Done
+- [ ] **[LOW]** `Room` entity still imported in several UI controllers.
+
 ### UI Redundancies
 - [ ] **[MEDIUM]** Inline styles scattered across controllers (100+ `.setStyle()` calls).  
-  *Fix:* Extract to CSS classes and apply via `getStyleClass().add()`. Defer to post-DTO phase.
-
-### Architecture
-- [x] **[HIGH]** Finance domain DTOs implemented (see Completed section)
-- [ ] **[MEDIUM]** Other domains still use direct entity binding (`User`, `Room`, etc.)  
-  *Fix:* Extend DTO pattern to other domains as needed.
+  *Fix:* Extract to CSS classes and apply via `getStyleClass().add()`.
 
 ### Code Quality
 - [ ] **[LOW]** Potential duplicate logic in controllers (form validation, dialog setup, etc.).  
@@ -22,12 +21,26 @@ Scope: tracking incremental cleanup against `REFACTORING_PLAYBOOK.md`.
 ---
 
 ## Next Actions
-1. ~~**Centralize alerts**~~ ✅ Done
-2. ~~**Implement SLF4J logging**~~ ✅ Done
-3. ~~**Introduce DTOs (Finance)**~~ ✅ Done  
-4. ~~**Migrate TransactionsController to DTOs**~~ ✅ Done
-5. **Migrate remaining finance controllers** – `TransactionHistoryController` and `StandingOrdersDialogController` (complex, deferred)
-6. **Extract inline styles** – Move to CSS classes (defer to post-DTO)
+
+1. ~~**Migrate Shopping domain to DTOs**~~ Done
+   - Created `ShoppingListDTO`, `ShoppingListItemDTO`, `ShoppingMapper`
+   - `ShoppingListController` now fully uses DTOs
+
+2. **Remove remaining `Room` entity usage from UI**  
+   - `CleaningScheduleController`, `SettingsController`, `NoWgController`, `TemplateEditorController` still use `Room`
+   - Create `RoomDTO` or expose room data via existing service methods
+
+3. **Extract inline styles to CSS**  
+   - 100+ `.setStyle()` calls scattered across controllers
+   - Move to `styles.css` using `.getStyleClass().add()`
+
+4. **Audit duplicate logic in controllers**  
+   - Form validation, dialog setup patterns appear repeated
+   - Extract to utilities or base `Controller` methods
+
+5. **(Optional) Create `UserDTO` / `WgDTO`**  
+   - `User` and `WG` imports remain in most controllers (used for session/auth context)
+   - Lower priority since these are core identity objects
 
 ---
 
@@ -69,4 +82,27 @@ Scope: tracking incremental cleanup against `REFACTORING_PLAYBOOK.md`.
   - `updateBalanceSheet()` now uses `BalanceDTO` from `TransactionService` decoupling UI from entity logic
   - Refactored `BalanceEntry` (inner class) to store only `userId` instead of full `User` entity
   - Updated settlement logic to resolve `User` from `UserRepository` only when needed
-
+- [x] **[HIGH]** `StandingOrdersDialogController` migrated to DTOs:
+  - Refactored to use `StandingOrderDTO` for table display
+  - Added ID-based `create`/`update` methods to `StandingOrderService` to fully decouple controller from entity instantiation
+  - Fixed multiple null-safety and create/update logic issues during migration
+- [x] **[MEDIUM]** `TransactionHistoryController` migrated to DTOs:
+  - Refactored to fully utilize `TransactionDTO` and `TransactionSplitDTO`
+  - Updated TableView columns and filter logic to consume immutable records
+  - Decoupled dialog logic from Entity classes
+- [x] **[MEDIUM]** Finance controller create/settlement paths now use DTO services:
+  - `TransactionDialogController` uses `createTransactionDTO`/`createStandingOrderDTO`
+  - `TransactionsController` settlement and credit-transfer flows use `createTransactionDTO`
+- [x] **[LOW]** Finance controllers now use UserService (no repo in UI)
+- [x] **[MEDIUM]** Cleaning schedule migrated to DTOs:
+  - Added `CleaningTaskDTO` and `CleaningMapper`
+  - `CleaningScheduleService` exposes DTO getters and id-based update/reassign/reschedule helpers
+  - `CleaningScheduleController` consumes DTOs (no direct `CleaningTask` manipulation)
+- [x] **[MEDIUM]** `TemplateEditorController` migrated to DTOs:
+  - Created `CleaningTaskTemplateDTO` for template display
+  - Added `getTemplatesDTO()` and `addTemplateByRoomId()` to service
+  - Refactored `WorkingTemplate` inner class to use IDs instead of entity references
+- [x] **[MEDIUM]** Shopping domain migrated to DTOs:
+  - Created `com.group_2.dto.shopping` package with `ShoppingListDTO`, `ShoppingListItemDTO`, `ShoppingMapper`
+  - Added ID-based service methods: `getAccessibleListsDTO()`, `createListByUserIds()`, `addItemByIds()`, etc.
+  - `ShoppingListController` fully refactored to use DTOs (no direct entity binding)

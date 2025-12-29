@@ -708,21 +708,20 @@ public class TransactionDialogController extends com.group_2.ui.core.Controller 
         }
 
         try {
+            User currentUser = sessionManager.getCurrentUser();
+            WG wg = currentUser.getWg();
+
             if (state.isStandingOrder()) {
-                // Create standing order (current user is the creator, payer is the creditor)
-                User currentUser = sessionManager.getCurrentUser();
-                WG wg = currentUser.getWg();
-                standingOrderService.createStandingOrder(currentUser, // creator (gets edit rights)
-                        state.getPayer(), // creditor (payer)
-                        wg, state.getTotalAmount(), state.getDescription(), state.getStandingOrderFrequency(),
-                        state.getStandingOrderStartDate(), debtorIds,
+                // Use DTO-creating path to keep controllers off entities
+                standingOrderService.createStandingOrderDTO(currentUser.getId(), // creator (gets edit rights)
+                        state.getPayer().getId(), // creditor (payer)
+                        wg != null ? wg.getId() : null, state.getTotalAmount(), state.getDescription(),
+                        state.getStandingOrderFrequency(), state.getStandingOrderStartDate(), debtorIds,
                         state.getSplitMode() == TransactionDialogState.SplitMode.EQUAL ? null : percentages,
                         state.getMonthlyDay(), state.isMonthlyLastDay());
             } else {
-                // Create immediate transaction (current user is the creator, payer is the
-                // creditor)
-                User currentUser = sessionManager.getCurrentUser();
-                transactionService.createTransaction(currentUser.getId(), // creator (gets edit rights)
+                // Create immediate transaction (current user is the creator, payer is the creditor)
+                transactionService.createTransactionDTO(currentUser.getId(), // creator (gets edit rights)
                         state.getPayer().getId(), // creditor (payer)
                         debtorIds, state.getSplitMode() == TransactionDialogState.SplitMode.EQUAL ? null : percentages,
                         state.getTotalAmount(), state.getDescription());

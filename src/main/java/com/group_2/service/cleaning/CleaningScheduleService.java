@@ -7,10 +7,14 @@ import com.group_2.model.cleaning.CleaningTaskTemplate;
 import com.group_2.model.cleaning.RecurrenceInterval;
 import com.group_2.model.cleaning.Room;
 import com.group_2.model.cleaning.RoomAssignmentQueue;
+import com.group_2.dto.cleaning.CleaningMapper;
+import com.group_2.dto.cleaning.CleaningTaskDTO;
+import com.group_2.dto.cleaning.CleaningTaskTemplateDTO;
 import com.group_2.repository.UserRepository;
 import com.group_2.repository.cleaning.CleaningTaskRepository;
 import com.group_2.repository.cleaning.CleaningTaskTemplateRepository;
 import com.group_2.repository.cleaning.RoomAssignmentQueueRepository;
+import com.group_2.repository.cleaning.RoomRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,8 +29,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Service for managing cleaning schedules and tasks.
- * Uses round-robin queue system for fair task distribution.
+ * Service for managing cleaning schedules and tasks. Uses round-robin queue
+ * system for fair task distribution.
  */
 @Service
 public class CleaningScheduleService {
@@ -35,16 +39,19 @@ public class CleaningScheduleService {
     private final CleaningTaskTemplateRepository templateRepository;
     private final RoomAssignmentQueueRepository queueRepository;
     private final UserRepository userRepository;
+    private final RoomRepository roomRepository;
+    private final CleaningMapper cleaningMapper;
 
     @Autowired
     public CleaningScheduleService(CleaningTaskRepository cleaningTaskRepository,
-            CleaningTaskTemplateRepository templateRepository,
-            RoomAssignmentQueueRepository queueRepository,
-            UserRepository userRepository) {
+            CleaningTaskTemplateRepository templateRepository, RoomAssignmentQueueRepository queueRepository,
+            UserRepository userRepository, RoomRepository roomRepository, CleaningMapper cleaningMapper) {
         this.cleaningTaskRepository = cleaningTaskRepository;
         this.templateRepository = templateRepository;
         this.queueRepository = queueRepository;
         this.userRepository = userRepository;
+        this.roomRepository = roomRepository;
+        this.cleaningMapper = cleaningMapper;
     }
 
     /**
@@ -63,9 +70,9 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Get all cleaning tasks for a specific week for a WG.
-     * Ensures all applicable templates have corresponding tasks for the week,
-     * generating missing ones automatically using round-robin assignment.
+     * Get all cleaning tasks for a specific week for a WG. Ensures all applicable
+     * templates have corresponding tasks for the week, generating missing ones
+     * automatically using round-robin assignment.
      */
     @Transactional
     public List<CleaningTask> getTasksForWeek(WG wg, LocalDate weekStart) {
@@ -81,9 +88,16 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Generate only the missing tasks from templates for a specific week.
-     * Checks which templates don't have a corresponding task yet and creates them.
-     * Only generates tasks for current week or future weeks, not past weeks.
+     * DTO variant of getTasksForWeek to keep UI decoupled from entities.
+     */
+    public List<CleaningTaskDTO> getTasksForWeekDTO(WG wg, LocalDate weekStart) {
+        return cleaningMapper.toDTOList(getTasksForWeek(wg, weekStart));
+    }
+
+    /**
+     * Generate only the missing tasks from templates for a specific week. Checks
+     * which templates don't have a corresponding task yet and creates them. Only
+     * generates tasks for current week or future weeks, not past weeks.
      */
     @Transactional
     public List<CleaningTask> generateMissingTasksFromTemplate(WG wg, LocalDate weekStart,
@@ -132,12 +146,7 @@ public class CleaningScheduleService {
             }
 
             LocalDate dueDate = weekStart.plusDays(template.getDayOfWeek() - 1);
-            CleaningTask task = new CleaningTask(
-                    template.getRoom(),
-                    assignee,
-                    wg,
-                    weekStart,
-                    dueDate);
+            CleaningTask task = new CleaningTask(template.getRoom(), assignee, wg, weekStart, dueDate);
             newTasks.add(cleaningTaskRepository.save(task));
 
             // Rotate the queue for next time
@@ -150,8 +159,8 @@ public class CleaningScheduleService {
 
     /**
      * Generate tasks from template for a specific week using round-robin
-     * assignment. This replaces any existing tasks for the week.
-     * Each room's queue determines the assignee, then the queue rotates.
+     * assignment. This replaces any existing tasks for the week. Each room's queue
+     * determines the assignee, then the queue rotates.
      */
     @Transactional
     public List<CleaningTask> generateFromTemplateForWeek(WG wg, LocalDate weekStart) {
@@ -204,9 +213,8 @@ public class CleaningScheduleService {
 
     /**
      * Sync a queue with current WG members (add new members, remove departed ones).
-     * New members are added at the end of the queue, meaning they will be
-     * assigned after all current members have had their turn (end of current
-     * cycle).
+     * New members are added at the end of the queue, meaning they will be assigned
+     * after all current members have had their turn (end of current cycle).
      */
     private void syncQueueWithMembers(RoomAssignmentQueue queue, List<User> currentMembers) {
         List<Long> queueIds = queue.getMemberIds();
@@ -227,14 +235,12 @@ public class CleaningScheduleService {
 
         // Update the queue
         queue.setMemberQueueOrder(
-                queueIds.stream()
-                        .map(String::valueOf)
-                        .collect(java.util.stream.Collectors.joining(",")));
+                queueIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")));
     }
 
     /**
-     * Sync all queues for a WG with current members.
-     * Call this when members join or leave the WG.
+     * Sync all queues for a WG with current members. Call this when members join or
+     * leave the WG.
      */
     @Transactional
     public void syncAllQueuesWithMembers(WG wg) {
@@ -248,9 +254,9 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Reset the cleaning schedule when membership changes (join or leave).
-     * This deletes all current and future tasks and regenerates them fresh,
-     * clearing all manual overrides and reassignments.
+     * Reset the cleaning schedule when membership changes (join or leave). This
+     * deletes all current and future tasks and regenerates them fresh, clearing all
+     * manual overrides and reassignments.
      * 
      * Call this when a member joins or leaves the WG.
      */
@@ -283,9 +289,9 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Reassign all incomplete tasks from a departing user to other members.
-     * Uses the room's queue to determine the next assignee.
-     * Call this when a member leaves the WG.
+     * Reassign all incomplete tasks from a departing user to other members. Uses
+     * the room's queue to determine the next assignee. Call this when a member
+     * leaves the WG.
      */
     @Transactional
     public void reassignTasksFromDepartedMember(WG wg, Long departedUserId) {
@@ -297,9 +303,8 @@ public class CleaningScheduleService {
         List<CleaningTask> tasks = cleaningTaskRepository.findByWg(wg);
         for (CleaningTask task : tasks) {
             // Only reassign incomplete tasks from current week onwards
-            if (!task.isCompleted() &&
-                    task.getAssignee().getId().equals(departedUserId) &&
-                    !task.getWeekStartDate().isBefore(currentWeekStart)) {
+            if (!task.isCompleted() && task.getAssignee().getId().equals(departedUserId)
+                    && !task.getWeekStartDate().isBefore(currentWeekStart)) {
 
                 // Get the queue for this room and find the next available assignee
                 List<RoomAssignmentQueue> queues = queueRepository.findByWgAndRoom(wg, task.getRoom());
@@ -339,8 +344,8 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Save current week's schedule as the default template.
-     * Also initializes assignment queues for each room.
+     * Save current week's schedule as the default template. Also initializes
+     * assignment queues for each room.
      */
     @Transactional
     public List<CleaningTaskTemplate> saveAsTemplate(WG wg) {
@@ -357,13 +362,8 @@ public class CleaningScheduleService {
         List<CleaningTaskTemplate> templates = new ArrayList<>();
         int offset = 0;
         for (CleaningTask task : currentTasks) {
-            int dayOfWeek = task.getDueDate() != null
-                    ? task.getDueDate().getDayOfWeek().getValue()
-                    : 1;
-            CleaningTaskTemplate template = new CleaningTaskTemplate(
-                    task.getRoom(),
-                    wg,
-                    dayOfWeek);
+            int dayOfWeek = task.getDueDate() != null ? task.getDueDate().getDayOfWeek().getValue() : 1;
+            CleaningTaskTemplate template = new CleaningTaskTemplate(task.getRoom(), wg, dayOfWeek);
             templates.add(templateRepository.save(template));
 
             // Create queue for this room with offset
@@ -380,6 +380,13 @@ public class CleaningScheduleService {
      */
     public List<CleaningTaskTemplate> getTemplates(WG wg) {
         return templateRepository.findByWgOrderByDayOfWeekAsc(wg);
+    }
+
+    /**
+     * Get all templates for a WG as DTOs.
+     */
+    public List<CleaningTaskTemplateDTO> getTemplatesDTO(WG wg) {
+        return cleaningMapper.toTemplateDTOList(getTemplates(wg));
     }
 
     /**
@@ -426,15 +433,26 @@ public class CleaningScheduleService {
         return cleaningTaskRepository.save(task);
     }
 
+    @Transactional
+    public CleaningTaskDTO assignTaskDTO(Room room, User assignee, WG wg) {
+        return cleaningMapper.toDTO(assignTask(room, assignee, wg));
+    }
+
+    @Transactional
+    public CleaningTaskDTO assignTaskByIds(Long roomId, Long assigneeId, WG wg) {
+        Room room = roomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        User assignee = userRepository.findById(assigneeId)
+                .orElseThrow(() -> new IllegalArgumentException("Assignee not found"));
+        return assignTaskDTO(room, assignee, wg);
+    }
+
     /**
      * Reassign a task to a different user by swapping with their next scheduled
-     * task.
-     * This preserves fairness: no tasks are created or removed, each person keeps
-     * the same total number of tasks.
+     * task. This preserves fairness: no tasks are created or removed, each person
+     * keeps the same total number of tasks.
      * 
      * Example: If A has task at week 1 and wants to give it to C who has task at
-     * week 3,
-     * after swap: C has task at week 1, A has task at week 3.
+     * week 3, after swap: C has task at week 1, A has task at week 3.
      * 
      * @param task        The task to reassign (current assignment)
      * @param newAssignee The user who should take this task
@@ -458,8 +476,8 @@ public class CleaningScheduleService {
         // Find the next task assigned to newAssignee AFTER the current task's week
         CleaningTask swapTarget = null;
         for (CleaningTask candidate : roomTasks) {
-            if (candidate.getAssignee().getId().equals(newAssignee.getId()) &&
-                    candidate.getWeekStartDate().isAfter(task.getWeekStartDate())) {
+            if (candidate.getAssignee().getId().equals(newAssignee.getId())
+                    && candidate.getWeekStartDate().isAfter(task.getWeekStartDate())) {
                 swapTarget = candidate;
                 break;
             }
@@ -478,6 +496,16 @@ public class CleaningScheduleService {
         return cleaningTaskRepository.save(task);
     }
 
+    @Transactional
+    public CleaningTaskDTO reassignTask(Long taskId, Long newAssigneeId) {
+        CleaningTask task = cleaningTaskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        User newAssignee = userRepository.findById(newAssigneeId)
+                .orElseThrow(() -> new IllegalArgumentException("Assignee not found"));
+        CleaningTask updated = reassignTask(task, newAssignee);
+        return cleaningMapper.toDTO(updated);
+    }
+
     /**
      * Reschedule a task to a different day.
      */
@@ -486,6 +514,14 @@ public class CleaningScheduleService {
         task.setDueDate(newDueDate);
         task.setManualOverride(true);
         return cleaningTaskRepository.save(task);
+    }
+
+    @Transactional
+    public CleaningTaskDTO rescheduleTask(Long taskId, LocalDate newDueDate) {
+        CleaningTask task = cleaningTaskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        CleaningTask updated = rescheduleTask(task, newDueDate);
+        return cleaningMapper.toDTO(updated);
     }
 
     /**
@@ -497,6 +533,14 @@ public class CleaningScheduleService {
         return cleaningTaskRepository.save(task);
     }
 
+    @Transactional
+    public CleaningTaskDTO markTaskComplete(Long taskId) {
+        CleaningTask task = cleaningTaskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        CleaningTask updated = markTaskComplete(task);
+        return cleaningMapper.toDTO(updated);
+    }
+
     /**
      * Mark a cleaning task as incomplete.
      */
@@ -504,6 +548,14 @@ public class CleaningScheduleService {
     public CleaningTask markTaskIncomplete(CleaningTask task) {
         task.markIncomplete();
         return cleaningTaskRepository.save(task);
+    }
+
+    @Transactional
+    public CleaningTaskDTO markTaskIncomplete(Long taskId) {
+        CleaningTask task = cleaningTaskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        CleaningTask updated = markTaskIncomplete(task);
+        return cleaningMapper.toDTO(updated);
     }
 
     /**
@@ -524,8 +576,8 @@ public class CleaningScheduleService {
     // ========== Template CRUD Methods ==========
 
     /**
-     * Add a new template task with round-robin queue.
-     * No assignee needed - queue handles assignment automatically.
+     * Add a new template task with round-robin queue. No assignee needed - queue
+     * handles assignment automatically.
      */
     @Transactional
     public CleaningTaskTemplate addTemplate(WG wg, Room room, DayOfWeek dayOfWeek, RecurrenceInterval interval) {
@@ -540,6 +592,17 @@ public class CleaningScheduleService {
         queueRepository.save(queue);
 
         return template;
+    }
+
+    /**
+     * Add a new template task by room ID - for DTO-based controller usage.
+     */
+    @Transactional
+    public CleaningTaskTemplateDTO addTemplateByRoomId(WG wg, Long roomId, DayOfWeek dayOfWeek,
+            RecurrenceInterval interval) {
+        Room room = roomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        CleaningTaskTemplate template = addTemplate(wg, room, dayOfWeek, interval);
+        return cleaningMapper.toTemplateDTO(template);
     }
 
     /**
@@ -572,8 +635,8 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Delete a single template and its associated queue.
-     * Only deletes current and future tasks for this room, preserves past tasks.
+     * Delete a single template and its associated queue. Only deletes current and
+     * future tasks for this room, preserves past tasks.
      */
     @Transactional
     public void deleteTemplate(CleaningTaskTemplate template) {
@@ -592,8 +655,8 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Clear all templates and queues for a WG.
-     * Only deletes current and future tasks, preserves past tasks.
+     * Clear all templates and queues for a WG. Only deletes current and future
+     * tasks, preserves past tasks.
      */
     @Transactional
     public void clearTemplates(WG wg) {
@@ -612,21 +675,19 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Delete all cleaning-related data for a specific room.
-     * This must be called before deleting the room itself.
+     * Delete all cleaning-related data for a specific room. This must be called
+     * before deleting the room itself.
      */
     @Transactional
     public void deleteRoomData(Room room) {
         // Delete all tasks for this room
         List<CleaningTask> tasks = cleaningTaskRepository.findAll().stream()
-                .filter(t -> t.getRoom().getId().equals(room.getId()))
-                .collect(java.util.stream.Collectors.toList());
+                .filter(t -> t.getRoom().getId().equals(room.getId())).collect(java.util.stream.Collectors.toList());
         cleaningTaskRepository.deleteAll(tasks);
 
         // Delete all templates for this room
         List<CleaningTaskTemplate> templates = templateRepository.findAll().stream()
-                .filter(t -> t.getRoom().getId().equals(room.getId()))
-                .collect(java.util.stream.Collectors.toList());
+                .filter(t -> t.getRoom().getId().equals(room.getId())).collect(java.util.stream.Collectors.toList());
         templateRepository.deleteAll(templates);
 
         // Delete all queues for this room
@@ -634,9 +695,9 @@ public class CleaningScheduleService {
     }
 
     /**
-     * Syncs the current week's schedule with the default templates.
-     * Overwrites tasks that are NOT manually overridden.
-     * Preserves tasks that have manual adjustments.
+     * Syncs the current week's schedule with the default templates. Overwrites
+     * tasks that are NOT manually overridden. Preserves tasks that have manual
+     * adjustments.
      */
     @Transactional
     public void syncCurrentWeekWithTemplate(WG wg) {
@@ -666,8 +727,7 @@ public class CleaningScheduleService {
                 // If it shouldn't be here this week, remove existing one if not overridden
                 existingTasks.stream()
                         .filter(t -> t.getRoom().getId().equals(template.getRoom().getId()) && !t.isManualOverride())
-                        .findFirst()
-                        .ifPresent(task -> {
+                        .findFirst().ifPresent(task -> {
                             cleaningTaskRepository.delete(task);
                             existingTasks.remove(task);
                         });
@@ -675,8 +735,7 @@ public class CleaningScheduleService {
             }
 
             Optional<CleaningTask> existing = existingTasks.stream()
-                    .filter(t -> t.getRoom().getId().equals(template.getRoom().getId()))
-                    .findFirst();
+                    .filter(t -> t.getRoom().getId().equals(template.getRoom().getId())).findFirst();
 
             if (existing.isPresent()) {
                 CleaningTask task = existing.get();

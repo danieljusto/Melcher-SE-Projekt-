@@ -1,10 +1,5 @@
 package com.group_2.ui.finance;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.group_2.model.User;
-import com.group_2.model.WG;
-import com.group_2.model.finance.StandingOrder;
 import com.group_2.model.finance.StandingOrderFrequency;
 import com.group_2.service.core.UserService;
 import com.group_2.service.finance.StandingOrderService;
@@ -28,34 +23,39 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.group_2.dto.finance.StandingOrderDTO;
+import com.group_2.dto.finance.StandingOrderDTO.DebtorShareDTO;
+import com.group_2.model.User;
+import com.group_2.model.WG;
+import com.group_2.model.finance.StandingOrderFrequency;
+
 @Component
 public class StandingOrdersDialogController extends com.group_2.ui.core.Controller {
 
     private final StandingOrderService standingOrderService;
     private final SessionManager sessionManager;
     private final UserService userService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final DecimalFormat currencyFormat = new DecimalFormat("€#,##0.00");
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     @FXML
     private StackPane dialogOverlay;
     @FXML
-    private TableView<StandingOrder> standingOrdersTable;
+    private TableView<StandingOrderDTO> standingOrdersTable;
     @FXML
-    private TableColumn<StandingOrder, String> descriptionColumn;
+    private TableColumn<StandingOrderDTO, String> descriptionColumn;
     @FXML
-    private TableColumn<StandingOrder, String> payerColumn;
+    private TableColumn<StandingOrderDTO, String> payerColumn;
     @FXML
-    private TableColumn<StandingOrder, String> debtorsColumn;
+    private TableColumn<StandingOrderDTO, String> debtorsColumn;
     @FXML
-    private TableColumn<StandingOrder, String> amountColumn;
+    private TableColumn<StandingOrderDTO, String> amountColumn;
     @FXML
-    private TableColumn<StandingOrder, String> frequencyColumn;
+    private TableColumn<StandingOrderDTO, String> frequencyColumn;
     @FXML
-    private TableColumn<StandingOrder, String> nextExecutionColumn;
+    private TableColumn<StandingOrderDTO, String> nextExecutionColumn;
     @FXML
-    private TableColumn<StandingOrder, Void> actionsColumn;
+    private TableColumn<StandingOrderDTO, Void> actionsColumn;
     @FXML
     private VBox emptyState;
 
@@ -76,58 +76,49 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
 
     private void setupTable() {
         // Description column
-        descriptionColumn
-                .setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDescription()));
+        descriptionColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().description()));
 
         // Payer column
-        payerColumn.setCellValueFactory(cellData -> {
-            User creditor = cellData.getValue().getCreditor();
-            String name = creditor.getName();
-            if (creditor.getSurname() != null && !creditor.getSurname().isEmpty()) {
-                name += " " + creditor.getSurname().charAt(0) + ".";
-            }
-            return new SimpleStringProperty(name);
-        });
+        payerColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().creditorName()));
 
         // Debtors column
         debtorsColumn.setCellValueFactory(cellData -> {
-            String debtorNames = parseDebtorNames(cellData.getValue().getDebtorData());
+            String debtorNames = parseDebtorNames(cellData.getValue().debtors());
             return new SimpleStringProperty(debtorNames);
         });
 
         // Amount column
         amountColumn.setCellValueFactory(
-                cellData -> new SimpleStringProperty(currencyFormat.format(cellData.getValue().getTotalAmount())));
+                cellData -> new SimpleStringProperty(currencyFormat.format(cellData.getValue().totalAmount())));
 
         // Frequency column
-        frequencyColumn.setCellValueFactory(cellData -> {
-            StandingOrder order = cellData.getValue();
-            String freqText = formatFrequency(order);
-            return new SimpleStringProperty(freqText);
-        });
+        frequencyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(formatFrequency(cellData.getValue())));
 
         // Next execution column
-        nextExecutionColumn.setCellValueFactory(
-                cellData -> new SimpleStringProperty(cellData.getValue().getNextExecution().format(dateFormatter)));
-
-        // Actions column with edit and delete buttons
-        actionsColumn.setCellFactory(col -> new TableCell<>() {
+        nextExecutionColumn.setCellValueFactory(cellData -> {
+            String nextDate = "N/A";
+            if (cellData.getValue().nextExecution() != null) {
+                nextDate = cellData.getValue().nextExecution().format(dateFormatter);
+            }
+            return new SimpleStringProperty(nextDate);
+        });
+        actionsColumn.setCellFactory(col -> new TableCell<StandingOrderDTO, Void>() {
             private final Button editBtn = new Button("✏️ Edit");
-            private final Button deleteBtn = new Button("🗑️ Delete");
+            private final Button deleteBtn = new Button("🗑️");
 
             {
                 editBtn.setStyle(
-                        "-fx-background-color: #dbeafe; -fx-text-fill: #2563eb; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 10;");
+                        "-fx-background-color: #dbeafe; -fx-text-fill: #2563eb; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 8;");
                 editBtn.setOnAction(e -> {
-                    StandingOrder order = getTableView().getItems().get(getIndex());
+                    StandingOrderDTO order = getTableView().getItems().get(getIndex());
                     showEditDialog(order);
                 });
 
                 deleteBtn.setStyle(
-                        "-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 10;");
+                        "-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 8;");
                 deleteBtn.setOnAction(e -> {
-                    StandingOrder order = getTableView().getItems().get(getIndex());
-                    confirmAndDeleteOrder(order);
+                    StandingOrderDTO order = getTableView().getItems().get(getIndex());
+                    confirmAndDelete(order);
                 });
             }
 
@@ -137,34 +128,45 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    StandingOrder order = getTableView().getItems().get(getIndex());
+                    StandingOrderDTO order = getTableView().getItems().get(getIndex());
                     User currentUser = sessionManager.getCurrentUser();
 
-                    // Only show edit/delete for orders created by current user
-                    if (currentUser != null && order.getCreatedBy().getId().equals(currentUser.getId())) {
+                    // Only show actions for creator
+                    if (currentUser != null && order.createdById().equals(currentUser.getId())) {
                         HBox buttons = new HBox(5, editBtn, deleteBtn);
                         setGraphic(buttons);
                     } else {
-                        // Show only a view indicator for others' orders
                         setGraphic(null);
                     }
                 }
             }
         });
+
+        // Add double click listener
+        standingOrdersTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2 && standingOrdersTable.getSelectionModel().getSelectedItem() != null) {
+                StandingOrderDTO selectedOrder = standingOrdersTable.getSelectionModel().getSelectedItem();
+                User currentUser = sessionManager.getCurrentUser();
+
+                if (currentUser != null && selectedOrder.createdById().equals(currentUser.getId())) {
+                    showEditDialog(selectedOrder);
+                }
+            }
+        });
     }
 
-    private String formatFrequency(StandingOrder order) {
-        StandingOrderFrequency freq = order.getFrequency();
+    private String formatFrequency(StandingOrderDTO order) {
+        StandingOrderFrequency freq = order.frequency();
         switch (freq) {
         case WEEKLY:
             return "Weekly";
         case BI_WEEKLY:
             return "Bi-weekly";
         case MONTHLY:
-            if (Boolean.TRUE.equals(order.getMonthlyLastDay())) {
+            if (Boolean.TRUE.equals(order.monthlyLastDay())) {
                 return "Monthly (last day)";
-            } else if (order.getMonthlyDay() != null) {
-                return "Monthly (" + order.getMonthlyDay() + getDaySuffix(order.getMonthlyDay()) + ")";
+            } else if (order.monthlyDay() != null) {
+                return "Monthly (" + order.monthlyDay() + getDaySuffix(order.monthlyDay()) + ")";
             } else {
                 return "Monthly";
             }
@@ -174,8 +176,9 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
     }
 
     private String getDaySuffix(int day) {
-        if (day >= 11 && day <= 13)
+        if (day >= 11 && day <= 13) {
             return "th";
+        }
         switch (day % 10) {
         case 1:
             return "st";
@@ -188,35 +191,24 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         }
     }
 
-    private String parseDebtorNames(String json) {
-        if (json == null || json.isEmpty()) {
-            return "";
-        }
-        try {
-            List<Map<String, Object>> debtorList = objectMapper.readValue(json,
-                    new TypeReference<List<Map<String, Object>>>() {
-                    });
-
-            List<String> names = debtorList.stream().map(entry -> {
-                Object userIdObj = entry.get("userId");
-                Long userId = userIdObj instanceof Number ? ((Number) userIdObj).longValue()
-                        : Long.parseLong(userIdObj.toString());
-                return userService.getDisplayName(userId);
-            }).collect(Collectors.toList());
-
-            return String.join(", ", names);
-        } catch (Exception e) {
-            return "Error";
+    private String parseDebtorNames(List<DebtorShareDTO> debtors) {
+        if (debtors == null || debtors.isEmpty()) {
+            return "None";
+        } else if (debtors.size() == 1) {
+            return debtors.get(0).userName();
+        } else {
+            return debtors.stream().map(d -> d.userName() + " (" + d.getFormattedPercentage() + ")")
+                    .collect(Collectors.joining(", "));
         }
     }
 
-    private void confirmAndDeleteOrder(StandingOrder order) {
+    private void confirmAndDelete(StandingOrderDTO order) {
         Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
         boolean confirmed = showConfirmDialog("Delete Standing Order", "Are you sure?",
-                "This will deactivate the standing order: " + order.getDescription(), owner);
+                "This will deactivate the standing order: " + order.description(), owner);
 
         if (confirmed) {
-            standingOrderService.deactivateStandingOrder(order.getId());
+            standingOrderService.deactivateStandingOrder(order.id());
             loadStandingOrders();
             if (onOrdersChanged != null) {
                 onOrdersChanged.run();
@@ -243,7 +235,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
             return;
         }
 
-        List<StandingOrder> orders = standingOrderService.getActiveStandingOrders(wg);
+        List<StandingOrderDTO> orders = standingOrderService.getActiveStandingOrdersDTO(wg);
 
         if (orders.isEmpty()) {
             showEmptyState(true);
@@ -264,7 +256,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         this.onOrdersChanged = callback;
     }
 
-    private void showEditDialog(StandingOrder order) {
+    private void showEditDialog(StandingOrderDTO order) {
         // Create edit dialog
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Edit Standing Order");
@@ -278,17 +270,35 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         content.setStyle("-fx-background-color: white;");
         content.setPrefWidth(500);
 
+        // Defaults for create mode
+        String defaultDesc = "";
+        double tempAmount = 0.0;
+        StandingOrderFrequency defaultFreq = StandingOrderFrequency.MONTHLY;
+        Boolean defaultMonthlyLastDay = false;
+        Integer defaultMonthlyDay = 1;
+        List<DebtorShareDTO> defaultDebtors = new java.util.ArrayList<>();
+
+        if (order != null) {
+            defaultDesc = order.description();
+            tempAmount = order.totalAmount();
+            defaultFreq = order.frequency();
+            defaultMonthlyLastDay = order.monthlyLastDay();
+            defaultMonthlyDay = order.monthlyDay();
+            defaultDebtors = order.debtors();
+        }
+        final double defaultAmount = tempAmount;
+
         // Description field
         javafx.scene.text.Text descLabel = new javafx.scene.text.Text("Description");
         descLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-        TextField descField = new TextField(order.getDescription());
+        TextField descField = new TextField(defaultDesc);
         descField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
 
         // Amount field
         javafx.scene.text.Text amountLabel = new javafx.scene.text.Text("Total Amount (€)");
         amountLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-        TextField amountField = new TextField(String.format("%.2f", order.getTotalAmount()));
+        TextField amountField = new TextField(String.format("%.2f", defaultAmount));
         amountField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
 
@@ -301,20 +311,24 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6;");
 
         // Set current frequency
-        switch (order.getFrequency()) {
-        case WEEKLY -> freqComboBox.setValue("Weekly");
-        case BI_WEEKLY -> freqComboBox.setValue("Bi-weekly");
-        case MONTHLY -> freqComboBox.setValue("Monthly");
+        if (defaultFreq != null) {
+            switch (defaultFreq) {
+            case WEEKLY -> freqComboBox.setValue("Weekly");
+            case BI_WEEKLY -> freqComboBox.setValue("Bi-weekly");
+            case MONTHLY -> freqComboBox.setValue("Monthly");
+            }
+        } else {
+            freqComboBox.setValue("Monthly");
         }
 
         // Monthly options
         VBox monthlyOptions = new VBox(10);
         CheckBox lastDayCheckbox = new CheckBox("Execute on last day of month");
-        lastDayCheckbox.setSelected(Boolean.TRUE.equals(order.getMonthlyLastDay()));
+        lastDayCheckbox.setSelected(Boolean.TRUE.equals(defaultMonthlyLastDay));
 
         javafx.scene.text.Text dayLabel = new javafx.scene.text.Text("Day of month (1-31):");
         dayLabel.setStyle("-fx-font-size: 12px;");
-        TextField dayField = new TextField(order.getMonthlyDay() != null ? order.getMonthlyDay().toString() : "1");
+        TextField dayField = new TextField(defaultMonthlyDay != null ? defaultMonthlyDay.toString() : "1");
         dayField.setPrefWidth(60);
         dayField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8;");
@@ -345,7 +359,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         // Parse existing debtor data
         List<Long> originalDebtorIds = new java.util.ArrayList<>();
         List<Double> originalPercentages = new java.util.ArrayList<>();
-        parseDebtorDataForEdit(order.getDebtorData(), originalDebtorIds, originalPercentages);
+        parseDebtorDataForEdit(defaultDebtors, originalDebtorIds, originalPercentages);
 
         // Split editing - only show if multiple debtors
         java.util.Map<Long, TextField> splitFields = new java.util.HashMap<>();
@@ -389,10 +403,11 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                 splitFields.clear();
 
                 double total;
+                final double amountFallback = defaultAmount; // Capture for lambda
                 try {
                     total = Double.parseDouble(amountField.getText().replace(",", "."));
                 } catch (NumberFormatException ex) {
-                    total = order.getTotalAmount();
+                    total = amountFallback;
                 }
 
                 if (currentMode[0].equals("EQUAL")) {
@@ -550,8 +565,8 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
             rebuildSplitFields.run();
         } else {
             // Single debtor info
-            javafx.scene.text.Text debtorsLabel = new javafx.scene.text.Text(
-                    "Debtor: " + parseDebtorNames(order.getDebtorData()));
+            String debtorText = defaultDebtors.isEmpty() ? "None" : parseDebtorNames(defaultDebtors);
+            javafx.scene.text.Text debtorsLabel = new javafx.scene.text.Text("Debtor: " + debtorText);
             debtorsLabel.setStyle("-fx-font-size: 12px; -fx-fill: #6b7280;");
             content.getChildren().add(debtorsLabel);
         }
@@ -580,7 +595,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                 case "Weekly" -> StandingOrderFrequency.WEEKLY;
                 case "Bi-weekly" -> StandingOrderFrequency.BI_WEEKLY;
                 case "Monthly" -> StandingOrderFrequency.MONTHLY;
-                default -> order.getFrequency();
+                default -> order != null ? order.frequency() : StandingOrderFrequency.MONTHLY;
                 };
 
                 Integer newMonthlyDay = null;
@@ -642,10 +657,22 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                     percentages.addAll(originalPercentages);
                 }
 
-                // Update the standing order
-                standingOrderService.updateStandingOrder(order.getId(), sessionManager.getCurrentUser().getId(),
-                        order.getCreditor(), newAmount, newDescription, newFrequency, debtorIds,
-                        percentages.isEmpty() ? null : percentages, newMonthlyDay, newMonthlyLastDay);
+                // Create or Update
+                if (order == null) {
+                    // Create mode
+                    standingOrderService.createStandingOrderDTO(sessionManager.getCurrentUser().getId(), // Creator
+                            sessionManager.getCurrentUser().getId(), // Creditor (self)
+                            sessionManager.getCurrentUser().getWg().getId(), // WG
+                            newAmount, newDescription, newFrequency, null, // Start date (defaults to now/next execution
+                                                                           // in service?) Service expect LocalDate
+                                                                           // startDate
+                            debtorIds, percentages.isEmpty() ? null : percentages, newMonthlyDay, newMonthlyLastDay);
+                } else {
+                    // Update mode
+                    standingOrderService.updateStandingOrderDTO(order.id(), sessionManager.getCurrentUser().getId(),
+                            order.creditorId(), newAmount, newDescription, newFrequency, debtorIds,
+                            percentages.isEmpty() ? null : percentages, newMonthlyDay, newMonthlyLastDay);
+                }
 
                 // Refresh the table
                 loadStandingOrders();
@@ -668,29 +695,13 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         }
     }
 
-    private void parseDebtorDataForEdit(String json, List<Long> debtorIds, List<Double> percentages) {
-        if (json == null || json.isEmpty()) {
+    private void parseDebtorDataForEdit(List<DebtorShareDTO> debtors, List<Long> debtorIds, List<Double> percentages) {
+        if (debtors == null)
             return;
-        }
-        try {
-            List<Map<String, Object>> debtorList = objectMapper.readValue(json,
-                    new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {
-                    });
 
-            for (Map<String, Object> entry : debtorList) {
-                Object userIdObj = entry.get("userId");
-                Object percentageObj = entry.get("percentage");
-
-                Long userId = userIdObj instanceof Number ? ((Number) userIdObj).longValue()
-                        : Long.parseLong(userIdObj.toString());
-                Double percentage = percentageObj instanceof Number ? ((Number) percentageObj).doubleValue()
-                        : Double.parseDouble(percentageObj.toString());
-
-                debtorIds.add(userId);
-                percentages.add(percentage);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse debtor data", e);
+        for (DebtorShareDTO d : debtors) {
+            debtorIds.add(d.userId());
+            percentages.add(d.percentage());
         }
     }
 }

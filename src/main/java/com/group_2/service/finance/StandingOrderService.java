@@ -7,6 +7,7 @@ import com.group_2.model.User;
 import com.group_2.model.WG;
 import com.group_2.model.finance.StandingOrder;
 import com.group_2.model.finance.StandingOrderFrequency;
+import com.group_2.repository.UserRepository;
 import com.group_2.repository.finance.StandingOrderRepository;
 import com.group_2.dto.finance.FinanceMapper;
 import com.group_2.dto.finance.StandingOrderDTO;
@@ -34,14 +35,16 @@ public class StandingOrderService {
     private final TransactionService transactionService;
     private final ObjectMapper objectMapper;
     private final FinanceMapper financeMapper;
+    private final UserRepository userRepository;
 
     @Autowired
     public StandingOrderService(StandingOrderRepository standingOrderRepository, TransactionService transactionService,
-            FinanceMapper financeMapper) {
+            FinanceMapper financeMapper, UserRepository userRepository) {
         this.standingOrderRepository = standingOrderRepository;
         this.transactionService = transactionService;
         this.objectMapper = new ObjectMapper();
         this.financeMapper = financeMapper;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -339,12 +342,47 @@ public class StandingOrderService {
     }
 
     /**
+     * Create a standing order (using IDs) and return as DTO
+     */
+    @Transactional
+    public StandingOrderDTO createStandingOrderDTO(Long creatorId, Long creditorId, Long wgId, Double totalAmount,
+            String description, StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds,
+            List<Double> percentages, Integer monthlyDay, Boolean monthlyLastDay) {
+
+        User creator = userRepository.findById(creatorId)
+                .orElseThrow(() -> new IllegalArgumentException("Creator not found"));
+        User creditor = userRepository.findById(creditorId)
+                .orElseThrow(() -> new IllegalArgumentException("Creditor not found"));
+        WG wg = creator.getWg(); // Assuming WG from creator for consistency, or fetch by ID if needed
+
+        StandingOrder order = createStandingOrder(creator, creditor, wg, totalAmount, description, frequency, startDate,
+                debtorIds, percentages, monthlyDay, monthlyLastDay);
+        return financeMapper.toDTO(order);
+    }
+
+    /**
      * Update a standing order and return as DTO
      */
     @Transactional
     public StandingOrderDTO updateStandingOrderDTO(Long id, Long currentUserId, User newCreditor, Double totalAmount,
             String description, StandingOrderFrequency frequency, List<Long> debtorIds, List<Double> percentages,
             Integer monthlyDay, Boolean monthlyLastDay) {
+        StandingOrder order = updateStandingOrder(id, currentUserId, newCreditor, totalAmount, description, frequency,
+                debtorIds, percentages, monthlyDay, monthlyLastDay);
+        return financeMapper.toDTO(order);
+    }
+
+    /**
+     * Update a standing order (using IDs) and return as DTO
+     */
+    @Transactional
+    public StandingOrderDTO updateStandingOrderDTO(Long id, Long currentUserId, Long newCreditorId, Double totalAmount,
+            String description, StandingOrderFrequency frequency, List<Long> debtorIds, List<Double> percentages,
+            Integer monthlyDay, Boolean monthlyLastDay) {
+
+        User newCreditor = userRepository.findById(newCreditorId)
+                .orElseThrow(() -> new IllegalArgumentException("Creditor not found"));
+
         StandingOrder order = updateStandingOrder(id, currentUserId, newCreditor, totalAmount, description, frequency,
                 debtorIds, percentages, monthlyDay, monthlyLastDay);
         return financeMapper.toDTO(order);

@@ -1,8 +1,8 @@
 package com.group_2.ui.shopping;
 
+import com.group_2.dto.shopping.ShoppingListDTO;
+import com.group_2.dto.shopping.ShoppingListItemDTO;
 import com.group_2.model.User;
-import com.group_2.model.shopping.ShoppingList;
-import com.group_2.model.shopping.ShoppingListItem;
 import com.group_2.service.shopping.ShoppingListService;
 import com.group_2.ui.core.Controller;
 import com.group_2.ui.core.NavbarController;
@@ -64,7 +64,7 @@ public class ShoppingListController extends Controller {
     @FXML
     private NavbarController navbarController;
 
-    private ShoppingList selectedList;
+    private ShoppingListDTO selectedList;
 
     public ShoppingListController(ShoppingListService shoppingListService, SessionManager sessionManager) {
         this.shoppingListService = shoppingListService;
@@ -85,7 +85,7 @@ public class ShoppingListController extends Controller {
             return;
 
         listsContainer.getChildren().clear();
-        List<ShoppingList> lists = shoppingListService.getAccessibleLists(currentUser);
+        List<ShoppingListDTO> lists = shoppingListService.getAccessibleListsDTO(currentUser);
 
         if (lists.isEmpty()) {
             VBox emptyState = new VBox(10);
@@ -99,7 +99,7 @@ public class ShoppingListController extends Controller {
             emptyState.getChildren().addAll(emptyIcon, emptyText);
             listsContainer.getChildren().add(emptyState);
         } else {
-            for (ShoppingList list : lists) {
+            for (ShoppingListDTO list : lists) {
                 listsContainer.getChildren().add(createListCard(list));
             }
             // Auto-select first list if none is selected
@@ -109,7 +109,7 @@ public class ShoppingListController extends Controller {
         }
     }
 
-    private HBox createListCard(ShoppingList list) {
+    private HBox createListCard(ShoppingListDTO list) {
         User currentUser = sessionManager.getCurrentUser();
         HBox card = new HBox(12);
         card.setAlignment(Pos.CENTER_LEFT);
@@ -131,23 +131,22 @@ public class ShoppingListController extends Controller {
 
         HBox titleRow = new HBox(8);
         titleRow.setAlignment(Pos.CENTER_LEFT);
-        Text nameText = new Text(list.getName());
+        Text nameText = new Text(list.name());
         nameText.getStyleClass().add("list-item-title");
         titleRow.getChildren().add(nameText);
 
         // Show shared indicator
-        if (list.isShared()) {
+        if (list.shared()) {
             Text sharedIcon = new Text("👥");
             sharedIcon.setStyle("-fx-font-size: 12px;");
             titleRow.getChildren().add(sharedIcon);
         }
 
-        String creatorName = list.getCreator().getName();
-        boolean isOwn = currentUser != null && list.getCreator().getId().equals(currentUser.getId());
-        Text creatorText = new Text(isOwn ? "Your list" : "Shared by " + creatorName);
+        boolean isOwn = currentUser != null && list.isCreator(currentUser.getId());
+        Text creatorText = new Text(isOwn ? "Your list" : "Shared by " + list.creatorName());
         creatorText.getStyleClass().add("list-item-subtitle");
 
-        Text itemCount = new Text(list.getItems().size() + " items");
+        Text itemCount = new Text(list.itemCount() + " items");
         itemCount.getStyleClass().add("list-item-subtitle");
 
         info.getChildren().addAll(titleRow, creatorText, itemCount);
@@ -160,7 +159,7 @@ public class ShoppingListController extends Controller {
         return card;
     }
 
-    private void selectList(ShoppingList list) {
+    private void selectList(ShoppingListDTO list) {
         this.selectedList = list;
         User currentUser = sessionManager.getCurrentUser();
 
@@ -171,13 +170,13 @@ public class ShoppingListController extends Controller {
         listDetailsView.setManaged(true);
 
         // Update header
-        selectedListName.setText(list.getName());
-        boolean isOwn = currentUser != null && list.getCreator().getId().equals(currentUser.getId());
-        selectedListCreator.setText(isOwn ? "Created by you" : "Shared by " + list.getCreator().getName());
+        selectedListName.setText(list.name());
+        boolean isOwn = currentUser != null && list.isCreator(currentUser.getId());
+        selectedListCreator.setText(isOwn ? "Created by you" : "Shared by " + list.creatorName());
 
         // Show shared badge
-        sharedBadge.setVisible(list.isShared());
-        sharedBadge.setManaged(list.isShared());
+        sharedBadge.setVisible(list.shared());
+        sharedBadge.setManaged(list.shared());
 
         // Only owner can delete
         deleteListButton.setVisible(isOwn);
@@ -194,14 +193,14 @@ public class ShoppingListController extends Controller {
         itemsContainer.getChildren().clear();
         boughtItemsContainer.getChildren().clear();
 
-        List<ShoppingListItem> items = shoppingListService.getItemsForList(selectedList);
+        List<ShoppingListItemDTO> items = shoppingListService.getItemsForListDTO(selectedList.id());
 
         // Separate pending and bought items
-        List<ShoppingListItem> pendingItems = new ArrayList<>();
-        List<ShoppingListItem> boughtItems = new ArrayList<>();
+        List<ShoppingListItemDTO> pendingItems = new ArrayList<>();
+        List<ShoppingListItemDTO> boughtItems = new ArrayList<>();
 
-        for (ShoppingListItem item : items) {
-            if (Boolean.TRUE.equals(item.getBought())) {
+        for (ShoppingListItemDTO item : items) {
+            if (item.bought()) {
                 boughtItems.add(item);
             } else {
                 pendingItems.add(item);
@@ -226,18 +225,18 @@ public class ShoppingListController extends Controller {
             emptyState.getChildren().add(emptyText);
             itemsContainer.getChildren().add(emptyState);
         } else {
-            for (ShoppingListItem item : pendingItems) {
+            for (ShoppingListItemDTO item : pendingItems) {
                 itemsContainer.getChildren().add(createItemRow(item, false));
             }
         }
 
         // Display bought items
-        for (ShoppingListItem item : boughtItems) {
+        for (ShoppingListItemDTO item : boughtItems) {
             boughtItemsContainer.getChildren().add(createItemRow(item, true));
         }
     }
 
-    private HBox createItemRow(ShoppingListItem item, boolean isBought) {
+    private HBox createItemRow(ShoppingListItemDTO item, boolean isBought) {
         User currentUser = sessionManager.getCurrentUser();
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
@@ -272,7 +271,7 @@ public class ShoppingListController extends Controller {
         // Item info
         VBox info = new VBox(2);
         HBox.setHgrow(info, Priority.ALWAYS);
-        Text nameText = new Text(item.getName());
+        Text nameText = new Text(item.name());
         nameText.getStyleClass().add("list-item-title");
 
         if (isBought) {
@@ -280,8 +279,9 @@ public class ShoppingListController extends Controller {
             nameText.setStyle("-fx-strikethrough: true; -fx-fill: #9ca3af;");
         }
 
-        boolean isOwnItem = currentUser != null && item.getCreator().getId().equals(currentUser.getId());
-        Text creatorText = new Text("Added by " + (isOwnItem ? "you" : item.getCreator().getName()));
+        boolean isOwnItem = currentUser != null && item.creatorId() != null
+                && item.creatorId().equals(currentUser.getId());
+        Text creatorText = new Text("Added by " + (isOwnItem ? "you" : item.creatorName()));
         creatorText.getStyleClass().add("list-item-subtitle");
         info.getChildren().addAll(nameText, creatorText);
 
@@ -295,11 +295,11 @@ public class ShoppingListController extends Controller {
         return row;
     }
 
-    private void toggleItemBought(ShoppingListItem item) {
-        shoppingListService.toggleBought(item);
+    private void toggleItemBought(ShoppingListItemDTO item) {
+        shoppingListService.toggleBoughtById(item.id());
 
         // Refresh
-        Optional<ShoppingList> refreshedList = shoppingListService.getList(selectedList.getId());
+        Optional<ShoppingListDTO> refreshedList = shoppingListService.getListDTO(selectedList.id());
         refreshedList.ifPresent(list -> {
             this.selectedList = list;
             loadItems();
@@ -322,11 +322,11 @@ public class ShoppingListController extends Controller {
         if (currentUser == null)
             return;
 
-        shoppingListService.addItem(selectedList, itemName, currentUser);
+        shoppingListService.addItemByIds(selectedList.id(), itemName, currentUser.getId());
         newItemField.clear();
 
         // Refresh the list to get updated item count
-        Optional<ShoppingList> refreshedList = shoppingListService.getList(selectedList.getId());
+        Optional<ShoppingListDTO> refreshedList = shoppingListService.getListDTO(selectedList.id());
         refreshedList.ifPresent(list -> {
             this.selectedList = list;
             loadItems();
@@ -334,11 +334,11 @@ public class ShoppingListController extends Controller {
         });
     }
 
-    private void removeItem(ShoppingListItem item) {
-        shoppingListService.removeItem(item);
+    private void removeItem(ShoppingListItemDTO item) {
+        shoppingListService.removeItemById(item.id());
 
         // Refresh
-        Optional<ShoppingList> refreshedList = shoppingListService.getList(selectedList.getId());
+        Optional<ShoppingListDTO> refreshedList = shoppingListService.getListDTO(selectedList.id());
         refreshedList.ifPresent(list -> {
             this.selectedList = list;
             loadItems();
@@ -355,7 +355,7 @@ public class ShoppingListController extends Controller {
         }
 
         // Create dialog
-        Dialog<ShoppingList> dialog = new Dialog<>();
+        Dialog<ShoppingListDTO> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Create New Shopping List");
         dialog.setHeaderText("Enter list details");
@@ -384,7 +384,7 @@ public class ShoppingListController extends Controller {
             if (!member.getId().equals(currentUser.getId())) {
                 CheckBox cb = new CheckBox(
                         member.getName() + (member.getSurname() != null ? " " + member.getSurname() : ""));
-                cb.setUserData(member);
+                cb.setUserData(member.getId()); // Store ID instead of User
                 checkBoxes.add(cb);
                 memberCheckboxes.getChildren().add(cb);
             }
@@ -410,13 +410,14 @@ public class ShoppingListController extends Controller {
         // Convert result
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == createButtonType) {
-                List<User> sharedWith = new ArrayList<>();
+                List<Long> sharedWithIds = new ArrayList<>();
                 for (CheckBox cb : checkBoxes) {
                     if (cb.isSelected()) {
-                        sharedWith.add((User) cb.getUserData());
+                        sharedWithIds.add((Long) cb.getUserData());
                     }
                 }
-                return shoppingListService.createList(nameField.getText().trim(), currentUser, sharedWith);
+                return shoppingListService.createListByUserIds(nameField.getText().trim(), currentUser.getId(),
+                        sharedWithIds);
             }
             return null;
         });
@@ -433,7 +434,7 @@ public class ShoppingListController extends Controller {
             return;
 
         User currentUser = sessionManager.getCurrentUser();
-        if (currentUser == null || !selectedList.getCreator().getId().equals(currentUser.getId())) {
+        if (currentUser == null || !selectedList.isCreator(currentUser.getId())) {
             showWarningAlert("Permission Denied", "Only the list creator can manage sharing.",
                     getOwnerWindow(listsContainer));
             return;
@@ -442,7 +443,7 @@ public class ShoppingListController extends Controller {
         if (currentUser.getWg() == null)
             return;
 
-        Dialog<List<User>> dialog = new Dialog<>();
+        Dialog<List<Long>> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Manage Sharing");
         dialog.setHeaderText("Select members to share with");
@@ -454,13 +455,13 @@ public class ShoppingListController extends Controller {
         content.setPadding(new Insets(20));
 
         List<CheckBox> checkBoxes = new ArrayList<>();
-        List<Long> currentlySharedIds = selectedList.getSharedWith().stream().map(User::getId).toList();
+        List<Long> currentlySharedIds = selectedList.sharedWithIds();
 
         for (User member : currentUser.getWg().getMitbewohner()) {
             if (!member.getId().equals(currentUser.getId())) {
                 CheckBox cb = new CheckBox(
                         member.getName() + (member.getSurname() != null ? " " + member.getSurname() : ""));
-                cb.setUserData(member);
+                cb.setUserData(member.getId()); // Store ID instead of User
                 cb.setSelected(currentlySharedIds.contains(member.getId()));
                 checkBoxes.add(cb);
                 content.getChildren().add(cb);
@@ -477,20 +478,20 @@ public class ShoppingListController extends Controller {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                List<User> sharedWith = new ArrayList<>();
+                List<Long> sharedWithIds = new ArrayList<>();
                 for (CheckBox cb : checkBoxes) {
                     if (cb.isSelected()) {
-                        sharedWith.add((User) cb.getUserData());
+                        sharedWithIds.add((Long) cb.getUserData());
                     }
                 }
-                return sharedWith;
+                return sharedWithIds;
             }
             return null;
         });
 
-        dialog.showAndWait().ifPresent(sharedWith -> {
-            shoppingListService.shareList(selectedList, sharedWith);
-            Optional<ShoppingList> refreshedList = shoppingListService.getList(selectedList.getId());
+        dialog.showAndWait().ifPresent(sharedWithIds -> {
+            shoppingListService.shareListByIds(selectedList.id(), sharedWithIds);
+            Optional<ShoppingListDTO> refreshedList = shoppingListService.getListDTO(selectedList.id());
             refreshedList.ifPresent(list -> {
                 this.selectedList = list;
                 selectList(list);
@@ -505,17 +506,17 @@ public class ShoppingListController extends Controller {
             return;
 
         User currentUser = sessionManager.getCurrentUser();
-        if (currentUser == null || !selectedList.getCreator().getId().equals(currentUser.getId())) {
+        if (currentUser == null || !selectedList.isCreator(currentUser.getId())) {
             showWarningAlert("Permission Denied", "Only the list creator can delete this list.",
                     getOwnerWindow(listsContainer));
             return;
         }
 
-        boolean confirmed = showConfirmDialog("Delete List", "Delete \"" + selectedList.getName() + "\"?",
+        boolean confirmed = showConfirmDialog("Delete List", "Delete \"" + selectedList.name() + "\"?",
                 "This will permanently delete the list and all its items.", getOwnerWindow(listsContainer));
 
         if (confirmed) {
-            shoppingListService.deleteList(selectedList);
+            shoppingListService.deleteListById(selectedList.id());
             selectedList = null;
 
             // Hide details view

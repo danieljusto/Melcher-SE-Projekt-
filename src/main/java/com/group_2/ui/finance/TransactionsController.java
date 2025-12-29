@@ -38,7 +38,7 @@ public class TransactionsController extends Controller {
     private final SessionManager sessionManager;
 
     @Autowired
-    private com.group_2.repository.UserRepository userRepository;
+    private com.group_2.service.core.UserService userService;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -212,7 +212,7 @@ public class TransactionsController extends Controller {
         String memberName = entry.getMemberName();
 
         // Resolve the User from userId when needed
-        User otherUser = userRepository.findById(entry.getUserId()).orElse(null);
+        User otherUser = userService.getUser(entry.getUserId()).orElse(null);
         if (otherUser == null) {
             showErrorAlert("Error", "User not found", balanceTable.getScene().getWindow());
             return;
@@ -475,7 +475,7 @@ public class TransactionsController extends Controller {
             }
 
             // Create the transaction (current user is always the creator)
-            transactionService.createTransaction(currentUser.getId(), // creator
+            transactionService.createTransactionDTO(currentUser.getId(), // creator
                     payerId, List.of(debtorId), null, // Equal split (100% to single debtor)
                     amount, description);
 
@@ -588,7 +588,7 @@ public class TransactionsController extends Controller {
 
             // Show confirmation for credit transfer
             // Resolve user first
-            User creditSourceUser = userRepository.findById(selectedCredit.getUserId()).orElse(null);
+            User creditSourceUser = userService.getUser(selectedCredit.getUserId()).orElse(null);
 
             if (creditSourceUser != null) {
                 showCreditTransferConfirmation(currentUser, creditSourceUser, debtorTo, transferAmount,
@@ -641,13 +641,13 @@ public class TransactionsController extends Controller {
             // And: creditSource's credit with currentUser is reduced
 
             // Transaction 1: Current user settles debt with debtorTo
-            transactionService.createTransaction(currentUser.getId(), // creator
+            transactionService.createTransactionDTO(currentUser.getId(), // creator
                     currentUser.getId(), // creditor (payer)
                     List.of(debtorTo.getId()), null, amount, "Settlement via Credit Transfer (settled debt)");
 
             // Transaction 2: Credit source settles their debt with current user
-            transactionService.createTransaction(currentUser.getId(), // creator (current user is creating this on
-                                                                      // behalf of credit source)
+            transactionService.createTransactionDTO(currentUser.getId(), // creator (current user is creating this on
+                                                                            // behalf of credit source)
                     creditSource.getId(), // creditor (credit source is the payer)
                     List.of(currentUser.getId()), null, amount, "Settlement via Credit Transfer (used credit)");
 

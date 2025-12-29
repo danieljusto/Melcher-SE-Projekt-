@@ -1,8 +1,8 @@
 package com.group_2.ui.finance;
 
+import com.group_2.dto.finance.TransactionDTO;
+import com.group_2.dto.finance.TransactionSplitDTO;
 import com.group_2.model.User;
-import com.group_2.model.finance.Transaction;
-import com.group_2.model.finance.TransactionSplit;
 import com.group_2.service.finance.TransactionService;
 import com.group_2.ui.core.Controller;
 import com.group_2.util.SessionManager;
@@ -41,21 +41,21 @@ public class TransactionHistoryController extends Controller {
     @FXML
     private Text transactionCountText;
     @FXML
-    private TableView<Transaction> historyTable;
+    private TableView<TransactionDTO> historyTable;
     @FXML
-    private TableColumn<Transaction, String> dateColumn;
+    private TableColumn<TransactionDTO, String> dateColumn;
     @FXML
-    private TableColumn<Transaction, String> timeColumn;
+    private TableColumn<TransactionDTO, String> timeColumn;
     @FXML
-    private TableColumn<Transaction, String> descriptionColumn;
+    private TableColumn<TransactionDTO, String> descriptionColumn;
     @FXML
-    private TableColumn<Transaction, String> amountColumn;
+    private TableColumn<TransactionDTO, String> amountColumn;
     @FXML
-    private TableColumn<Transaction, String> creditorColumn;
+    private TableColumn<TransactionDTO, String> creditorColumn;
     @FXML
-    private TableColumn<Transaction, String> debtorColumn;
+    private TableColumn<TransactionDTO, String> debtorColumn;
     @FXML
-    private TableColumn<Transaction, Void> actionsColumn;
+    private TableColumn<TransactionDTO, Void> actionsColumn;
 
     // Filter controls
     @FXML
@@ -74,7 +74,7 @@ public class TransactionHistoryController extends Controller {
     private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     // Master list of all transactions for the current user
-    private List<Transaction> allTransactions = new ArrayList<>();
+    private List<TransactionDTO> allTransactions = new ArrayList<>();
 
     // Month names for the filter dropdown
     private static final String[] MONTH_NAMES = { "All Months", "January", "February", "March", "April", "May", "June",
@@ -90,27 +90,27 @@ public class TransactionHistoryController extends Controller {
     public void initialize() {
         // Setup table columns
         dateColumn.setCellValueFactory(cellData -> {
-            LocalDateTime timestamp = cellData.getValue().getTimestamp();
+            LocalDateTime timestamp = cellData.getValue().timestamp();
             return new SimpleStringProperty(timestamp.format(dateFormatter));
         });
 
         timeColumn.setCellValueFactory(cellData -> {
-            LocalDateTime timestamp = cellData.getValue().getTimestamp();
+            LocalDateTime timestamp = cellData.getValue().timestamp();
             return new SimpleStringProperty(timestamp.format(timeFormatter));
         });
 
         descriptionColumn.setCellValueFactory(cellData -> {
-            String desc = cellData.getValue().getDescription();
+            String desc = cellData.getValue().description();
             return new SimpleStringProperty(desc != null ? desc : "No description");
         });
 
         amountColumn.setCellValueFactory(cellData -> {
-            Double amount = cellData.getValue().getTotalAmount();
+            Double amount = cellData.getValue().totalAmount();
             return new SimpleStringProperty(currencyFormat.format(amount));
         });
 
         // Add styling to amount column based on value
-        amountColumn.setCellFactory(column -> new TableCell<Transaction, String>() {
+        amountColumn.setCellFactory(column -> new TableCell<TransactionDTO, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -120,8 +120,8 @@ public class TransactionHistoryController extends Controller {
                 } else {
                     setText(item);
                     // Color positive amounts in green, keep others default
-                    Transaction transaction = getTableView().getItems().get(getIndex());
-                    if (transaction.getTotalAmount() > 0) {
+                    TransactionDTO transaction = getTableView().getItems().get(getIndex());
+                    if (transaction.totalAmount() > 0) {
                         setStyle("-fx-text-fill: #10b981; -fx-font-weight: 600;");
                     } else {
                         setStyle("-fx-font-weight: 600;");
@@ -131,29 +131,19 @@ public class TransactionHistoryController extends Controller {
         });
 
         creditorColumn.setCellValueFactory(cellData -> {
-            User creditor = cellData.getValue().getCreditor();
-            String name = creditor.getName();
-            if (creditor.getSurname() != null) {
-                name += " " + creditor.getSurname();
-            }
-            return new SimpleStringProperty(name);
+            return new SimpleStringProperty(cellData.getValue().creditorName());
         });
 
         debtorColumn.setCellValueFactory(cellData -> {
-            List<TransactionSplit> splits = cellData.getValue().getSplits();
+            List<TransactionSplitDTO> splits = cellData.getValue().splits();
             if (splits.isEmpty()) {
                 return new SimpleStringProperty("None");
             } else if (splits.size() == 1) {
-                User debtor = splits.get(0).getDebtor();
-                String name = debtor.getName();
-                if (debtor.getSurname() != null) {
-                    name += " " + debtor.getSurname();
-                }
-                return new SimpleStringProperty(name);
+                return new SimpleStringProperty(splits.get(0).debtorName());
             } else {
                 // Multiple debtors - show name with amount for each
-                String debtors = splits.stream().map(
-                        split -> split.getDebtor().getName() + " (" + currencyFormat.format(split.getAmount()) + ")")
+                String debtors = splits.stream()
+                        .map(split -> split.debtorName() + " (" + currencyFormat.format(split.amount()) + ")")
                         .collect(Collectors.joining(", "));
                 if (debtors.length() > 50) {
                     debtors = debtors.substring(0, 47) + "...";
@@ -163,7 +153,7 @@ public class TransactionHistoryController extends Controller {
         });
 
         // Setup actions column with edit and delete buttons
-        actionsColumn.setCellFactory(col -> new TableCell<>() {
+        actionsColumn.setCellFactory(col -> new TableCell<TransactionDTO, Void>() {
             private final Button editBtn = new Button("✏️ Edit");
             private final Button deleteBtn = new Button("🗑️");
 
@@ -171,14 +161,14 @@ public class TransactionHistoryController extends Controller {
                 editBtn.setStyle(
                         "-fx-background-color: #dbeafe; -fx-text-fill: #2563eb; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 8;");
                 editBtn.setOnAction(e -> {
-                    Transaction transaction = getTableView().getItems().get(getIndex());
+                    TransactionDTO transaction = getTableView().getItems().get(getIndex());
                     showEditTransactionDialog(transaction);
                 });
 
                 deleteBtn.setStyle(
                         "-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 11px; -fx-padding: 5 8;");
                 deleteBtn.setOnAction(e -> {
-                    Transaction transaction = getTableView().getItems().get(getIndex());
+                    TransactionDTO transaction = getTableView().getItems().get(getIndex());
                     confirmAndDeleteTransaction(transaction);
                 });
             }
@@ -189,11 +179,11 @@ public class TransactionHistoryController extends Controller {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    Transaction transaction = getTableView().getItems().get(getIndex());
+                    TransactionDTO transaction = getTableView().getItems().get(getIndex());
                     User currentUser = sessionManager.getCurrentUser();
 
                     // Only show edit/delete for transactions created by current user
-                    if (currentUser != null && transaction.getCreatedBy().getId().equals(currentUser.getId())) {
+                    if (currentUser != null && transaction.createdById().equals(currentUser.getId())) {
                         HBox buttons = new HBox(5, editBtn, deleteBtn);
                         setGraphic(buttons);
                     } else {
@@ -205,13 +195,13 @@ public class TransactionHistoryController extends Controller {
 
         // Setup row factory for double-click edit
         historyTable.setRowFactory(tv -> {
-            TableRow<Transaction> row = new TableRow<>();
+            TableRow<TransactionDTO> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Transaction transaction = row.getItem();
+                    TransactionDTO transaction = row.getItem();
                     User currentUser = sessionManager.getCurrentUser();
                     // Only allow edit if current user is the creator
-                    if (currentUser != null && transaction.getCreatedBy().getId().equals(currentUser.getId())) {
+                    if (currentUser != null && transaction.createdById().equals(currentUser.getId())) {
                         showEditTransactionDialog(transaction);
                     }
                 }
@@ -225,9 +215,10 @@ public class TransactionHistoryController extends Controller {
         historyTable.setFixedCellSize(52); // Fixed row height for consistency
 
         // Add listener to dynamically size table based on number of items
-        historyTable.getItems().addListener((javafx.collections.ListChangeListener.Change<? extends Transaction> c) -> {
-            updateHistoryTableHeight();
-        });
+        historyTable.getItems()
+                .addListener((javafx.collections.ListChangeListener.Change<? extends TransactionDTO> c) -> {
+                    updateHistoryTableHeight();
+                });
 
         // Load data
         initView();
@@ -254,7 +245,7 @@ public class TransactionHistoryController extends Controller {
         }
 
         // Fetch all transactions for current user
-        allTransactions = transactionService.getTransactionsForUser(currentUser.getId());
+        allTransactions = transactionService.getTransactionsForUserDTO(currentUser.getId());
 
         // Populate filter dropdowns
         populateFilters();
@@ -273,8 +264,8 @@ public class TransactionHistoryController extends Controller {
         yearOptions.add("All Years");
 
         Set<Integer> years = new TreeSet<>();
-        for (Transaction t : allTransactions) {
-            years.add(t.getTimestamp().getYear());
+        for (TransactionDTO t : allTransactions) {
+            years.add(t.timestamp().getYear());
         }
         // Always include current year
         int currentYear = Year.now().getValue();
@@ -329,11 +320,11 @@ public class TransactionHistoryController extends Controller {
         UserDisplay selectedPayer = payerFilter.getValue();
         UserDisplay selectedDebtor = debtorFilter.getValue();
 
-        List<Transaction> filtered = allTransactions.stream().filter(t -> {
+        List<TransactionDTO> filtered = allTransactions.stream().filter(t -> {
             // Year filter (optional - "All Years" shows all)
             if (selectedYear != null && !selectedYear.equals("All Years")) {
                 int year = Integer.parseInt(selectedYear);
-                if (t.getTimestamp().getYear() != year) {
+                if (t.timestamp().getYear() != year) {
                     return false;
                 }
             }
@@ -341,22 +332,22 @@ public class TransactionHistoryController extends Controller {
             // Month filter (optional - "All Months" shows all)
             if (selectedMonth != null && !selectedMonth.equals("All Months")) {
                 int monthIndex = java.util.Arrays.asList(MONTH_NAMES).indexOf(selectedMonth);
-                if (monthIndex > 0 && t.getTimestamp().getMonthValue() != monthIndex) {
+                if (monthIndex > 0 && t.timestamp().getMonthValue() != monthIndex) {
                     return false;
                 }
             }
 
             // Payer filter
             if (selectedPayer != null && selectedPayer.getUser() != null) {
-                if (!t.getCreditor().getId().equals(selectedPayer.getUser().getId())) {
+                if (!t.creditorId().equals(selectedPayer.getUser().getId())) {
                     return false;
                 }
             }
 
             // Debtor filter
             if (selectedDebtor != null && selectedDebtor.getUser() != null) {
-                boolean hasDebtor = t.getSplits().stream()
-                        .anyMatch(s -> s.getDebtor().getId().equals(selectedDebtor.getUser().getId()));
+                boolean hasDebtor = t.splits().stream()
+                        .anyMatch(s -> s.debtorId().equals(selectedDebtor.getUser().getId()));
                 if (!hasDebtor) {
                     return false;
                 }
@@ -365,7 +356,7 @@ public class TransactionHistoryController extends Controller {
             // Description search (case-insensitive partial match)
             String searchText = searchField.getText();
             if (searchText != null && !searchText.trim().isEmpty()) {
-                String desc = t.getDescription();
+                String desc = t.description();
                 if (desc == null || !desc.toLowerCase().contains(searchText.toLowerCase().trim())) {
                     return false;
                 }
@@ -412,7 +403,7 @@ public class TransactionHistoryController extends Controller {
         });
     }
 
-    private void showEditTransactionDialog(Transaction transaction) {
+    private void showEditTransactionDialog(TransactionDTO transaction) {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null)
             return;
@@ -431,31 +422,30 @@ public class TransactionHistoryController extends Controller {
         // Description field
         Text descLabel = new Text("Description");
         descLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-        TextField descField = new TextField(transaction.getDescription());
+        TextField descField = new TextField(transaction.description());
         descField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
 
         // Total Amount field
         Text amountLabel = new Text("Total Amount (€)");
         amountLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-        TextField amountField = new TextField(String.format("%.2f", transaction.getTotalAmount()));
+        TextField amountField = new TextField(String.format("%.2f", transaction.totalAmount()));
         amountField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
 
         // Creditor info
-        Text creditorInfo = new Text("Creditor: " + transaction.getCreditor().getName()
-                + (transaction.getCreditor().getSurname() != null ? " " + transaction.getCreditor().getSurname() : ""));
+        Text creditorInfo = new Text("Creditor: " + transaction.creditorName());
         creditorInfo.setStyle("-fx-font-size: 12px; -fx-fill: #6b7280;");
 
         // Date info
-        Text dateInfo = new Text("Created: " + transaction.getTimestamp().format(dateFormatter) + " at "
-                + transaction.getTimestamp().format(timeFormatter));
+        Text dateInfo = new Text("Created: " + transaction.timestamp().format(dateFormatter) + " at "
+                + transaction.timestamp().format(timeFormatter));
         dateInfo.setStyle("-fx-font-size: 11px; -fx-fill: #9ca3af;");
 
         content.getChildren().addAll(descLabel, descField, amountLabel, amountField, creditorInfo, dateInfo);
 
         // For multiple debtors, show split mode options
-        List<TransactionSplit> splits = transaction.getSplits();
+        List<TransactionSplitDTO> splits = transaction.splits();
         java.util.Map<Long, TextField> splitFields = new java.util.HashMap<>();
         final String[] currentMode = { "AMOUNT" }; // Default mode
 
@@ -498,18 +488,15 @@ public class TransactionHistoryController extends Controller {
                 try {
                     total = Double.parseDouble(amountField.getText().replace(",", "."));
                 } catch (NumberFormatException e) {
-                    total = transaction.getTotalAmount();
+                    total = transaction.totalAmount();
                 }
 
                 if (currentMode[0].equals("EQUAL")) {
                     double equalAmount = total / splits.size();
-                    for (TransactionSplit split : splits) {
+                    for (TransactionSplitDTO split : splits) {
                         HBox row = new HBox(10);
                         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-                        String name = split.getDebtor().getName();
-                        if (split.getDebtor().getSurname() != null)
-                            name += " " + split.getDebtor().getSurname();
-                        Text nameText = new Text(name + ": " + String.format("%.2f", equalAmount) + "€");
+                        Text nameText = new Text(split.debtorName() + ": " + String.format("%.2f", equalAmount) + "€");
                         nameText.setStyle("-fx-font-size: 12px;");
                         row.getChildren().add(nameText);
                         splitsContainer.getChildren().add(row);
@@ -517,21 +504,18 @@ public class TransactionHistoryController extends Controller {
                     validationLabel.setText("✓ Equal split");
                     validationLabel.setStyle("-fx-font-size: 11px; -fx-fill: #16a34a;");
                 } else if (currentMode[0].equals("PERCENT")) {
-                    for (TransactionSplit split : splits) {
+                    for (TransactionSplitDTO split : splits) {
                         HBox row = new HBox(10);
                         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-                        String name = split.getDebtor().getName();
-                        if (split.getDebtor().getSurname() != null)
-                            name += " " + split.getDebtor().getSurname();
-                        Text nameText = new Text(name + ":");
+                        Text nameText = new Text(split.debtorName() + ":");
                         nameText.setStyle("-fx-font-size: 12px;");
                         nameText.setWrappingWidth(120);
 
-                        TextField field = new TextField(String.format("%.1f", split.getPercentage()));
+                        TextField field = new TextField(String.format("%.1f", split.percentage()));
                         field.setStyle(
                                 "-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-radius: 4; -fx-padding: 6;");
                         field.setPrefWidth(70);
-                        splitFields.put(split.getDebtor().getId(), field);
+                        splitFields.put(split.debtorId(), field);
 
                         // Add listener for live validation
                         field.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -565,7 +549,7 @@ public class TransactionHistoryController extends Controller {
                         splitsContainer.getChildren().add(row);
                     }
                     // Initial calculation
-                    double sum = splits.stream().mapToDouble(TransactionSplit::getPercentage).sum();
+                    double sum = splits.stream().mapToDouble(TransactionSplitDTO::percentage).sum();
                     double remaining = 100.0 - sum;
                     String style = Math.abs(remaining) < 0.01
                             ? "-fx-font-size: 11px; -fx-fill: #10b981; -fx-font-weight: 600;"
@@ -573,21 +557,18 @@ public class TransactionHistoryController extends Controller {
                     validationLabel.setText(String.format("Total: %.1f%% of 100%%\n%.1f%% left", sum, remaining));
                     validationLabel.setStyle(style);
                 } else { // AMOUNT mode
-                    for (TransactionSplit split : splits) {
+                    for (TransactionSplitDTO split : splits) {
                         HBox row = new HBox(10);
                         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-                        String name = split.getDebtor().getName();
-                        if (split.getDebtor().getSurname() != null)
-                            name += " " + split.getDebtor().getSurname();
-                        Text nameText = new Text(name + ":");
+                        Text nameText = new Text(split.debtorName() + ":");
                         nameText.setStyle("-fx-font-size: 12px;");
                         nameText.setWrappingWidth(120);
 
-                        TextField field = new TextField(String.format("%.2f", split.getAmount()));
+                        TextField field = new TextField(String.format("%.2f", split.amount()));
                         field.setStyle(
                                 "-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-radius: 4; -fx-padding: 6;");
                         field.setPrefWidth(80);
-                        splitFields.put(split.getDebtor().getId(), field);
+                        splitFields.put(split.debtorId(), field);
 
                         // Add listener for live validation
                         field.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -622,7 +603,7 @@ public class TransactionHistoryController extends Controller {
                         splitsContainer.getChildren().add(row);
                     }
                     // Initial calculation
-                    double sum = splits.stream().mapToDouble(TransactionSplit::getAmount).sum();
+                    double sum = splits.stream().mapToDouble(TransactionSplitDTO::amount).sum();
                     double remaining = total - sum;
                     String style = Math.abs(remaining) < 0.01
                             ? "-fx-font-size: 11px; -fx-fill: #10b981; -fx-font-weight: 600;"
@@ -680,18 +661,18 @@ public class TransactionHistoryController extends Controller {
                     if (currentMode[0].equals("EQUAL")) {
                         // Equal split
                         double equalPercent = 100.0 / splits.size();
-                        for (TransactionSplit split : splits) {
-                            debtorIds.add(split.getDebtor().getId());
+                        for (TransactionSplitDTO split : splits) {
+                            debtorIds.add(split.debtorId());
                             percentages.add(equalPercent);
                         }
                     } else if (currentMode[0].equals("PERCENT")) {
                         // Percentage mode - validate sum = 100%
                         double sum = 0;
-                        for (TransactionSplit split : splits) {
-                            TextField field = splitFields.get(split.getDebtor().getId());
+                        for (TransactionSplitDTO split : splits) {
+                            TextField field = splitFields.get(split.debtorId());
                             double pct = Double.parseDouble(field.getText().replace(",", "."));
                             sum += pct;
-                            debtorIds.add(split.getDebtor().getId());
+                            debtorIds.add(split.debtorId());
                             percentages.add(pct);
                         }
                         if (Math.abs(sum - 100.0) > 0.1) {
@@ -701,32 +682,32 @@ public class TransactionHistoryController extends Controller {
                     } else {
                         // Amount mode - calculate percentages from amounts
                         double totalSplitAmount = 0;
-                        for (TransactionSplit split : splits) {
-                            TextField field = splitFields.get(split.getDebtor().getId());
+                        for (TransactionSplitDTO split : splits) {
+                            TextField field = splitFields.get(split.debtorId());
                             totalSplitAmount += Double.parseDouble(field.getText().replace(",", "."));
                         }
                         if (Math.abs(totalSplitAmount - newAmount) > 0.01) {
                             throw new IllegalArgumentException(String.format(
                                     "Split amounts (€%.2f) must equal total (€%.2f)", totalSplitAmount, newAmount));
                         }
-                        for (TransactionSplit split : splits) {
-                            TextField field = splitFields.get(split.getDebtor().getId());
+                        for (TransactionSplitDTO split : splits) {
+                            TextField field = splitFields.get(split.debtorId());
                             double amount = Double.parseDouble(field.getText().replace(",", "."));
-                            debtorIds.add(split.getDebtor().getId());
+                            debtorIds.add(split.debtorId());
                             percentages.add((amount / newAmount) * 100.0);
                         }
                     }
                 } else {
                     // Single debtor
-                    for (TransactionSplit split : splits) {
-                        debtorIds.add(split.getDebtor().getId());
-                        percentages.add(split.getPercentage());
+                    for (TransactionSplitDTO split : splits) {
+                        debtorIds.add(split.debtorId());
+                        percentages.add(split.percentage());
                     }
                 }
 
                 // Update the transaction
-                transactionService.updateTransaction(transaction.getId(), currentUser.getId(),
-                        transaction.getCreditor().getId(), debtorIds, percentages, newAmount, newDescription);
+                transactionService.updateTransactionDTO(transaction.id(), currentUser.getId(), transaction.creditorId(),
+                        debtorIds, percentages, newAmount, newDescription);
 
                 // Refresh the view
                 initView();
@@ -742,13 +723,13 @@ public class TransactionHistoryController extends Controller {
         }
     }
 
-    private void confirmAndDeleteTransaction(Transaction transaction) {
+    private void confirmAndDeleteTransaction(TransactionDTO transaction) {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null)
             return;
 
-        String message = "Transaction: " + transaction.getDescription() + "\nAmount: "
-                + currencyFormat.format(transaction.getTotalAmount())
+        String message = "Transaction: " + transaction.description() + "\nAmount: "
+                + currencyFormat.format(transaction.totalAmount())
                 + "\n\nThis action cannot be undone and will affect all balances.";
 
         boolean confirmed = showConfirmDialog("Delete Transaction", "Are you sure you want to delete this transaction?",
@@ -756,7 +737,7 @@ public class TransactionHistoryController extends Controller {
 
         if (confirmed) {
             try {
-                transactionService.deleteTransaction(transaction.getId(), currentUser.getId());
+                transactionService.deleteTransaction(transaction.id(), currentUser.getId());
 
                 // Refresh the view
                 initView();
