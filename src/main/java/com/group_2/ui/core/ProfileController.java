@@ -8,7 +8,7 @@ import com.group_2.util.SessionManager;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
+
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
@@ -19,11 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 /**
- * Controller for the profile view.
- * Shows user information and provides logout/leave WG functionality.
+ * Controller for the profile view. Shows user information and provides
+ * logout/leave WG functionality.
  */
 @Component
 public class ProfileController extends Controller {
@@ -65,8 +63,8 @@ public class ProfileController extends Controller {
     private void updateProfileInfo() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser != null) {
-            String fullName = currentUser.getName() +
-                    (currentUser.getSurname() != null ? " " + currentUser.getSurname() : "");
+            String fullName = currentUser.getName()
+                    + (currentUser.getSurname() != null ? " " + currentUser.getSurname() : "");
             userNameText.setText(fullName);
             nameDisplayText.setText(fullName);
 
@@ -117,9 +115,7 @@ public class ProfileController extends Controller {
         lastNameField.setStyle(
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
 
-        content.getChildren().addAll(
-                new Text("First Name:"), firstNameField,
-                new Text("Last Name:"), lastNameField);
+        content.getChildren().addAll(new Text("First Name:"), firstNameField, new Text("Last Name:"), lastNameField);
 
         dialog.getDialogPane().setContent(content);
 
@@ -132,7 +128,7 @@ public class ProfileController extends Controller {
 
         dialog.showAndWait().ifPresent(names -> {
             if (names[0].isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Name", "First name cannot be empty.");
+                showWarningAlert("Invalid Name", "First name cannot be empty.");
                 return;
             }
             try {
@@ -140,9 +136,9 @@ public class ProfileController extends Controller {
                         currentUser.getEmail());
                 sessionManager.refreshCurrentUser();
                 updateProfileInfo();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Name updated successfully!");
+                showSuccessAlert("Success", "Name updated successfully!");
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to update name: " + e.getMessage());
+                showErrorAlert("Error", "Failed to update name: " + e.getMessage());
             }
         });
     }
@@ -181,20 +177,20 @@ public class ProfileController extends Controller {
 
         dialog.showAndWait().ifPresent(email -> {
             if (email.isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Email", "Email cannot be empty.");
+                showWarningAlert("Invalid Email", "Email cannot be empty.");
                 return;
             }
             if (!email.contains("@")) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Email", "Please enter a valid email address.");
+                showWarningAlert("Invalid Email", "Please enter a valid email address.");
                 return;
             }
             try {
                 userService.updateUser(currentUser.getId(), currentUser.getName(), currentUser.getSurname(), email);
                 sessionManager.refreshCurrentUser();
                 updateProfileInfo();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Email updated successfully!");
+                showSuccessAlert("Success", "Email updated successfully!");
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to update email: " + e.getMessage());
+                showErrorAlert("Error", "Failed to update email: " + e.getMessage());
             }
         });
     }
@@ -209,7 +205,7 @@ public class ProfileController extends Controller {
     public void handleLeaveWG() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.WARNING, "No WG", "You are not a member of any WG.");
+            showWarningAlert("No WG", "You are not a member of any WG.");
             return;
         }
 
@@ -217,25 +213,22 @@ public class ProfileController extends Controller {
         boolean isAdmin = wg.admin != null && wg.admin.getId().equals(currentUser.getId());
 
         if (isAdmin) {
-            showAlert(Alert.AlertType.WARNING, "Cannot Leave",
+            showWarningAlert("Cannot Leave",
                     "As the admin, you cannot leave the WG. Please transfer admin rights first or delete the WG.");
             return;
         }
 
-        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmDialog.setTitle("Leave WG");
-        confirmDialog.setHeaderText("Are you sure you want to leave " + wg.name + "?");
-        confirmDialog.setContentText("This action cannot be undone.");
+        boolean confirmed = showConfirmDialog("Leave WG", "Are you sure you want to leave " + wg.name + "?",
+                "This action cannot be undone.");
 
-        Optional<ButtonType> result = confirmDialog.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        if (confirmed) {
             try {
                 wgService.removeMitbewohner(wg.getId(), currentUser.getId());
                 sessionManager.refreshCurrentUser();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "You have left the WG.");
+                showSuccessAlert("Success", "You have left the WG.");
                 loadScene(avatarInitial.getScene(), "/core/no_wg.fxml");
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to leave WG: " + e.getMessage());
+                showErrorAlert("Error", "Failed to leave WG: " + e.getMessage());
             }
         }
     }

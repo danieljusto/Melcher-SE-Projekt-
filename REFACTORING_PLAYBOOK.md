@@ -37,6 +37,24 @@ Purpose: keep incremental refactors aligned across architecture, naming, and pra
 - Unit-test services with mocked repositories; integration tests for key flows with in-memory DB when feasible.
 - When refactoring, add/adjust tests around changed seams before deeper changes.
 
+## FXML Organization
+- FXML files live under `resources/` in domain subfolders: `/core/`, `/cleaning/`, `/finance/`, `/shopping/`.
+- Shared components (e.g., `navbar.fxml`) stay in `/core/` and are included via `<fx:include>`.
+- Each FXML file declares its controller with the full package path in `fx:controller`.
+
+## Controller Initialization
+- Controllers receive `SessionManager` via Spring injection; avoid static access patterns.
+- Use a parameterless `initView()` method that calls `refreshCurrentUser()` internally; calling sites should not pass the user object.
+- Keep view-setup logic in `initView()`; event handlers delegate to services.
+
+## Scene Navigation
+- Use `loadScene(fxmlPath)` with paths relative to the resources root (e.g., `/finance/transactions.fxml`).
+- Centralize navigation helpers in a utility or base controller to avoid path duplication.
+
+## Entity Lifecycle
+- Define cascade and orphan-removal strategies per relationship; prefer explicit over implicit cascades.
+- Document any `CascadeType.ALL` usage; avoid unless truly owning the child lifecycle.
+
 ## Incremental Refactor Approach
 - Work per domain slice (core → cleaning → finance → shopping); finish a slice with naming/structure fixes, dependency cleanup, and tests before moving on.
 - Keep changes small and reversible; document decisions and any follow-ups in `REFACTORING_STATUS.md`.

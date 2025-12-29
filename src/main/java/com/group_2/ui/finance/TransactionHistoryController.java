@@ -77,14 +77,11 @@ public class TransactionHistoryController extends Controller {
     private List<Transaction> allTransactions = new ArrayList<>();
 
     // Month names for the filter dropdown
-    private static final String[] MONTH_NAMES = {
-            "All Months", "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-    };
+    private static final String[] MONTH_NAMES = { "All Months", "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December" };
 
     @Autowired
-    public TransactionHistoryController(TransactionService transactionService,
-            SessionManager sessionManager) {
+    public TransactionHistoryController(TransactionService transactionService, SessionManager sessionManager) {
         this.transactionService = transactionService;
         this.sessionManager = sessionManager;
     }
@@ -155,9 +152,8 @@ public class TransactionHistoryController extends Controller {
                 return new SimpleStringProperty(name);
             } else {
                 // Multiple debtors - show name with amount for each
-                String debtors = splits.stream()
-                        .map(split -> split.getDebtor().getName() + " (" + currencyFormat.format(split.getAmount())
-                                + ")")
+                String debtors = splits.stream().map(
+                        split -> split.getDebtor().getName() + " (" + currencyFormat.format(split.getAmount()) + ")")
                         .collect(Collectors.joining(", "));
                 if (debtors.length() > 50) {
                     debtors = debtors.substring(0, 47) + "...";
@@ -333,52 +329,50 @@ public class TransactionHistoryController extends Controller {
         UserDisplay selectedPayer = payerFilter.getValue();
         UserDisplay selectedDebtor = debtorFilter.getValue();
 
-        List<Transaction> filtered = allTransactions.stream()
-                .filter(t -> {
-                    // Year filter (optional - "All Years" shows all)
-                    if (selectedYear != null && !selectedYear.equals("All Years")) {
-                        int year = Integer.parseInt(selectedYear);
-                        if (t.getTimestamp().getYear() != year) {
-                            return false;
-                        }
-                    }
+        List<Transaction> filtered = allTransactions.stream().filter(t -> {
+            // Year filter (optional - "All Years" shows all)
+            if (selectedYear != null && !selectedYear.equals("All Years")) {
+                int year = Integer.parseInt(selectedYear);
+                if (t.getTimestamp().getYear() != year) {
+                    return false;
+                }
+            }
 
-                    // Month filter (optional - "All Months" shows all)
-                    if (selectedMonth != null && !selectedMonth.equals("All Months")) {
-                        int monthIndex = java.util.Arrays.asList(MONTH_NAMES).indexOf(selectedMonth);
-                        if (monthIndex > 0 && t.getTimestamp().getMonthValue() != monthIndex) {
-                            return false;
-                        }
-                    }
+            // Month filter (optional - "All Months" shows all)
+            if (selectedMonth != null && !selectedMonth.equals("All Months")) {
+                int monthIndex = java.util.Arrays.asList(MONTH_NAMES).indexOf(selectedMonth);
+                if (monthIndex > 0 && t.getTimestamp().getMonthValue() != monthIndex) {
+                    return false;
+                }
+            }
 
-                    // Payer filter
-                    if (selectedPayer != null && selectedPayer.getUser() != null) {
-                        if (!t.getCreditor().getId().equals(selectedPayer.getUser().getId())) {
-                            return false;
-                        }
-                    }
+            // Payer filter
+            if (selectedPayer != null && selectedPayer.getUser() != null) {
+                if (!t.getCreditor().getId().equals(selectedPayer.getUser().getId())) {
+                    return false;
+                }
+            }
 
-                    // Debtor filter
-                    if (selectedDebtor != null && selectedDebtor.getUser() != null) {
-                        boolean hasDebtor = t.getSplits().stream()
-                                .anyMatch(s -> s.getDebtor().getId().equals(selectedDebtor.getUser().getId()));
-                        if (!hasDebtor) {
-                            return false;
-                        }
-                    }
+            // Debtor filter
+            if (selectedDebtor != null && selectedDebtor.getUser() != null) {
+                boolean hasDebtor = t.getSplits().stream()
+                        .anyMatch(s -> s.getDebtor().getId().equals(selectedDebtor.getUser().getId()));
+                if (!hasDebtor) {
+                    return false;
+                }
+            }
 
-                    // Description search (case-insensitive partial match)
-                    String searchText = searchField.getText();
-                    if (searchText != null && !searchText.trim().isEmpty()) {
-                        String desc = t.getDescription();
-                        if (desc == null || !desc.toLowerCase().contains(searchText.toLowerCase().trim())) {
-                            return false;
-                        }
-                    }
+            // Description search (case-insensitive partial match)
+            String searchText = searchField.getText();
+            if (searchText != null && !searchText.trim().isEmpty()) {
+                String desc = t.getDescription();
+                if (desc == null || !desc.toLowerCase().contains(searchText.toLowerCase().trim())) {
+                    return false;
+                }
+            }
 
-                    return true;
-                })
-                .collect(Collectors.toList());
+            return true;
+        }).collect(Collectors.toList());
 
         // Update count text
         transactionCountText.setText(String.valueOf(filtered.size()));
@@ -449,13 +443,13 @@ public class TransactionHistoryController extends Controller {
                 "-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;");
 
         // Creditor info
-        Text creditorInfo = new Text("Creditor: " + transaction.getCreditor().getName() +
-                (transaction.getCreditor().getSurname() != null ? " " + transaction.getCreditor().getSurname() : ""));
+        Text creditorInfo = new Text("Creditor: " + transaction.getCreditor().getName()
+                + (transaction.getCreditor().getSurname() != null ? " " + transaction.getCreditor().getSurname() : ""));
         creditorInfo.setStyle("-fx-font-size: 12px; -fx-fill: #6b7280;");
 
         // Date info
-        Text dateInfo = new Text("Created: " + transaction.getTimestamp().format(dateFormatter) +
-                " at " + transaction.getTimestamp().format(timeFormatter));
+        Text dateInfo = new Text("Created: " + transaction.getTimestamp().format(dateFormatter) + " at "
+                + transaction.getTimestamp().format(timeFormatter));
         dateInfo.setStyle("-fx-font-size: 11px; -fx-fill: #9ca3af;");
 
         content.getChildren().addAll(descLabel, descField, amountLabel, amountField, creditorInfo, dateInfo);
@@ -665,8 +659,8 @@ public class TransactionHistoryController extends Controller {
 
         // Style the save button
         Button saveBtn = (Button) dialog.getDialogPane().lookupButton(saveButton);
-        saveBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; " +
-                "-fx-padding: 10 24; -fx-font-weight: bold; -fx-cursor: hand;");
+        saveBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; "
+                + "-fx-padding: 10 24; -fx-font-weight: bold; -fx-cursor: hand;");
 
         // Handle result
         Optional<ButtonType> result = dialog.showAndWait();
@@ -712,9 +706,8 @@ public class TransactionHistoryController extends Controller {
                             totalSplitAmount += Double.parseDouble(field.getText().replace(",", "."));
                         }
                         if (Math.abs(totalSplitAmount - newAmount) > 0.01) {
-                            throw new IllegalArgumentException(
-                                    String.format("Split amounts (€%.2f) must equal total (€%.2f)", totalSplitAmount,
-                                            newAmount));
+                            throw new IllegalArgumentException(String.format(
+                                    "Split amounts (€%.2f) must equal total (€%.2f)", totalSplitAmount, newAmount));
                         }
                         for (TransactionSplit split : splits) {
                             TextField field = splitFields.get(split.getDebtor().getId());
@@ -732,40 +725,19 @@ public class TransactionHistoryController extends Controller {
                 }
 
                 // Update the transaction
-                transactionService.updateTransaction(
-                        transaction.getId(),
-                        currentUser.getId(),
-                        transaction.getCreditor().getId(),
-                        debtorIds,
-                        percentages,
-                        newAmount,
-                        newDescription);
+                transactionService.updateTransaction(transaction.getId(), currentUser.getId(),
+                        transaction.getCreditor().getId(), debtorIds, percentages, newAmount, newDescription);
 
                 // Refresh the view
                 initView();
 
                 // Show success
-                Alert success = new Alert(Alert.AlertType.INFORMATION);
-                success.initOwner(historyTable.getScene().getWindow());
-                success.setTitle("Success");
-                success.setHeaderText(null);
-                success.setContentText("Transaction updated successfully.");
-                success.showAndWait();
+                showSuccessAlert("Success", "Transaction updated successfully.", historyTable.getScene().getWindow());
 
             } catch (NumberFormatException e) {
-                Alert error = new Alert(Alert.AlertType.ERROR);
-                error.initOwner(historyTable.getScene().getWindow());
-                error.setTitle("Error");
-                error.setHeaderText("Invalid input");
-                error.setContentText("Please enter valid amounts.");
-                error.showAndWait();
+                showErrorAlert("Invalid input", "Please enter valid amounts.", historyTable.getScene().getWindow());
             } catch (Exception e) {
-                Alert error = new Alert(Alert.AlertType.ERROR);
-                error.initOwner(historyTable.getScene().getWindow());
-                error.setTitle("Error");
-                error.setHeaderText("Failed to update transaction");
-                error.setContentText(e.getMessage());
-                error.showAndWait();
+                showErrorAlert("Failed to update transaction", e.getMessage(), historyTable.getScene().getWindow());
             }
         }
     }
@@ -775,16 +747,14 @@ public class TransactionHistoryController extends Controller {
         if (currentUser == null)
             return;
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.initOwner(historyTable.getScene().getWindow());
-        confirm.setTitle("Delete Transaction");
-        confirm.setHeaderText("Are you sure you want to delete this transaction?");
-        confirm.setContentText("Transaction: " + transaction.getDescription() +
-                "\nAmount: " + currencyFormat.format(transaction.getTotalAmount()) +
-                "\n\nThis action cannot be undone and will affect all balances.");
+        String message = "Transaction: " + transaction.getDescription() + "\nAmount: "
+                + currencyFormat.format(transaction.getTotalAmount())
+                + "\n\nThis action cannot be undone and will affect all balances.";
 
-        Optional<ButtonType> result = confirm.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        boolean confirmed = showConfirmDialog("Delete Transaction", "Are you sure you want to delete this transaction?",
+                message, historyTable.getScene().getWindow());
+
+        if (confirmed) {
             try {
                 transactionService.deleteTransaction(transaction.getId(), currentUser.getId());
 
@@ -792,20 +762,10 @@ public class TransactionHistoryController extends Controller {
                 initView();
 
                 // Show success
-                Alert success = new Alert(Alert.AlertType.INFORMATION);
-                success.initOwner(historyTable.getScene().getWindow());
-                success.setTitle("Success");
-                success.setHeaderText(null);
-                success.setContentText("Transaction deleted successfully.");
-                success.showAndWait();
+                showSuccessAlert("Success", "Transaction deleted successfully.", historyTable.getScene().getWindow());
 
             } catch (Exception e) {
-                Alert error = new Alert(Alert.AlertType.ERROR);
-                error.initOwner(historyTable.getScene().getWindow());
-                error.setTitle("Error");
-                error.setHeaderText("Failed to delete transaction");
-                error.setContentText(e.getMessage());
-                error.showAndWait();
+                showErrorAlert("Failed to delete transaction", e.getMessage(), historyTable.getScene().getWindow());
             }
         }
     }

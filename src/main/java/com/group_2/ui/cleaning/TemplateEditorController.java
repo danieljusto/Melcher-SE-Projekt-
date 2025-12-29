@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Controller for the template editor view.
- * Allows users to define a default weekly schedule template.
- * Uses a working copy that is only saved when "Save & Apply" is clicked.
+ * Controller for the template editor view. Allows users to define a default
+ * weekly schedule template. Uses a working copy that is only saved when "Save &
+ * Apply" is clicked.
  */
 @Component
 public class TemplateEditorController extends Controller {
@@ -153,8 +153,8 @@ public class TemplateEditorController extends Controller {
     }
 
     private void clearColumns() {
-        VBox[] columns = { mondayColumn, tuesdayColumn, wednesdayColumn,
-                thursdayColumn, fridayColumn, saturdayColumn, sundayColumn };
+        VBox[] columns = { mondayColumn, tuesdayColumn, wednesdayColumn, thursdayColumn, fridayColumn, saturdayColumn,
+                sundayColumn };
         for (VBox column : columns) {
             if (column.getChildren().size() > 1) {
                 column.getChildren().subList(1, column.getChildren().size()).clear();
@@ -164,22 +164,22 @@ public class TemplateEditorController extends Controller {
 
     private VBox getColumnForDay(int dayOfWeek) {
         switch (dayOfWeek) {
-            case 1:
-                return mondayColumn;
-            case 2:
-                return tuesdayColumn;
-            case 3:
-                return wednesdayColumn;
-            case 4:
-                return thursdayColumn;
-            case 5:
-                return fridayColumn;
-            case 6:
-                return saturdayColumn;
-            case 7:
-                return sundayColumn;
-            default:
-                return mondayColumn;
+        case 1:
+            return mondayColumn;
+        case 2:
+            return tuesdayColumn;
+        case 3:
+            return wednesdayColumn;
+        case 4:
+            return thursdayColumn;
+        case 5:
+            return fridayColumn;
+        case 6:
+            return saturdayColumn;
+        case 7:
+            return sundayColumn;
+        default:
+            return mondayColumn;
         }
     }
 
@@ -220,15 +220,15 @@ public class TemplateEditorController extends Controller {
 
         Button editBtn = new Button("✏️ Edit Day");
         editBtn.setMaxWidth(Double.MAX_VALUE);
-        editBtn.setStyle("-fx-background-color: #e0e7ff; -fx-text-fill: #4338ca; -fx-font-size: 12px; " +
-                "-fx-cursor: hand; -fx-padding: 8 12; -fx-background-radius: 6;");
+        editBtn.setStyle("-fx-background-color: #e0e7ff; -fx-text-fill: #4338ca; -fx-font-size: 12px; "
+                + "-fx-cursor: hand; -fx-padding: 8 12; -fx-background-radius: 6;");
         editBtn.setTooltip(new Tooltip("Edit day of week"));
         editBtn.setOnAction(e -> showEditTemplateDialog(template));
 
         Button deleteBtn = new Button("🗑️ Delete");
         deleteBtn.setMaxWidth(Double.MAX_VALUE);
-        deleteBtn.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-font-size: 12px; " +
-                "-fx-cursor: hand; -fx-padding: 8 12; -fx-background-radius: 6;");
+        deleteBtn.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #dc2626; -fx-font-size: 12px; "
+                + "-fx-cursor: hand; -fx-padding: 8 12; -fx-background-radius: 6;");
         deleteBtn.setTooltip(new Tooltip("Delete this task"));
         deleteBtn.setOnAction(e -> deleteTemplate(template));
 
@@ -242,20 +242,18 @@ public class TemplateEditorController extends Controller {
     public void showAddTemplateDialog() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.", getOwnerWindow(headerTitle));
+            showErrorAlert("Error", "You must be in a WG.", getOwnerWindow(headerTitle));
             return;
         }
 
         WG wg = currentUser.getWg();
         if (wg.rooms == null || wg.rooms.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Rooms", "Please add rooms first in the Dashboard.",
-                    getOwnerWindow(headerTitle));
+            showWarningAlert("No Rooms", "Please add rooms first in the Dashboard.", getOwnerWindow(headerTitle));
             return;
         }
 
         if (wg.getMitbewohner().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Members", "WG has no members.",
-                    getOwnerWindow(headerTitle));
+            showWarningAlert("No Members", "WG has no members.", getOwnerWindow(headerTitle));
             return;
         }
 
@@ -320,19 +318,16 @@ public class TemplateEditorController extends Controller {
         infoText.setStyle("-fx-font-size: 12px; -fx-fill: #166534;");
         infoBox.getChildren().addAll(infoIcon, infoText);
 
-        content.getChildren().addAll(
-                new Text("Room:"), roomCombo,
-                new Text("Day:"), dayCombo,
-                new Text("Frequency:"), freqCombo,
-                infoBox);
+        content.getChildren().addAll(new Text("Room:"), roomCombo, new Text("Day:"), dayCombo, new Text("Frequency:"),
+                freqCombo, infoBox);
 
         dialog.getDialogPane().setContent(content);
 
         dialog.getDialogPane().lookupButton(addButtonType).setDisable(true);
-        roomCombo.valueProperty().addListener(
-                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
-        dayCombo.valueProperty().addListener(
-                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
+        roomCombo.valueProperty()
+                .addListener((o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
+        dayCombo.valueProperty()
+                .addListener((o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
@@ -348,10 +343,8 @@ public class TemplateEditorController extends Controller {
         });
     }
 
-    private void updateAddButton(Dialog<?> dialog, ButtonType btnType, ComboBox<Room> room,
-            ComboBox<DayOfWeek> day) {
-        dialog.getDialogPane().lookupButton(btnType).setDisable(
-                room.getValue() == null || day.getValue() == null);
+    private void updateAddButton(Dialog<?> dialog, ButtonType btnType, ComboBox<Room> room, ComboBox<DayOfWeek> day) {
+        dialog.getDialogPane().lookupButton(btnType).setDisable(room.getValue() == null || day.getValue() == null);
     }
 
     private void showEditTemplateDialog(WorkingTemplate template) {
@@ -403,10 +396,7 @@ public class TemplateEditorController extends Controller {
         infoText.setStyle("-fx-font-size: 12px; -fx-fill: #166534;");
         infoBox.getChildren().addAll(infoIcon, infoText);
 
-        content.getChildren().addAll(
-                new Text("Day of Week:"), dayCombo,
-                new Text("Frequency:"), freqCombo,
-                infoBox);
+        content.getChildren().addAll(new Text("Day of Week:"), dayCombo, new Text("Frequency:"), freqCombo, infoBox);
 
         dialog.getDialogPane().setContent(content);
 
@@ -424,26 +414,21 @@ public class TemplateEditorController extends Controller {
     }
 
     private void deleteTemplate(WorkingTemplate template) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        configureDialogOwner(confirm, getOwnerWindow(headerTitle));
-        confirm.setTitle("Delete Template");
-        confirm.setHeaderText("Delete \"" + template.room.getName() + "\"?");
-        confirm.setContentText("This change will be applied when you click 'Save & Apply'.");
+        boolean confirmed = showConfirmDialog("Delete Template", "Delete \"" + template.room.getName() + "\"?",
+                "This change will be applied when you click 'Save & Apply'.", getOwnerWindow(headerTitle));
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                template.isDeleted = true;
-                hasUnsavedChanges = true;
-                refreshView();
-            }
-        });
+        if (confirmed) {
+            template.isDeleted = true;
+            hasUnsavedChanges = true;
+            refreshView();
+        }
     }
 
     @FXML
     public void saveAndApplyTemplate() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG.", getOwnerWindow(headerTitle));
+            showErrorAlert("Error", "You must be in a WG.", getOwnerWindow(headerTitle));
             return;
         }
 
@@ -461,8 +446,8 @@ public class TemplateEditorController extends Controller {
 
         hasUnsavedChanges = false;
 
-        showAlert(Alert.AlertType.INFORMATION, "Template Applied",
-                "The template has been saved and applied to the schedule.", getOwnerWindow(headerTitle));
+        showSuccessAlert("Template Applied", "The template has been saved and applied to the schedule.",
+                getOwnerWindow(headerTitle));
 
         // Navigate back to cleaning schedule to show the result
         loadScene(headerTitle.getScene(), "/cleaning/cleaning_schedule.fxml");
@@ -474,22 +459,17 @@ public class TemplateEditorController extends Controller {
         if (currentUser == null || currentUser.getWg() == null)
             return;
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        configureDialogOwner(confirm, getOwnerWindow(headerTitle));
-        confirm.setTitle("Clear All");
-        confirm.setHeaderText("Clear all template tasks?");
-        confirm.setContentText("This change will be applied when you click 'Save & Apply'.");
+        boolean confirmed = showConfirmDialog("Clear All", "Clear all template tasks?",
+                "This change will be applied when you click 'Save & Apply'.", getOwnerWindow(headerTitle));
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                // Mark all as deleted
-                for (WorkingTemplate wt : workingTemplates) {
-                    wt.isDeleted = true;
-                }
-                hasUnsavedChanges = true;
-                refreshView();
+        if (confirmed) {
+            // Mark all as deleted
+            for (WorkingTemplate wt : workingTemplates) {
+                wt.isDeleted = true;
             }
-        });
+            hasUnsavedChanges = true;
+            refreshView();
+        }
     }
 
     @FXML

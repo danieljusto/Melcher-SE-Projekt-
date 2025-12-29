@@ -17,6 +17,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.group_2.dto.finance.BalanceDTO;
+import com.group_2.dto.finance.FinanceMapper;
+import com.group_2.dto.finance.TransactionDTO;
+
 @Service
 public class TransactionService {
 
@@ -24,16 +28,17 @@ public class TransactionService {
     private final TransactionSplitRepository transactionSplitRepository;
     private final UserRepository userRepository;
     private final WGRepository wgRepository;
+    private final FinanceMapper financeMapper;
 
     @Autowired
     public TransactionService(TransactionRepository transactionRepository,
-            TransactionSplitRepository transactionSplitRepository,
-            UserRepository userRepository,
-            WGRepository wgRepository) {
+            TransactionSplitRepository transactionSplitRepository, UserRepository userRepository,
+            WGRepository wgRepository, FinanceMapper financeMapper) {
         this.transactionRepository = transactionRepository;
         this.transactionSplitRepository = transactionSplitRepository;
         this.userRepository = userRepository;
         this.wgRepository = wgRepository;
+        this.financeMapper = financeMapper;
     }
 
     /**
@@ -51,8 +56,7 @@ public class TransactionService {
      */
     @Transactional
     public Transaction createTransaction(Long creatorId, Long creditorId, List<Long> debtorIds,
-            List<Double> percentages, Double totalAmount,
-            String description) {
+            List<Double> percentages, Double totalAmount, String description) {
         // Validate inputs
         if (debtorIds == null || debtorIds.isEmpty()) {
             throw new IllegalArgumentException("At least one debtor is required");
@@ -62,8 +66,7 @@ public class TransactionService {
         }
 
         // Fetch entities
-        User creator = userRepository.findById(creatorId)
-                .orElseThrow(() -> new RuntimeException("Creator not found"));
+        User creator = userRepository.findById(creatorId).orElseThrow(() -> new RuntimeException("Creator not found"));
         User creditor = userRepository.findById(creditorId)
                 .orElseThrow(() -> new RuntimeException("Creditor not found"));
         WG wg = creator.getWg();
@@ -75,9 +78,7 @@ public class TransactionService {
         List<Double> finalPercentages = percentages;
         if (percentages == null || percentages.isEmpty()) {
             double equalPercentage = 100.0 / debtorIds.size();
-            finalPercentages = debtorIds.stream()
-                    .map(id -> equalPercentage)
-                    .toList();
+            finalPercentages = debtorIds.stream().map(id -> equalPercentage).toList();
         } else {
             // Validate percentages sum to 100
             double sum = percentages.stream().mapToDouble(Double::doubleValue).sum();
@@ -115,18 +116,16 @@ public class TransactionService {
      * Get all transactions for a WG
      */
     public List<Transaction> getTransactionsByWG(Long wgId) {
-        WG wg = wgRepository.findById(wgId)
-                .orElseThrow(() -> new RuntimeException("WG not found"));
+        WG wg = wgRepository.findById(wgId).orElseThrow(() -> new RuntimeException("WG not found"));
         return transactionRepository.findByWg(wg);
     }
 
     /**
-     * Get all transactions involving a specific user (as creditor or debtor)
-     * Sorted by creation date descending (newest first)
+     * Get all transactions involving a specific user (as creditor or debtor) Sorted
+     * by creation date descending (newest first)
      */
     public List<Transaction> getTransactionsForUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         WG wg = user.getWg();
         if (wg == null) {
@@ -136,31 +135,26 @@ public class TransactionService {
         List<Transaction> allTransactions = transactionRepository.findByWg(wg);
 
         // Filter transactions where user is creditor or appears in splits
-        return allTransactions.stream()
-                .filter(t -> {
-                    // User is creditor
-                    if (t.getCreditor().getId().equals(userId)) {
-                        return true;
-                    }
-                    // User is debtor in any split
-                    return t.getSplits().stream()
-                            .anyMatch(split -> split.getDebtor().getId().equals(userId));
-                })
-                .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp())) // Newest first
+        return allTransactions.stream().filter(t -> {
+            // User is creditor
+            if (t.getCreditor().getId().equals(userId)) {
+                return true;
+            }
+            // User is debtor in any split
+            return t.getSplits().stream().anyMatch(split -> split.getDebtor().getId().equals(userId));
+        }).sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp())) // Newest first
                 .toList();
     }
 
     /**
-     * Calculate cumulative balance between two users
-     * Positive = otherUser owes currentUser
-     * Negative = currentUser owes otherUser
+     * Calculate cumulative balance between two users Positive = otherUser owes
+     * currentUser Negative = currentUser owes otherUser
      */
     public double calculateBalanceWithUser(Long currentUserId, Long otherUserId) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         // Validate other user exists
-        userRepository.findById(otherUserId)
-                .orElseThrow(() -> new RuntimeException("Other user not found"));
+        userRepository.findById(otherUserId).orElseThrow(() -> new RuntimeException("Other user not found"));
 
         WG wg = currentUser.getWg();
         if (wg == null) {
@@ -227,8 +221,8 @@ public class TransactionService {
     }
 
     /**
-     * Update an existing transaction
-     * Only the creditor (creator) can update a transaction
+     * Update an existing transaction Only the creditor (creator) can update a
+     * transaction
      * 
      * @param transactionId ID of the transaction to update
      * @param currentUserId ID of the user attempting the update (must be the
@@ -268,9 +262,7 @@ public class TransactionService {
         List<Double> finalPercentages = percentages;
         if (percentages == null || percentages.isEmpty()) {
             double equalPercentage = 100.0 / debtorIds.size();
-            finalPercentages = debtorIds.stream()
-                    .map(id -> equalPercentage)
-                    .toList();
+            finalPercentages = debtorIds.stream().map(id -> equalPercentage).toList();
         } else {
             // Validate percentages sum to 100
             double sum = percentages.stream().mapToDouble(Double::doubleValue).sum();
@@ -309,8 +301,7 @@ public class TransactionService {
     }
 
     /**
-     * Delete a transaction
-     * Only the creditor (creator) can delete a transaction
+     * Delete a transaction Only the creditor (creator) can delete a transaction
      * 
      * @param transactionId ID of the transaction to delete
      * @param currentUserId ID of the user attempting the deletion
@@ -338,5 +329,72 @@ public class TransactionService {
     public Transaction getTransactionById(Long transactionId) {
         return transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
+    }
+
+    // ==================== DTO METHODS ====================
+    // These methods return DTOs instead of entities for UI consumption
+
+    /**
+     * Get all transactions for a user as DTOs
+     */
+    public List<TransactionDTO> getTransactionsForUserDTO(Long userId) {
+        List<Transaction> transactions = getTransactionsForUser(userId);
+        return financeMapper.toDTOList(transactions);
+    }
+
+    /**
+     * Get all transactions for a WG as DTOs
+     */
+    public List<TransactionDTO> getTransactionsByWGDTO(Long wgId) {
+        List<Transaction> transactions = getTransactionsByWG(wgId);
+        return financeMapper.toDTOList(transactions);
+    }
+
+    /**
+     * Get a single transaction by ID as DTO
+     */
+    public TransactionDTO getTransactionByIdDTO(Long transactionId) {
+        Transaction transaction = getTransactionById(transactionId);
+        return financeMapper.toDTO(transaction);
+    }
+
+    /**
+     * Calculate balances between current user and all WG members as DTOs
+     */
+    public List<BalanceDTO> calculateAllBalancesDTO(Long currentUserId) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        WG wg = currentUser.getWg();
+        if (wg == null || wg.mitbewohner == null) {
+            return List.of();
+        }
+
+        return wg.mitbewohner.stream().filter(member -> !member.getId().equals(currentUserId)).map(member -> {
+            double balance = calculateBalanceWithUser(currentUserId, member.getId());
+            return financeMapper.toBalanceDTO(member, balance);
+        }).filter(dto -> dto != null).toList();
+    }
+
+    /**
+     * Create a transaction and return as DTO
+     */
+    @Transactional
+    public TransactionDTO createTransactionDTO(Long creatorId, Long creditorId, List<Long> debtorIds,
+            List<Double> percentages, Double totalAmount, String description) {
+        Transaction transaction = createTransaction(creatorId, creditorId, debtorIds, percentages, totalAmount,
+                description);
+        return financeMapper.toDTO(transaction);
+    }
+
+    /**
+     * Update a transaction and return as DTO
+     */
+    @Transactional
+    public TransactionDTO updateTransactionDTO(Long transactionId, Long currentUserId, Long newCreditorId,
+            List<Long> debtorIds, List<Double> percentages, Double totalAmount, String description) {
+        Transaction transaction = updateTransaction(transactionId, currentUserId, newCreditorId, debtorIds, percentages,
+                totalAmount, description);
+        return financeMapper.toDTO(transaction);
     }
 }

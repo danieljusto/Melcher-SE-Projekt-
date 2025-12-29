@@ -8,7 +8,6 @@ import com.group_2.model.cleaning.Room;
 import com.group_2.model.cleaning.RoomAssignmentQueue;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Repository for managing room assignment queues.

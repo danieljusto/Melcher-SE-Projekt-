@@ -4,7 +4,6 @@ import com.group_2.model.User;
 import com.group_2.service.core.UserService;
 import com.group_2.util.SessionManager;
 
-import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.fxml.FXML;
@@ -15,8 +14,8 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 /**
- * Controller for handling user login functionality.
- * Extends the abstract Controller class to inherit common UI utilities.
+ * Controller for handling user login functionality. Extends the abstract
+ * Controller class to inherit common UI utilities.
  */
 @Component
 public class LoginController extends Controller {
@@ -47,7 +46,7 @@ public class LoginController extends Controller {
             sessionManager.setCurrentUser(user.get()); // Set the current user in the session
             navigateAfterAuth(user.get());
         } else {
-            showAlert(Alert.AlertType.ERROR, "Login Failed", "Invalid email or password.");
+            showErrorAlert("Login Failed", "Invalid email or password.");
         }
     }
 

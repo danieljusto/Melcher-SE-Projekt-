@@ -4,7 +4,6 @@ import com.group_2.model.User;
 import com.group_2.service.core.UserService;
 import com.group_2.util.SessionManager;
 
-import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.fxml.FXML;
@@ -13,8 +12,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 /**
- * Controller for handling user signup functionality.
- * Extends the abstract Controller class to inherit common UI utilities.
+ * Controller for handling user signup functionality. Extends the abstract
+ * Controller class to inherit common UI utilities.
  */
 @Component
 public class SignUpController extends Controller {
@@ -48,14 +47,14 @@ public class SignUpController extends Controller {
 
         // Validate that all fields are filled
         if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Please fill in all fields.");
+            showErrorAlert("Validation Error", "Please fill in all fields.");
             return;
         }
 
         try {
             User user = userService.registerUser(name, surname, email, password);
             sessionManager.setCurrentUser(user); // Set as current user in session
-            showAlert(Alert.AlertType.INFORMATION, "Signup Successful", "Account created!");
+            showSuccessAlert("Signup Successful", "Account created!");
             // New users never have a WG, so go to no_wg screen
             loadScene(signupNameField.getScene(), "/core/no_wg.fxml");
             javafx.application.Platform.runLater(() -> {
@@ -63,7 +62,7 @@ public class SignUpController extends Controller {
                 noWgController.initView();
             });
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Signup Failed", e.getMessage());
+            showErrorAlert("Signup Failed", e.getMessage());
         }
     }
 

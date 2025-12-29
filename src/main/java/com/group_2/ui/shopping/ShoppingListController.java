@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Controller for the shopping list view.
- * Manages shopping lists and their items.
+ * Controller for the shopping list view. Manages shopping lists and their
+ * items.
  */
 @Component
 public class ShoppingListController extends Controller {
@@ -257,13 +257,13 @@ public class ShoppingListController extends Controller {
         if (isBought) {
             // Checked state - green with checkmark
             checkBox.setText("✓");
-            checkBox.setStyle("-fx-background-color: #22c55e; -fx-background-radius: 14; " +
-                    "-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;");
+            checkBox.setStyle("-fx-background-color: #22c55e; -fx-background-radius: 14; "
+                    + "-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;");
         } else {
             // Unchecked state - empty circle
             checkBox.setText("");
-            checkBox.setStyle("-fx-background-color: white; -fx-border-color: #d1d5db; " +
-                    "-fx-border-radius: 14; -fx-background-radius: 14; -fx-cursor: hand;");
+            checkBox.setStyle("-fx-background-color: white; -fx-border-color: #d1d5db; "
+                    + "-fx-border-radius: 14; -fx-background-radius: 14; -fx-cursor: hand;");
         }
 
         // Toggle bought on click
@@ -314,8 +314,7 @@ public class ShoppingListController extends Controller {
 
         String itemName = newItemField.getText().trim();
         if (itemName.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Empty Item", "Please enter an item name.",
-                    getOwnerWindow(newItemField));
+            showWarningAlert("Empty Item", "Please enter an item name.", getOwnerWindow(newItemField));
             return;
         }
 
@@ -351,8 +350,7 @@ public class ShoppingListController extends Controller {
     public void showCreateListDialog() {
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || currentUser.getWg() == null) {
-            showAlert(Alert.AlertType.ERROR, "Error", "You must be in a WG to create shopping lists.",
-                    getOwnerWindow(listsContainer));
+            showErrorAlert("Error", "You must be in a WG to create shopping lists.", getOwnerWindow(listsContainer));
             return;
         }
 
@@ -384,8 +382,8 @@ public class ShoppingListController extends Controller {
 
         for (User member : currentUser.getWg().getMitbewohner()) {
             if (!member.getId().equals(currentUser.getId())) {
-                CheckBox cb = new CheckBox(member.getName() +
-                        (member.getSurname() != null ? " " + member.getSurname() : ""));
+                CheckBox cb = new CheckBox(
+                        member.getName() + (member.getSurname() != null ? " " + member.getSurname() : ""));
                 cb.setUserData(member);
                 checkBoxes.add(cb);
                 memberCheckboxes.getChildren().add(cb);
@@ -436,7 +434,7 @@ public class ShoppingListController extends Controller {
 
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || !selectedList.getCreator().getId().equals(currentUser.getId())) {
-            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the list creator can manage sharing.",
+            showWarningAlert("Permission Denied", "Only the list creator can manage sharing.",
                     getOwnerWindow(listsContainer));
             return;
         }
@@ -456,13 +454,12 @@ public class ShoppingListController extends Controller {
         content.setPadding(new Insets(20));
 
         List<CheckBox> checkBoxes = new ArrayList<>();
-        List<Long> currentlySharedIds = selectedList.getSharedWith().stream()
-                .map(User::getId).toList();
+        List<Long> currentlySharedIds = selectedList.getSharedWith().stream().map(User::getId).toList();
 
         for (User member : currentUser.getWg().getMitbewohner()) {
             if (!member.getId().equals(currentUser.getId())) {
-                CheckBox cb = new CheckBox(member.getName() +
-                        (member.getSurname() != null ? " " + member.getSurname() : ""));
+                CheckBox cb = new CheckBox(
+                        member.getName() + (member.getSurname() != null ? " " + member.getSurname() : ""));
                 cb.setUserData(member);
                 cb.setSelected(currentlySharedIds.contains(member.getId()));
                 checkBoxes.add(cb);
@@ -509,31 +506,26 @@ public class ShoppingListController extends Controller {
 
         User currentUser = sessionManager.getCurrentUser();
         if (currentUser == null || !selectedList.getCreator().getId().equals(currentUser.getId())) {
-            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the list creator can delete this list.",
+            showWarningAlert("Permission Denied", "Only the list creator can delete this list.",
                     getOwnerWindow(listsContainer));
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        configureDialogOwner(confirm, getOwnerWindow(listsContainer));
-        confirm.setTitle("Delete List");
-        confirm.setHeaderText("Delete \"" + selectedList.getName() + "\"?");
-        confirm.setContentText("This will permanently delete the list and all its items.");
+        boolean confirmed = showConfirmDialog("Delete List", "Delete \"" + selectedList.getName() + "\"?",
+                "This will permanently delete the list and all its items.", getOwnerWindow(listsContainer));
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                shoppingListService.deleteList(selectedList);
-                selectedList = null;
+        if (confirmed) {
+            shoppingListService.deleteList(selectedList);
+            selectedList = null;
 
-                // Hide details view
-                listDetailsView.setVisible(false);
-                listDetailsView.setManaged(false);
-                noListSelectedView.setVisible(true);
-                noListSelectedView.setManaged(true);
+            // Hide details view
+            listDetailsView.setVisible(false);
+            listDetailsView.setManaged(false);
+            noListSelectedView.setVisible(true);
+            noListSelectedView.setManaged(true);
 
-                loadLists();
-            }
-        });
+            loadLists();
+        }
     }
 
 }

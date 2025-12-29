@@ -2,13 +2,13 @@ package com.group_2.ui.core;
 
 import com.group_2.model.cleaning.Room;
 import com.group_2.model.User;
-import com.group_2.service.cleaning.RoomService;
+import com.group_2.service.core.HouseholdSetupService;
 import com.group_2.service.core.UserService;
 import com.group_2.service.core.WGService;
 import com.group_2.util.SessionManager;
 
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
+
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -24,15 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Controller for users who are not yet part of a WG.
- * Allows them to create or join a WG.
+ * Controller for users who are not yet part of a WG. Allows them to create or
+ * join a WG.
  */
 @Component
 public class NoWgController extends Controller {
 
     private final UserService userService;
     private final WGService wgService;
-    private final RoomService roomService;
+    private final HouseholdSetupService householdSetupService;
     private final SessionManager sessionManager;
 
     @Autowired
@@ -60,11 +60,11 @@ public class NoWgController extends Controller {
     @FXML
     private TextField wgIdField;
 
-    public NoWgController(UserService userService, WGService wgService, RoomService roomService,
+    public NoWgController(UserService userService, WGService wgService, HouseholdSetupService householdSetupService,
             SessionManager sessionManager) {
         this.userService = userService;
         this.wgService = wgService;
-        this.roomService = roomService;
+        this.householdSetupService = householdSetupService;
         this.sessionManager = sessionManager;
     }
 
@@ -149,7 +149,7 @@ public class NoWgController extends Controller {
         String wgName = wgNameField.getText().trim();
 
         if (wgName.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Error", "WG Name cannot be empty.");
+            showErrorAlert("Error", "WG Name cannot be empty.");
             return;
         }
 
@@ -157,7 +157,7 @@ public class NoWgController extends Controller {
         for (TextField roomField : roomFields) {
             String roomName = roomField.getText().trim();
             if (!roomName.isEmpty()) {
-                Room room = roomService.createRoom(roomName);
+                Room room = householdSetupService.createRoom(roomName);
                 rooms.add(room);
             }
         }
@@ -176,10 +176,10 @@ public class NoWgController extends Controller {
                 currentUser.setWg(wgService.getWG(currentUser.getId()).orElse(null));
             }
 
-            showAlert(Alert.AlertType.INFORMATION, "Success", "WG created successfully!");
+            showSuccessAlert("Success", "WG created successfully!");
             navigateToMainScreen();
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to create WG: " + e.getMessage());
+            showErrorAlert("Error", "Failed to create WG: " + e.getMessage());
         }
     }
 
@@ -188,17 +188,17 @@ public class NoWgController extends Controller {
         String inviteCode = wgIdField.getText().trim().toUpperCase();
 
         if (inviteCode.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Please enter an invite code.");
+            showErrorAlert("Error", "Please enter an invite code.");
             return;
         }
 
         try {
             wgService.addMitbewohnerByInviteCode(inviteCode, sessionManager.getCurrentUser());
             sessionManager.refreshCurrentUser();
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Successfully joined the WG!");
+            showSuccessAlert("Success", "Successfully joined the WG!");
             navigateToMainScreen();
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to join WG. Invalid invite code.");
+            showErrorAlert("Error", "Failed to join WG. Invalid invite code.");
         }
     }
 

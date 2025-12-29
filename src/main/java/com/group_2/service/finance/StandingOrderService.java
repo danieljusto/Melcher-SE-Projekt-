@@ -8,7 +8,11 @@ import com.group_2.model.WG;
 import com.group_2.model.finance.StandingOrder;
 import com.group_2.model.finance.StandingOrderFrequency;
 import com.group_2.repository.finance.StandingOrderRepository;
+import com.group_2.dto.finance.FinanceMapper;
+import com.group_2.dto.finance.StandingOrderDTO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -24,25 +28,28 @@ import java.util.Map;
 @Service
 public class StandingOrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(StandingOrderService.class);
+
     private final StandingOrderRepository standingOrderRepository;
     private final TransactionService transactionService;
     private final ObjectMapper objectMapper;
+    private final FinanceMapper financeMapper;
 
     @Autowired
-    public StandingOrderService(StandingOrderRepository standingOrderRepository,
-            TransactionService transactionService) {
+    public StandingOrderService(StandingOrderRepository standingOrderRepository, TransactionService transactionService,
+            FinanceMapper financeMapper) {
         this.standingOrderRepository = standingOrderRepository;
         this.transactionService = transactionService;
         this.objectMapper = new ObjectMapper();
+        this.financeMapper = financeMapper;
     }
 
     /**
      * Create a new standing order
      */
     @Transactional
-    public StandingOrder createStandingOrder(User creator, User creditor, WG wg, Double totalAmount,
-            String description, StandingOrderFrequency frequency,
-            LocalDate startDate, List<Long> debtorIds, List<Double> percentages,
+    public StandingOrder createStandingOrder(User creator, User creditor, WG wg, Double totalAmount, String description,
+            StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds, List<Double> percentages,
             Integer monthlyDay, Boolean monthlyLastDay) {
         // Calculate next execution date
         LocalDate nextExecution;
@@ -83,8 +90,8 @@ public class StandingOrderService {
         String debtorData = buildDebtorDataJson(debtorIds, percentages);
 
         // Create order with monthly preferences (creator gets edit rights)
-        StandingOrder order = new StandingOrder(creditor, creator, wg, totalAmount, description,
-                frequency, nextExecution, debtorData, monthlyDay, monthlyLastDay);
+        StandingOrder order = new StandingOrder(creditor, creator, wg, totalAmount, description, frequency,
+                nextExecution, debtorData, monthlyDay, monthlyLastDay);
 
         order = standingOrderRepository.save(order);
 
@@ -95,9 +102,9 @@ public class StandingOrderService {
                 executeStandingOrder(order);
                 order.advanceNextExecution();
                 standingOrderRepository.save(order);
-                System.out.println("Standing order " + order.getId() + " executed immediately (was due today)");
+                log.info("Standing order {} executed immediately (was due today)", order.getId());
             } catch (Exception e) {
-                System.err.println("Failed to execute standing order immediately: " + e.getMessage());
+                log.error("Failed to execute standing order immediately: {}", e.getMessage());
             }
         }
 
@@ -114,13 +121,13 @@ public class StandingOrderService {
     }
 
     /**
-     * Also process on application startup to catch any missed orders
-     * (e.g., if app wasn't running for several days)
+     * Also process on application startup to catch any missed orders (e.g., if app
+     * wasn't running for several days)
      */
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void processOnStartup() {
-        System.out.println("Checking for due standing orders on startup...");
+        log.info("Checking for due standing orders on startup...");
         processDueStandingOrders();
     }
 
@@ -130,8 +137,7 @@ public class StandingOrderService {
     @Transactional
     public void processDueStandingOrders() {
         LocalDate today = LocalDate.now();
-        List<StandingOrder> dueOrders = standingOrderRepository
-                .findByNextExecutionLessThanEqualAndIsActiveTrue(today);
+        List<StandingOrder> dueOrders = standingOrderRepository.findByNextExecutionLessThanEqualAndIsActiveTrue(today);
 
         for (StandingOrder order : dueOrders) {
             try {
@@ -140,7 +146,7 @@ public class StandingOrderService {
                 standingOrderRepository.save(order);
             } catch (Exception e) {
                 // Log error but continue with other orders
-                System.err.println("Failed to execute standing order " + order.getId() + ": " + e.getMessage());
+                log.error("Failed to execute standing order {}: {}", order.getId(), e.getMessage());
             }
         }
     }
@@ -157,13 +163,9 @@ public class StandingOrderService {
 
         // Create the transaction (createdBy is whoever created the standing order)
         String description = order.getDescription() + " (Standing Order)";
-        transactionService.createTransaction(
-                order.getCreatedBy().getId(), // creator of the transaction
+        transactionService.createTransaction(order.getCreatedBy().getId(), // creator of the transaction
                 order.getCreditor().getId(), // creditor (payer)
-                debtorIds,
-                percentages.isEmpty() ? null : percentages,
-                order.getTotalAmount(),
-                description);
+                debtorIds, percentages.isEmpty() ? null : percentages, order.getTotalAmount(), description);
     }
 
     /**
@@ -188,13 +190,12 @@ public class StandingOrderService {
      * Get a standing order by ID
      */
     public StandingOrder getStandingOrderById(Long id) {
-        return standingOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Standing order not found"));
+        return standingOrderRepository.findById(id).orElseThrow(() -> new RuntimeException("Standing order not found"));
     }
 
     /**
-     * Update an existing standing order
-     * Only the creditor (creator) can update a standing order
+     * Update an existing standing order Only the creditor (creator) can update a
+     * standing order
      * 
      * @param id             The ID of the standing order to update
      * @param currentUserId  The ID of the user attempting the update
@@ -209,9 +210,8 @@ public class StandingOrderService {
      * @return The updated standing order
      */
     @Transactional
-    public StandingOrder updateStandingOrder(Long id, Long currentUserId, User newCreditor,
-            Double totalAmount, String description, StandingOrderFrequency frequency,
-            List<Long> debtorIds, List<Double> percentages,
+    public StandingOrder updateStandingOrder(Long id, Long currentUserId, User newCreditor, Double totalAmount,
+            String description, StandingOrderFrequency frequency, List<Long> debtorIds, List<Double> percentages,
             Integer monthlyDay, Boolean monthlyLastDay) {
 
         StandingOrder order = standingOrderRepository.findById(id)
@@ -305,5 +305,48 @@ public class StandingOrderService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse debtor data", e);
         }
+    }
+
+    // ==================== DTO METHODS ====================
+    // These methods return DTOs instead of entities for UI consumption
+
+    /**
+     * Get all active standing orders for a WG as DTOs
+     */
+    public List<StandingOrderDTO> getActiveStandingOrdersDTO(WG wg) {
+        List<StandingOrder> orders = getActiveStandingOrders(wg);
+        return financeMapper.toStandingOrderDTOList(orders);
+    }
+
+    /**
+     * Get a standing order by ID as DTO
+     */
+    public StandingOrderDTO getStandingOrderByIdDTO(Long id) {
+        StandingOrder order = getStandingOrderById(id);
+        return financeMapper.toDTO(order);
+    }
+
+    /**
+     * Create a standing order and return as DTO
+     */
+    @Transactional
+    public StandingOrderDTO createStandingOrderDTO(User creator, User creditor, WG wg, Double totalAmount,
+            String description, StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds,
+            List<Double> percentages, Integer monthlyDay, Boolean monthlyLastDay) {
+        StandingOrder order = createStandingOrder(creator, creditor, wg, totalAmount, description, frequency, startDate,
+                debtorIds, percentages, monthlyDay, monthlyLastDay);
+        return financeMapper.toDTO(order);
+    }
+
+    /**
+     * Update a standing order and return as DTO
+     */
+    @Transactional
+    public StandingOrderDTO updateStandingOrderDTO(Long id, Long currentUserId, User newCreditor, Double totalAmount,
+            String description, StandingOrderFrequency frequency, List<Long> debtorIds, List<Double> percentages,
+            Integer monthlyDay, Boolean monthlyLastDay) {
+        StandingOrder order = updateStandingOrder(id, currentUserId, newCreditor, totalAmount, description, frequency,
+                debtorIds, percentages, monthlyDay, monthlyLastDay);
+        return financeMapper.toDTO(order);
     }
 }

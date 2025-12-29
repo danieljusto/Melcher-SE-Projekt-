@@ -6,7 +6,7 @@ import com.group_2.model.User;
 import com.group_2.model.WG;
 import com.group_2.model.finance.StandingOrder;
 import com.group_2.model.finance.StandingOrderFrequency;
-import com.group_2.repository.UserRepository;
+import com.group_2.service.core.UserService;
 import com.group_2.service.finance.StandingOrderService;
 import com.group_2.util.SessionManager;
 
@@ -17,6 +17,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Window;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,11 +29,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-public class StandingOrdersDialogController {
+public class StandingOrdersDialogController extends com.group_2.ui.core.Controller {
 
     private final StandingOrderService standingOrderService;
     private final SessionManager sessionManager;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final DecimalFormat currencyFormat = new DecimalFormat("€#,##0.00");
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -61,11 +62,11 @@ public class StandingOrdersDialogController {
     private Runnable onOrdersChanged;
 
     @Autowired
-    public StandingOrdersDialogController(StandingOrderService standingOrderService,
-            SessionManager sessionManager, UserRepository userRepository) {
+    public StandingOrdersDialogController(StandingOrderService standingOrderService, SessionManager sessionManager,
+            UserService userService) {
         this.standingOrderService = standingOrderService;
         this.sessionManager = sessionManager;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @FXML
@@ -155,20 +156,20 @@ public class StandingOrdersDialogController {
     private String formatFrequency(StandingOrder order) {
         StandingOrderFrequency freq = order.getFrequency();
         switch (freq) {
-            case WEEKLY:
-                return "Weekly";
-            case BI_WEEKLY:
-                return "Bi-weekly";
-            case MONTHLY:
-                if (Boolean.TRUE.equals(order.getMonthlyLastDay())) {
-                    return "Monthly (last day)";
-                } else if (order.getMonthlyDay() != null) {
-                    return "Monthly (" + order.getMonthlyDay() + getDaySuffix(order.getMonthlyDay()) + ")";
-                } else {
-                    return "Monthly";
-                }
-            default:
-                return freq.toString();
+        case WEEKLY:
+            return "Weekly";
+        case BI_WEEKLY:
+            return "Bi-weekly";
+        case MONTHLY:
+            if (Boolean.TRUE.equals(order.getMonthlyLastDay())) {
+                return "Monthly (last day)";
+            } else if (order.getMonthlyDay() != null) {
+                return "Monthly (" + order.getMonthlyDay() + getDaySuffix(order.getMonthlyDay()) + ")";
+            } else {
+                return "Monthly";
+            }
+        default:
+            return freq.toString();
         }
     }
 
@@ -176,14 +177,14 @@ public class StandingOrdersDialogController {
         if (day >= 11 && day <= 13)
             return "th";
         switch (day % 10) {
-            case 1:
-                return "st";
-            case 2:
-                return "nd";
-            case 3:
-                return "rd";
-            default:
-                return "th";
+        case 1:
+            return "st";
+        case 2:
+            return "nd";
+        case 3:
+            return "rd";
+        default:
+            return "th";
         }
     }
 
@@ -196,22 +197,12 @@ public class StandingOrdersDialogController {
                     new TypeReference<List<Map<String, Object>>>() {
                     });
 
-            List<String> names = debtorList.stream()
-                    .map(entry -> {
-                        Object userIdObj = entry.get("userId");
-                        Long userId = userIdObj instanceof Number ? ((Number) userIdObj).longValue()
-                                : Long.parseLong(userIdObj.toString());
-                        return userRepository.findById(userId)
-                                .map(user -> {
-                                    String name = user.getName();
-                                    if (user.getSurname() != null && !user.getSurname().isEmpty()) {
-                                        name += " " + user.getSurname().charAt(0) + ".";
-                                    }
-                                    return name;
-                                })
-                                .orElse("Unknown");
-                    })
-                    .collect(Collectors.toList());
+            List<String> names = debtorList.stream().map(entry -> {
+                Object userIdObj = entry.get("userId");
+                Long userId = userIdObj instanceof Number ? ((Number) userIdObj).longValue()
+                        : Long.parseLong(userIdObj.toString());
+                return userService.getDisplayName(userId);
+            }).collect(Collectors.toList());
 
             return String.join(", ", names);
         } catch (Exception e) {
@@ -220,16 +211,11 @@ public class StandingOrdersDialogController {
     }
 
     private void confirmAndDeleteOrder(StandingOrder order) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        if (dialogOverlay.getScene() != null) {
-            confirm.initOwner(dialogOverlay.getScene().getWindow());
-        }
-        confirm.setTitle("Delete Standing Order");
-        confirm.setHeaderText("Are you sure?");
-        confirm.setContentText("This will deactivate the standing order: " + order.getDescription());
+        Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
+        boolean confirmed = showConfirmDialog("Delete Standing Order", "Are you sure?",
+                "This will deactivate the standing order: " + order.getDescription(), owner);
 
-        Optional<ButtonType> result = confirm.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        if (confirmed) {
             standingOrderService.deactivateStandingOrder(order.getId());
             loadStandingOrders();
             if (onOrdersChanged != null) {
@@ -316,9 +302,9 @@ public class StandingOrdersDialogController {
 
         // Set current frequency
         switch (order.getFrequency()) {
-            case WEEKLY -> freqComboBox.setValue("Weekly");
-            case BI_WEEKLY -> freqComboBox.setValue("Bi-weekly");
-            case MONTHLY -> freqComboBox.setValue("Monthly");
+        case WEEKLY -> freqComboBox.setValue("Weekly");
+        case BI_WEEKLY -> freqComboBox.setValue("Bi-weekly");
+        case MONTHLY -> freqComboBox.setValue("Monthly");
         }
 
         // Monthly options
@@ -394,11 +380,8 @@ public class StandingOrdersDialogController {
             validationLabel.setStyle("-fx-font-size: 11px; -fx-fill: #6b7280;");
             content.getChildren().add(validationLabel);
 
-            // Build a map of userId -> User for names
-            java.util.Map<Long, User> userMap = new java.util.HashMap<>();
-            for (Long userId : originalDebtorIds) {
-                userRepository.findById(userId).ifPresent(u -> userMap.put(userId, u));
-            }
+            // Build a map of userId -> display name
+            Map<Long, String> displayNameMap = userService.getDisplayNames(originalDebtorIds);
 
             // Function to rebuild split fields
             Runnable rebuildSplitFields = () -> {
@@ -416,10 +399,7 @@ public class StandingOrdersDialogController {
                     double equalAmount = total / originalDebtorIds.size();
                     for (int i = 0; i < originalDebtorIds.size(); i++) {
                         Long userId = originalDebtorIds.get(i);
-                        User user = userMap.get(userId);
-                        String name = user != null
-                                ? user.getName() + (user.getSurname() != null ? " " + user.getSurname() : "")
-                                : "User " + userId;
+                        String name = displayNameMap.getOrDefault(userId, "User " + userId);
 
                         HBox row = new HBox(10);
                         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -434,10 +414,7 @@ public class StandingOrdersDialogController {
                 } else if (currentMode[0].equals("PERCENT")) {
                     for (int i = 0; i < originalDebtorIds.size(); i++) {
                         Long userId = originalDebtorIds.get(i);
-                        User user = userMap.get(userId);
-                        String name = user != null
-                                ? user.getName() + (user.getSurname() != null ? " " + user.getSurname() : "")
-                                : "User " + userId;
+                        String name = displayNameMap.getOrDefault(userId, "User " + userId);
                         Double pct = i < originalPercentages.size() ? originalPercentages.get(i)
                                 : 100.0 / originalDebtorIds.size();
 
@@ -494,10 +471,7 @@ public class StandingOrdersDialogController {
                 } else { // AMOUNT
                     for (int i = 0; i < originalDebtorIds.size(); i++) {
                         Long userId = originalDebtorIds.get(i);
-                        User user = userMap.get(userId);
-                        String name = user != null
-                                ? user.getName() + (user.getSurname() != null ? " " + user.getSurname() : "")
-                                : "User " + userId;
+                        String name = displayNameMap.getOrDefault(userId, "User " + userId);
                         Double pct = i < originalPercentages.size() ? originalPercentages.get(i)
                                 : 100.0 / originalDebtorIds.size();
                         double amount = (pct / 100.0) * total;
@@ -514,7 +488,6 @@ public class StandingOrdersDialogController {
                         field.setPrefWidth(80);
                         splitFields.put(userId, field);
 
-                        final double totalFinal = total;
                         field.textProperty().addListener((obs, oldVal, newVal) -> {
                             try {
                                 double totalAmt = Double.parseDouble(amountField.getText().replace(",", "."));
@@ -592,8 +565,8 @@ public class StandingOrdersDialogController {
 
         // Style the save button
         Button saveBtn = (Button) dialog.getDialogPane().lookupButton(saveButton);
-        saveBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; " +
-                "-fx-padding: 10 24; -fx-font-weight: bold; -fx-cursor: hand;");
+        saveBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; "
+                + "-fx-padding: 10 24; -fx-font-weight: bold; -fx-cursor: hand;");
 
         // Handle result
         Optional<ButtonType> result = dialog.showAndWait();
@@ -604,10 +577,10 @@ public class StandingOrdersDialogController {
                 double newAmount = Double.parseDouble(amountField.getText().replace(",", "."));
 
                 StandingOrderFrequency newFrequency = switch (freqComboBox.getValue()) {
-                    case "Weekly" -> StandingOrderFrequency.WEEKLY;
-                    case "Bi-weekly" -> StandingOrderFrequency.BI_WEEKLY;
-                    case "Monthly" -> StandingOrderFrequency.MONTHLY;
-                    default -> order.getFrequency();
+                case "Weekly" -> StandingOrderFrequency.WEEKLY;
+                case "Bi-weekly" -> StandingOrderFrequency.BI_WEEKLY;
+                case "Monthly" -> StandingOrderFrequency.MONTHLY;
+                default -> order.getFrequency();
                 };
 
                 Integer newMonthlyDay = null;
@@ -670,17 +643,9 @@ public class StandingOrdersDialogController {
                 }
 
                 // Update the standing order
-                standingOrderService.updateStandingOrder(
-                        order.getId(),
-                        sessionManager.getCurrentUser().getId(),
-                        order.getCreditor(),
-                        newAmount,
-                        newDescription,
-                        newFrequency,
-                        debtorIds,
-                        percentages.isEmpty() ? null : percentages,
-                        newMonthlyDay,
-                        newMonthlyLastDay);
+                standingOrderService.updateStandingOrder(order.getId(), sessionManager.getCurrentUser().getId(),
+                        order.getCreditor(), newAmount, newDescription, newFrequency, debtorIds,
+                        percentages.isEmpty() ? null : percentages, newMonthlyDay, newMonthlyLastDay);
 
                 // Refresh the table
                 loadStandingOrders();
@@ -690,33 +655,15 @@ public class StandingOrdersDialogController {
                 }
 
                 // Show success message
-                Alert success = new Alert(Alert.AlertType.INFORMATION);
-                if (dialogOverlay.getScene() != null) {
-                    success.initOwner(dialogOverlay.getScene().getWindow());
-                }
-                success.setTitle("Success");
-                success.setHeaderText(null);
-                success.setContentText("Standing order updated successfully.");
-                success.showAndWait();
+                Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
+                showSuccessAlert("Success", "Standing order updated successfully.", owner);
 
             } catch (NumberFormatException e) {
-                Alert error = new Alert(Alert.AlertType.ERROR);
-                if (dialogOverlay.getScene() != null) {
-                    error.initOwner(dialogOverlay.getScene().getWindow());
-                }
-                error.setTitle("Error");
-                error.setHeaderText("Invalid input");
-                error.setContentText("Please enter valid numbers.");
-                error.showAndWait();
+                Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
+                showErrorAlert("Invalid input", "Please enter valid numbers.", owner);
             } catch (Exception e) {
-                Alert error = new Alert(Alert.AlertType.ERROR);
-                if (dialogOverlay.getScene() != null) {
-                    error.initOwner(dialogOverlay.getScene().getWindow());
-                }
-                error.setTitle("Error");
-                error.setHeaderText("Failed to update standing order");
-                error.setContentText(e.getMessage());
-                error.showAndWait();
+                Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
+                showErrorAlert("Failed to update standing order", e.getMessage(), owner);
             }
         }
     }
