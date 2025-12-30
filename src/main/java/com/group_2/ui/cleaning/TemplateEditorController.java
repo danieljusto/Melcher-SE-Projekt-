@@ -107,7 +107,7 @@ public class TemplateEditorController extends Controller {
     @FXML
     public void initialize() {
         if (navbarController != null) {
-            navbarController.setTitle("📝 Template Editor");
+            navbarController.setTitle("Template Editor");
             navbarController.setBackDestination("/cleaning/cleaning_schedule.fxml", false);
             navbarController.getBackButton().setOnAction(e -> backToCleaningSchedule());
         }
@@ -173,22 +173,22 @@ public class TemplateEditorController extends Controller {
 
     private VBox getColumnForDay(int dayOfWeek) {
         switch (dayOfWeek) {
-        case 1:
-            return mondayColumn;
-        case 2:
-            return tuesdayColumn;
-        case 3:
-            return wednesdayColumn;
-        case 4:
-            return thursdayColumn;
-        case 5:
-            return fridayColumn;
-        case 6:
-            return saturdayColumn;
-        case 7:
-            return sundayColumn;
-        default:
-            return mondayColumn;
+            case 1:
+                return mondayColumn;
+            case 2:
+                return tuesdayColumn;
+            case 3:
+                return wednesdayColumn;
+            case 4:
+                return thursdayColumn;
+            case 5:
+                return fridayColumn;
+            case 6:
+                return saturdayColumn;
+            case 7:
+                return sundayColumn;
+            default:
+                return mondayColumn;
         }
     }
 
@@ -205,14 +205,14 @@ public class TemplateEditorController extends Controller {
         // Show round-robin info
         HBox assigneeRow = new HBox(5);
         assigneeRow.setAlignment(Pos.CENTER_LEFT);
-        Text rotationInfo = new Text("🔄 Round-robin");
+        Text rotationInfo = new Text("Round-robin");
         rotationInfo.getStyleClass().add("template-info-text");
         assigneeRow.getChildren().add(rotationInfo);
 
         // Frequency display
         HBox frequencyRow = new HBox(5);
         frequencyRow.setAlignment(Pos.CENTER_LEFT);
-        Text freqIcon = new Text("📅");
+        Text freqIcon = new Text("");
         freqIcon.getStyleClass().add("template-icon");
         Text freqText = new Text(template.recurrenceInterval.getDisplayName());
         freqText.getStyleClass().add("template-info-text");
@@ -227,13 +227,13 @@ public class TemplateEditorController extends Controller {
         VBox actions = new VBox(6);
         actions.setAlignment(Pos.CENTER);
 
-        Button editBtn = new Button("✏️ Edit Day");
+        Button editBtn = new Button("Edit");
         editBtn.setMaxWidth(Double.MAX_VALUE);
         editBtn.getStyleClass().addAll("small-action-button", "edit-button");
         editBtn.setTooltip(new Tooltip("Edit day of week"));
         editBtn.setOnAction(e -> showEditTemplateDialog(template));
 
-        Button deleteBtn = new Button("🗑️ Delete");
+        Button deleteBtn = new Button("Delete");
         deleteBtn.setMaxWidth(Double.MAX_VALUE);
         deleteBtn.getStyleClass().addAll("small-action-button", "delete-button-small");
         deleteBtn.setTooltip(new Tooltip("Delete this task"));
@@ -267,6 +267,7 @@ public class TemplateEditorController extends Controller {
 
         Dialog<WorkingTemplate> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(headerTitle));
+        styleDialog(dialog);
         dialog.setTitle("Add Template Task");
         dialog.setHeaderText("Add a room to the cleaning schedule");
 
@@ -320,7 +321,7 @@ public class TemplateEditorController extends Controller {
         HBox infoBox = new HBox(8);
         infoBox.setAlignment(Pos.CENTER_LEFT);
         infoBox.getStyleClass().add("info-box-success");
-        Text infoIcon = new Text("🔄");
+        Text infoIcon = new Text("↻");
         infoIcon.getStyleClass().add("info-box-success-icon");
         Text infoText = new Text("Assignees rotate automatically each week");
         infoText.getStyleClass().add("info-box-success-text");
@@ -365,6 +366,7 @@ public class TemplateEditorController extends Controller {
 
         Dialog<Void> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(headerTitle));
+        styleDialog(dialog);
         dialog.setTitle("Edit Template");
         dialog.setHeaderText("Edit \"" + template.roomName + "\"");
 
@@ -401,7 +403,7 @@ public class TemplateEditorController extends Controller {
         HBox infoBox = new HBox(8);
         infoBox.setAlignment(Pos.CENTER_LEFT);
         infoBox.getStyleClass().add("info-box-success");
-        Text infoIcon = new Text("🔄");
+        Text infoIcon = new Text("↻");
         infoIcon.getStyleClass().add("info-box-success-icon");
         Text infoText = new Text("Assignees rotate automatically - no need to change");
         infoText.getStyleClass().add("info-box-success-text");

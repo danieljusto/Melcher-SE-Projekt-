@@ -33,7 +33,7 @@
                               styleClass="text-subtitle-cleaning"/>
                     </VBox>
                     <Button text="▶" styleClass="icon-button nav-button-light" onAction="#nextWeek"/>
-                    <Button text="📅 Today" styleClass="nav-button-primary" onAction="#goToCurrentWeek"/>
+                    <Button text="Today" styleClass="nav-button-primary" onAction="#goToCurrentWeek"/>
                 </HBox>
                 
                 <Region HBox.hgrow="ALWAYS"/>
@@ -58,12 +58,12 @@
             <!-- Action Toolbar -->
             <HBox spacing="12" alignment="CENTER_LEFT" styleClass="cleaning-toolbar">
 
-                <Button text="➕ Add Task" onAction="#showAddTaskDialog"
+                <Button text="+ Add Task" onAction="#showAddTaskDialog"
                         styleClass="action-button-light"/>
                 
                 <Region prefWidth="20"/>
                 
-                <Button text="📝 Edit Template" onAction="#openTemplateEditor"
+                <Button text="Edit Template" onAction="#openTemplateEditor"
                         styleClass="action-button-light"/>
             </HBox>
 
@@ -104,7 +104,7 @@
 
                     <!-- Tasks by Room Section -->
                     <VBox spacing="15" styleClass="section-top">
-                        <Text text="📋 All Cleaning Tasks" 
+                        <Text text="All Cleaning Tasks" 
                               styleClass="section-title-cleaning"/>
                         
                         <FlowPane fx:id="roomCardsContainer" hgap="15" vgap="15" alignment="TOP_LEFT">

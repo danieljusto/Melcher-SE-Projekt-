@@ -38,8 +38,13 @@ public class MainScreenController extends Controller {
     private Text headerAvatar;
 
     public void initView() {
-        sessionManager.refreshCurrentUser();
-        updateHeader();
+        System.out.println("MainScreenController initialized");
+        try {
+            sessionManager.refreshCurrentUser();
+            updateHeader();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void updateHeader() {

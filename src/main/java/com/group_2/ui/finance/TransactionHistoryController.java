@@ -1,4 +1,4 @@
-﻿package com.group_2.ui.finance;
+package com.group_2.ui.finance;
 
 import com.group_2.dto.finance.TransactionViewDTO;
 import com.group_2.dto.finance.TransactionSplitViewDTO;

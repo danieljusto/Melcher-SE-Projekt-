@@ -67,7 +67,7 @@ public class CleaningScheduleController extends Controller {
     @FXML
     public void initialize() {
         if (navbarController != null) {
-            navbarController.setTitle("🧹 Cleaning Schedule");
+            navbarController.setTitle("Cleaning Schedule");
         }
         displayedWeekStart = cleaningScheduleService.getCurrentWeekStart();
         refreshView();
@@ -273,18 +273,6 @@ public class CleaningScheduleController extends Controller {
             cardWrapper.getChildren().add(deleteBtn);
         }
 
-        // Room icon
-        StackPane iconPane = new StackPane();
-        iconPane.getStyleClass().add("task-icon-pane");
-        if (isCompleted) {
-            iconPane.getStyleClass().add("task-icon-pane-completed");
-        } else if (isMyTask) {
-            iconPane.getStyleClass().add("task-icon-pane-my-task");
-        }
-        Text iconText = new Text(isCompleted ? "✓" : "🚪");
-        iconText.getStyleClass().add("task-icon-text");
-        iconPane.getChildren().add(iconText);
-
         // Room name
         Text roomName = new Text(task.roomName());
         roomName.getStyleClass().add("task-room-name");
@@ -318,7 +306,7 @@ public class CleaningScheduleController extends Controller {
         LocalDate dueDate = task.dueDate() != null ? task.dueDate() : task.weekStartDate();
         String dayName = dueDate.getDayOfWeek().toString().substring(0, 1)
                 + dueDate.getDayOfWeek().toString().substring(1).toLowerCase();
-        Text dueDateText = new Text("📅 " + dayName + ", " + dueDate.getDayOfMonth());
+        Text dueDateText = new Text(dayName + ", " + dueDate.getDayOfMonth());
         dueDateText.getStyleClass().add("task-due-date");
 
         // Status badge
@@ -328,7 +316,7 @@ public class CleaningScheduleController extends Controller {
         statusBadge.getStyleClass().add("status-badge");
         statusBadge.getStyleClass().add(isCompleted ? "status-badge-completed" : "status-badge-pending");
 
-        Text statusText = new Text(isCompleted ? "✓ Completed" : "⏳ Pending");
+        Text statusText = new Text(isCompleted ? "Completed" : "Pending");
         statusText.getStyleClass().add("status-badge-text");
         statusText.getStyleClass().add(isCompleted ? "status-badge-text-completed" : "status-badge-text-pending");
         statusBadge.getChildren().add(statusText);
@@ -355,7 +343,7 @@ public class CleaningScheduleController extends Controller {
 
         // Only show reassign button for your own tasks
         if (isMyTask) {
-            Button reassignBtn = new Button("👤");
+            Button reassignBtn = new Button("↻");
             reassignBtn.getStyleClass().add("task-action-button");
             reassignBtn.setMinWidth(Region.USE_PREF_SIZE);
             reassignBtn.setTooltip(new Tooltip("Reassign to someone else"));
@@ -363,7 +351,7 @@ public class CleaningScheduleController extends Controller {
             actions.getChildren().add(reassignBtn);
         }
 
-        Button rescheduleBtn = new Button("📅");
+        Button rescheduleBtn = new Button("Cal");
         rescheduleBtn.getStyleClass().add("task-action-button");
         rescheduleBtn.setMinWidth(Region.USE_PREF_SIZE);
         rescheduleBtn.setTooltip(new Tooltip("Reschedule"));
@@ -371,7 +359,7 @@ public class CleaningScheduleController extends Controller {
 
         actions.getChildren().add(rescheduleBtn);
 
-        card.getChildren().addAll(iconPane, roomName, assigneeBox, dueDateText, statusBadge, actions);
+        card.getChildren().addAll(roomName, assigneeBox, dueDateText, statusBadge, actions);
 
         // Return the wrapper as a VBox containing the StackPane
         VBox wrapper = new VBox(cardWrapper);
@@ -411,7 +399,7 @@ public class CleaningScheduleController extends Controller {
         HBox buttons = new HBox(10);
         buttons.setAlignment(Pos.CENTER);
 
-        Button addBtn = new Button("➕ Add Task");
+        Button addBtn = new Button("+ Add Task");
         addBtn.getStyleClass().add("secondary-button");
         addBtn.setOnAction(e -> showAddTaskDialog());
 
@@ -482,6 +470,7 @@ public class CleaningScheduleController extends Controller {
 
         Dialog<CleaningTaskDTO> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(weekTitle));
+        styleDialog(dialog);
         dialog.setTitle("Add Cleaning Task");
         dialog.setHeaderText("Assign a room to a member");
 
@@ -590,6 +579,7 @@ public class CleaningScheduleController extends Controller {
 
         Dialog<User> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(weekTitle));
+        styleDialog(dialog);
         dialog.setTitle("Reassign Task");
         dialog.setHeaderText("Reassign \"" + task.roomName() + "\"");
 
@@ -629,6 +619,7 @@ public class CleaningScheduleController extends Controller {
     private void showRescheduleDialog(CleaningTaskDTO task) {
         Dialog<LocalDate> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(weekTitle));
+        styleDialog(dialog);
         dialog.setTitle("Reschedule Task");
         dialog.setHeaderText("Reschedule \"" + task.roomName() + "\"");
 

@@ -15,7 +15,7 @@
     <top>
         <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
             <Button text="← Back" onAction="#backToHome" styleClass="navbar-back-button"/>
-            <Text text="👤 My Profile" styleClass="navbar-title"/>
+            <Text text="My Profile" styleClass="navbar-title"/>
             <Region HBox.hgrow="ALWAYS"/>
         </HBox>
     </top>
@@ -48,7 +48,7 @@
                             <Text text="Name" styleClass="card-subtitle" style="-fx-font-size: 12px;"/>
                             <Text fx:id="nameDisplayText" text="First Last" style="-fx-font-size: 14px; -fx-fill: #1e293b;"/>
                         </VBox>
-                        <Button text="✏️ Edit" onAction="#handleEditName"
+                        <Button text="Edit" onAction="#handleEditName"
                                 style="-fx-background-color: #f1f5f9; -fx-text-fill: #475569; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand; -fx-font-size: 12px;"/>
                     </HBox>
                     
@@ -58,7 +58,7 @@
                             <Text text="Email" styleClass="card-subtitle" style="-fx-font-size: 12px;"/>
                             <Text fx:id="emailDisplayText" text="email@example.com" style="-fx-font-size: 14px; -fx-fill: #1e293b;"/>
                         </VBox>
-                        <Button text="✏️ Edit" onAction="#handleEditEmail"
+                        <Button text="Edit" onAction="#handleEditEmail"
                                 style="-fx-background-color: #f1f5f9; -fx-text-fill: #475569; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand; -fx-font-size: 12px;"/>
                     </HBox>
                     
@@ -83,9 +83,9 @@
 
                 <!-- Action Buttons -->
                 <VBox spacing="12" alignment="CENTER" style="-fx-padding: 10 0 0 0;">
-                    <Button text="🚪 Leave Home" onAction="#handleLeaveWG"
+                    <Button text="Leave Home" onAction="#handleLeaveWG"
                             style="-fx-background-color: #fef2f2; -fx-text-fill: #dc2626; -fx-background-radius: 8; -fx-padding: 12 30; -fx-cursor: hand; -fx-pref-width: 200;"/>
-                    <Button text="🔓 Logout" onAction="#handleLogout"
+                    <Button text="Logout" onAction="#handleLogout"
                             styleClass="primary-button" style="-fx-pref-width: 200; -fx-padding: 12 30;"/>
                 </VBox>
             </VBox>

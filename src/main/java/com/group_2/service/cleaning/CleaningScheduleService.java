@@ -90,6 +90,7 @@ public class CleaningScheduleService {
     /**
      * DTO variant of getTasksForWeek to keep UI decoupled from entities.
      */
+    @Transactional
     public List<CleaningTaskDTO> getTasksForWeekDTO(WG wg, LocalDate weekStart) {
         return cleaningMapper.toDTOList(getTasksForWeek(wg, weekStart));
     }
@@ -200,7 +201,8 @@ public class CleaningScheduleService {
      * Get existing queue or create a new one with the correct offset.
      */
     private RoomAssignmentQueue getOrCreateQueueForRoom(WG wg, Room room, List<User> members) {
-        List<RoomAssignmentQueue> queues = queueRepository.findByWgAndRoom(wg, room);
+        // Use pessimistic lock to prevent concurrent queue rotation issues
+        List<RoomAssignmentQueue> queues = queueRepository.findByWgAndRoomForUpdate(wg, room);
         if (!queues.isEmpty()) {
             return queues.get(0);
         }

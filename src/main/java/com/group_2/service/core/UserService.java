@@ -16,10 +16,12 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncryptionService passwordEncryptionService;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncryptionService passwordEncryptionService) {
         this.userRepository = userRepository;
+        this.passwordEncryptionService = passwordEncryptionService;
     }
 
     @Transactional
@@ -34,13 +36,19 @@ public class UserService {
         if (userRepository.findAll().stream().anyMatch(u -> u.getEmail() != null && u.getEmail().equals(email))) {
             throw new RuntimeException("Email already exists");
         }
-        User user = new User(name, surname, email, password);
+        // Hash password before storing
+        String hashedPassword = passwordEncryptionService.hashPassword(password);
+        User user = new User(name, surname, email, hashedPassword);
         return userRepository.save(user);
     }
 
     public Optional<User> authenticate(String email, String password) {
-        return userRepository.findAll().stream().filter(u -> u.getEmail() != null && u.getEmail().equals(email)
-                && u.getPassword() != null && u.getPassword().equals(password)).findFirst();
+        // Find user by email, then verify password using BCrypt
+        return userRepository.findAll().stream()
+                .filter(u -> u.getEmail() != null && u.getEmail().equals(email))
+                .filter(u -> u.getPassword() != null
+                        && passwordEncryptionService.verifyPassword(password, u.getPassword()))
+                .findFirst();
     }
 
     public Optional<User> getUser(Long id) {

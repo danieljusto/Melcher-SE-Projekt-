@@ -144,7 +144,9 @@ public class StandingOrderService {
     @Transactional
     public void processDueStandingOrders() {
         LocalDate today = LocalDate.now();
-        List<StandingOrder> dueOrders = standingOrderRepository.findByNextExecutionLessThanEqualAndIsActiveTrue(today);
+        // Use pessimistic lock to prevent double-execution when scheduler runs
+        // concurrently
+        List<StandingOrder> dueOrders = standingOrderRepository.findDueOrdersForUpdate(today);
 
         for (StandingOrder order : dueOrders) {
             try {

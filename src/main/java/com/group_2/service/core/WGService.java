@@ -36,6 +36,17 @@ public class WGService {
     @Transactional
     public WG createWG(String name, User admin, List<Room> rooms) {
         WG wg = new WG(name, admin, rooms);
+
+        // Ensure unique invite code with retry logic
+        int maxRetries = 10;
+        while (wgRepository.existsByInviteCode(wg.getInviteCode())) {
+            wg.regenerateInviteCode();
+            maxRetries--;
+            if (maxRetries <= 0) {
+                throw new RuntimeException("Failed to generate unique invite code after multiple attempts");
+            }
+        }
+
         // Save WG first
         wg = wgRepository.save(wg);
         // Ensure admin has the WG set and save the user
@@ -125,7 +136,15 @@ public class WGService {
         wg.removeMitbewohner(userToRemove);
 
         // Regenerate invite code to prevent removed user from rejoining with old code
-        wg.regenerateInviteCode();
+        // Ensure unique invite code with retry logic
+        int maxRetries = 10;
+        do {
+            wg.regenerateInviteCode();
+            maxRetries--;
+            if (maxRetries <= 0) {
+                throw new RuntimeException("Failed to generate unique invite code after multiple attempts");
+            }
+        } while (wgRepository.existsByInviteCode(wg.getInviteCode()));
 
         WG savedWg = wgRepository.save(wg);
 

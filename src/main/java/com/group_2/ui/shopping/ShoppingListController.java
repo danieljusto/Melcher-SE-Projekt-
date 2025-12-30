@@ -74,7 +74,7 @@ public class ShoppingListController extends Controller {
     @FXML
     public void initialize() {
         if (navbarController != null) {
-            navbarController.setTitle("🛒 Shopping Lists");
+            navbarController.setTitle("Shopping Lists");
         }
         loadLists();
     }

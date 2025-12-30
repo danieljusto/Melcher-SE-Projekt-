@@ -311,6 +311,7 @@ public class SettingsController extends Controller {
 
         TextInputDialog dialog = new TextInputDialog();
         configureDialogOwner(dialog, getOwnerWindow(roomsBox));
+        styleDialog(dialog);
         dialog.setTitle("Add Room");
         dialog.setHeaderText("Add a new room to your WG");
         dialog.setContentText("Room name:");
@@ -338,6 +339,7 @@ public class SettingsController extends Controller {
 
         TextInputDialog dialog = new TextInputDialog(room.name());
         configureDialogOwner(dialog, getOwnerWindow(roomsBox));
+        styleDialog(dialog);
         dialog.setTitle("Edit Room");
         dialog.setHeaderText("Edit room name");
         dialog.setContentText("Room name:");
@@ -388,6 +390,7 @@ public class SettingsController extends Controller {
 
         TextInputDialog dialog = new TextInputDialog(currentUser.getWg().name);
         configureDialogOwner(dialog, getOwnerWindow(wgNameHeader));
+        styleDialog(dialog);
         dialog.setTitle("Edit WG Name");
         dialog.setHeaderText("Change your WG name");
         dialog.setContentText("New name:");
