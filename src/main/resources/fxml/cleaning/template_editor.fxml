@@ -48,7 +48,7 @@
                 
                 <Region HBox.hgrow="ALWAYS"/>
                 
-                <Button text="✅ Save \&amp; Apply" onAction="#saveAndApplyTemplate"
+                <Button text="Save and Apply" onAction="#saveAndApplyTemplate"
                         styleClass="btn btn-success"/>
                 
                 <!-- Info Badge -->

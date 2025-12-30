@@ -386,6 +386,27 @@
     -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.2), 8, 0, 0, 2);
 }
 
+.task-delete-button {
+    -fx-background-color: rgba(239, 68, 68, 0.1);
+    -fx-background-radius: 50;
+    -fx-text-fill: #ef4444;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-max-width: 24;
+    -fx-max-height: 24;
+}
+
+.task-delete-button:hover {
+    -fx-background-color: #ef4444;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 8, 0, 0, 2);
+}
+
 /* ===== TEXT FIELDS ===== */
 .text-field,
 .modern-text-field {

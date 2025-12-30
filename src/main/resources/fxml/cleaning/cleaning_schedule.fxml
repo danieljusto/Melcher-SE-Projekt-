@@ -107,9 +107,9 @@
                         <Text text="📋 All Cleaning Tasks" 
                               styleClass="section-title-cleaning"/>
                         
-                        <HBox fx:id="roomCardsContainer" spacing="15" alignment="TOP_LEFT">
+                        <FlowPane fx:id="roomCardsContainer" hgap="15" vgap="15" alignment="TOP_LEFT">
                             <!-- Room task cards will be added dynamically -->
-                        </HBox>
+                        </FlowPane>
                     </VBox>
 
                 </VBox>

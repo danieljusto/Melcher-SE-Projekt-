@@ -447,6 +447,29 @@ public class CleaningScheduleService {
     }
 
     /**
+     * Assign a cleaning task for a specific room to a user with a custom due date.
+     * Always creates a new task (allows multiple tasks per room per day).
+     */
+    @Transactional
+    public CleaningTaskDTO assignTaskByIdsWithDate(Long roomId, Long assigneeId, WG wg, LocalDate dueDate) {
+        if (dueDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Cannot assign a task to a date in the past.");
+        }
+        Room room = roomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        User assignee = userRepository.findById(assigneeId)
+                .orElseThrow(() -> new IllegalArgumentException("Assignee not found"));
+
+        // Calculate the week start from the due date
+        LocalDate weekStart = dueDate
+                .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+
+        // Always create a new task (allows multiple tasks per room per day)
+        CleaningTask task = new CleaningTask(room, assignee, wg, weekStart, dueDate);
+        task.setManualOverride(true);
+        return cleaningMapper.toDTO(cleaningTaskRepository.save(task));
+    }
+
+    /**
      * Reassign a task to a different user by swapping with their next scheduled
      * task. This preserves fairness: no tasks are created or removed, each person
      * keeps the same total number of tasks.
@@ -511,6 +534,9 @@ public class CleaningScheduleService {
      */
     @Transactional
     public CleaningTask rescheduleTask(CleaningTask task, LocalDate newDueDate) {
+        if (newDueDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Cannot reschedule a task to a date in the past.");
+        }
         task.setDueDate(newDueDate);
         task.setManualOverride(true);
         return cleaningTaskRepository.save(task);
@@ -570,6 +596,16 @@ public class CleaningScheduleService {
      */
     @Transactional
     public void deleteTask(CleaningTask task) {
+        cleaningTaskRepository.delete(task);
+    }
+
+    /**
+     * Delete a cleaning task by ID.
+     */
+    @Transactional
+    public void deleteTask(Long taskId) {
+        CleaningTask task = cleaningTaskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
         cleaningTaskRepository.delete(task);
     }
 

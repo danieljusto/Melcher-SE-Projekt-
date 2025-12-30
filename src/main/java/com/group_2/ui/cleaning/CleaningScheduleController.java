@@ -51,7 +51,7 @@ public class CleaningScheduleController extends Controller {
     @FXML
     private HBox calendarDaysContainer;
     @FXML
-    private HBox roomCardsContainer;
+    private FlowPane roomCardsContainer;
 
     // Navbar
     @FXML
@@ -241,7 +241,7 @@ public class CleaningScheduleController extends Controller {
 
     private VBox createRoomCard(CleaningTaskDTO task, User currentUser) {
         VBox card = new VBox(12);
-        card.setPadding(new Insets(20, 15, 20, 15));
+        card.setPadding(new Insets(25, 15, 20, 15)); // Extra top padding for delete button
         card.setPrefWidth(220);
         card.setAlignment(Pos.TOP_CENTER);
 
@@ -254,6 +254,23 @@ public class CleaningScheduleController extends Controller {
             card.getStyleClass().add("task-card-completed");
         } else if (isMyTask) {
             card.getStyleClass().add("task-card-my-task");
+        }
+
+        // Wrap card content in a StackPane to position delete button
+        StackPane cardWrapper = new StackPane();
+        cardWrapper.getChildren().add(card);
+
+        // Only show delete button for manually created tasks (not template-generated)
+        if (task.manualOverride()) {
+            Button deleteBtn = new Button("×");
+            deleteBtn.getStyleClass().add("task-delete-button");
+            deleteBtn.setTooltip(new Tooltip("Delete task"));
+            deleteBtn.setOnAction(e -> showDeleteConfirmDialog(task));
+
+            // Position delete button at top-right
+            StackPane.setAlignment(deleteBtn, Pos.TOP_RIGHT);
+            StackPane.setMargin(deleteBtn, new Insets(5, 5, 0, 0));
+            cardWrapper.getChildren().add(deleteBtn);
         }
 
         // Room icon
@@ -355,7 +372,24 @@ public class CleaningScheduleController extends Controller {
         actions.getChildren().add(rescheduleBtn);
 
         card.getChildren().addAll(iconPane, roomName, assigneeBox, dueDateText, statusBadge, actions);
-        return card;
+
+        // Return the wrapper as a VBox containing the StackPane
+        VBox wrapper = new VBox(cardWrapper);
+        return wrapper;
+    }
+
+    private void showDeleteConfirmDialog(CleaningTaskDTO task) {
+        boolean confirmed = showConfirmDialog(
+                "Delete Task",
+                "Are you sure you want to delete this task?",
+                "Task: " + task.roomName() + " assigned to " + task.assigneeName()
+                        + "\n\nThis action cannot be undone.",
+                getOwnerWindow(weekTitle));
+
+        if (confirmed) {
+            cleaningScheduleService.deleteTask(task.id());
+            refreshView();
+        }
     }
 
     private void showEmptyState() {
@@ -489,20 +523,59 @@ public class CleaningScheduleController extends Controller {
             }
         });
 
-        content.getChildren().addAll(new Text("Room:"), roomCombo, new Text("Assign to:"), assigneeCombo);
+        // Date selection
+        DatePicker datePicker = new DatePicker();
+        LocalDate now = LocalDate.now();
+        // Default to the displayed week start, but not earlier than today
+        LocalDate defaultValue = displayedWeekStart.isBefore(now) ? now : displayedWeekStart;
+        datePicker.setValue(defaultValue);
+        datePicker.setPromptText("Select due date");
+
+        // Disable past dates in the picker
+        datePicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (date != null && date.isBefore(now)) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: #f0f0f0;");
+                }
+            }
+        });
+
+        content.getChildren().addAll(
+                new Text("Room:"), roomCombo,
+                new Text("Assign to:"), assigneeCombo,
+                new Text("Due Date:"), datePicker);
 
         dialog.getDialogPane().setContent(content);
 
         dialog.getDialogPane().lookupButton(addButtonType).setDisable(true);
-        roomCombo.valueProperty().addListener((obs, oldVal, newVal) -> dialog.getDialogPane()
-                .lookupButton(addButtonType).setDisable(newVal == null || assigneeCombo.getValue() == null));
-        assigneeCombo.valueProperty().addListener((obs, oldVal, newVal) -> dialog.getDialogPane()
-                .lookupButton(addButtonType).setDisable(newVal == null || roomCombo.getValue() == null));
+
+        // Validation: enable button only when all fields are filled and date is not in
+        // the past
+        Runnable validateFields = () -> {
+            boolean isValid = roomCombo.getValue() != null
+                    && assigneeCombo.getValue() != null
+                    && datePicker.getValue() != null
+                    && !datePicker.getValue().isBefore(LocalDate.now());
+            dialog.getDialogPane().lookupButton(addButtonType).setDisable(!isValid);
+        };
+
+        roomCombo.valueProperty().addListener((obs, oldVal, newVal) -> validateFields.run());
+        assigneeCombo.valueProperty().addListener((obs, oldVal, newVal) -> validateFields.run());
+        datePicker.valueProperty().addListener((obs, oldVal, newVal) -> validateFields.run());
+
+        // Run initial validation
+        validateFields.run();
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
-                return cleaningScheduleService.assignTaskByIds(roomCombo.getValue().id(),
-                        assigneeCombo.getValue().getId(), wg);
+                return cleaningScheduleService.assignTaskByIdsWithDate(
+                        roomCombo.getValue().id(),
+                        assigneeCombo.getValue().getId(),
+                        wg,
+                        datePicker.getValue());
             }
             return null;
         });
@@ -574,12 +647,19 @@ public class CleaningScheduleController extends Controller {
 
         LocalDate currentDueDate = task.dueDate() != null ? task.dueDate() : displayedWeekStart;
         int currentDayIndex = currentDueDate.getDayOfWeek().getValue() - 1;
+        LocalDate now = LocalDate.now();
 
         for (int i = 0; i < 7; i++) {
             LocalDate day = displayedWeekStart.plusDays(i);
             RadioButton rb = new RadioButton(dayNames[i] + " (" + day.getDayOfMonth() + ")");
             rb.setUserData(day);
             rb.setToggleGroup(group);
+
+            // Disable days in the past
+            if (day.isBefore(now)) {
+                rb.setDisable(true);
+            }
+
             if (i == currentDayIndex) {
                 rb.setSelected(true);
             }
@@ -587,6 +667,15 @@ public class CleaningScheduleController extends Controller {
         }
 
         dialog.getDialogPane().setContent(content);
+
+        // Validation for reschedule button
+        dialog.getDialogPane().lookupButton(rescheduleButtonType).setDisable(group.getSelectedToggle() == null
+                || ((LocalDate) group.getSelectedToggle().getUserData()).isBefore(now));
+
+        group.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            boolean isInvalid = newVal == null || ((LocalDate) newVal.getUserData()).isBefore(now);
+            dialog.getDialogPane().lookupButton(rescheduleButtonType).setDisable(isInvalid);
+        });
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == rescheduleButtonType && group.getSelectedToggle() != null) {
