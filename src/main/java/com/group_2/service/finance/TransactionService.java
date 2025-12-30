@@ -20,6 +20,8 @@ import java.util.Map;
 import com.group_2.dto.finance.BalanceDTO;
 import com.group_2.dto.finance.FinanceMapper;
 import com.group_2.dto.finance.TransactionDTO;
+import com.group_2.dto.finance.TransactionViewDTO;
+import com.group_2.dto.finance.BalanceViewDTO;
 
 @Service
 public class TransactionService {
@@ -359,6 +361,14 @@ public class TransactionService {
     }
 
     /**
+     * Get all transactions for a user as view DTOs with nested user summaries.
+     */
+    public List<TransactionViewDTO> getTransactionsForUserView(Long userId) {
+        List<Transaction> transactions = getTransactionsForUser(userId);
+        return financeMapper.toViewList(transactions);
+    }
+
+    /**
      * Calculate balances between current user and all WG members as DTOs
      */
     public List<BalanceDTO> calculateAllBalancesDTO(Long currentUserId) {
@@ -373,6 +383,25 @@ public class TransactionService {
         return wg.mitbewohner.stream().filter(member -> !member.getId().equals(currentUserId)).map(member -> {
             double balance = calculateBalanceWithUser(currentUserId, member.getId());
             return financeMapper.toBalanceDTO(member, balance);
+        }).filter(dto -> dto != null).toList();
+    }
+
+    /**
+     * Calculate balances between current user and all WG members as view DTOs with
+     * nested user summaries.
+     */
+    public List<BalanceViewDTO> calculateAllBalancesView(Long currentUserId) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        WG wg = currentUser.getWg();
+        if (wg == null || wg.mitbewohner == null) {
+            return List.of();
+        }
+
+        return wg.mitbewohner.stream().filter(member -> !member.getId().equals(currentUserId)).map(member -> {
+            double balance = calculateBalanceWithUser(currentUserId, member.getId());
+            return financeMapper.toBalanceView(member, balance);
         }).filter(dto -> dto != null).toList();
     }
 
@@ -396,5 +425,64 @@ public class TransactionService {
         Transaction transaction = updateTransaction(transactionId, currentUserId, newCreditorId, debtorIds, percentages,
                 totalAmount, description);
         return financeMapper.toDTO(transaction);
+    }
+
+    /**
+     * Settle a balance between two users with a single transaction. Validates WG
+     * membership and positive amounts.
+     */
+    @Transactional
+    public void settleBalance(Long currentUserId, Long otherUserId, double amount, boolean currentUserPays,
+            String paymentMethod) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        User otherUser = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new RuntimeException("Other user not found"));
+
+        WG wg = currentUser.getWg();
+        if (wg == null || otherUser.getWg() == null || !wg.getId().equals(otherUser.getWg().getId())) {
+            throw new RuntimeException("Users must belong to the same WG to settle balances");
+        }
+
+        Long payerId = currentUserPays ? currentUserId : otherUserId;
+        Long debtorId = currentUserPays ? otherUserId : currentUserId;
+
+        String description = "Settlement" + (paymentMethod != null ? " via " + paymentMethod : "");
+
+        createTransactionDTO(currentUserId, payerId, List.of(debtorId), null, amount, description);
+    }
+
+    /**
+     * Execute a credit transfer: a third roommate's positive balance with the
+     * current user is used to settle a debt to another roommate.
+     */
+    @Transactional
+    public void transferCredit(Long currentUserId, Long creditSourceUserId, Long debtorToUserId, double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        User creditSource = userRepository.findById(creditSourceUserId)
+                .orElseThrow(() -> new RuntimeException("Credit source user not found"));
+        User debtorTo = userRepository.findById(debtorToUserId)
+                .orElseThrow(() -> new RuntimeException("Debtor user not found"));
+
+        WG wg = currentUser.getWg();
+        if (wg == null || creditSource.getWg() == null || debtorTo.getWg() == null
+                || !wg.getId().equals(creditSource.getWg().getId()) || !wg.getId().equals(debtorTo.getWg().getId())) {
+            throw new RuntimeException("All users must belong to the same WG for credit transfer");
+        }
+
+        // Transaction 1: current user settles debt with debtorTo
+        createTransactionDTO(currentUserId, currentUserId, List.of(debtorToUserId), null, amount,
+                "Settlement via Credit Transfer (settled debt)");
+
+        // Transaction 2: credit source settles their debt with current user
+        createTransactionDTO(currentUserId, creditSourceUserId, List.of(currentUserId), null, amount,
+                "Settlement via Credit Transfer (used credit)");
     }
 }

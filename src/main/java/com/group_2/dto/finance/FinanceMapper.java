@@ -2,6 +2,12 @@ package com.group_2.dto.finance;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.group_2.dto.core.CoreMapper;
+import com.group_2.dto.core.UserSummaryDTO;
+import com.group_2.dto.finance.TransactionSplitViewDTO;
+import com.group_2.dto.finance.TransactionViewDTO;
+import com.group_2.dto.finance.BalanceViewDTO;
+import com.group_2.dto.finance.StandingOrderViewDTO;
 import com.group_2.model.User;
 import com.group_2.model.finance.StandingOrder;
 import com.group_2.model.finance.Transaction;
@@ -23,9 +29,11 @@ public class FinanceMapper {
 
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final CoreMapper coreMapper;
 
-    public FinanceMapper(UserRepository userRepository) {
+    public FinanceMapper(UserRepository userRepository, CoreMapper coreMapper) {
         this.userRepository = userRepository;
+        this.coreMapper = coreMapper;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -172,5 +180,76 @@ public class FinanceMapper {
         }
 
         return debtors;
+    }
+
+    // ===== View-facing DTOs (nested summaries) =====
+
+    public TransactionViewDTO toView(Transaction transaction) {
+        if (transaction == null) {
+            return null;
+        }
+        List<TransactionSplitViewDTO> splitViews = new ArrayList<>();
+        if (transaction.getSplits() != null) {
+            for (TransactionSplit split : transaction.getSplits()) {
+                splitViews.add(toView(split));
+            }
+        }
+        return new TransactionViewDTO(transaction.getId(), coreMapper.toUserSummary(transaction.getCreditor()),
+                coreMapper.toUserSummary(transaction.getCreatedBy()), transaction.getTotalAmount(),
+                transaction.getDescription(), transaction.getTimestamp(), coreMapper.toWgSummary(transaction.getWg()),
+                splitViews);
+    }
+
+    public TransactionSplitViewDTO toView(TransactionSplit split) {
+        if (split == null) {
+            return null;
+        }
+        return new TransactionSplitViewDTO(split.getId(), coreMapper.toUserSummary(split.getDebtor()),
+                split.getPercentage(), split.getAmount());
+    }
+
+    public List<TransactionViewDTO> toViewList(List<Transaction> transactions) {
+        List<TransactionViewDTO> dtos = new ArrayList<>();
+        if (transactions != null) {
+            for (Transaction transaction : transactions) {
+                dtos.add(toView(transaction));
+            }
+        }
+        return dtos;
+    }
+
+    public BalanceViewDTO toBalanceView(User user, Double balance) {
+        if (user == null) {
+            return null;
+        }
+        UserSummaryDTO summary = coreMapper.toUserSummary(user);
+        return new BalanceViewDTO(summary, balance);
+    }
+
+    public StandingOrderViewDTO toStandingOrderView(StandingOrder order) {
+        if (order == null) {
+            return null;
+        }
+        List<StandingOrderViewDTO.DebtorShareViewDTO> debtorDTOs = new ArrayList<>();
+        List<StandingOrderDTO.DebtorShareDTO> parsed = parseDebtorData(order.getDebtorData(), order.getTotalAmount());
+        for (StandingOrderDTO.DebtorShareDTO d : parsed) {
+            User debtor = userRepository.findById(d.userId()).orElse(null);
+            debtorDTOs.add(new StandingOrderViewDTO.DebtorShareViewDTO(d.userId(), coreMapper.toUserSummary(debtor),
+                    d.percentage(), d.amount()));
+        }
+        return new StandingOrderViewDTO(order.getId(), coreMapper.toUserSummary(order.getCreditor()),
+                coreMapper.toUserSummary(order.getCreatedBy()), order.getTotalAmount(), order.getDescription(),
+                order.getFrequency(), order.getNextExecution(), order.getIsActive(), order.getCreatedAt(),
+                order.getMonthlyDay(), order.getMonthlyLastDay(), debtorDTOs, coreMapper.toWgSummary(order.getWg()));
+    }
+
+    public List<StandingOrderViewDTO> toStandingOrderViewList(List<StandingOrder> orders) {
+        List<StandingOrderViewDTO> dtos = new ArrayList<>();
+        if (orders != null) {
+            for (StandingOrder order : orders) {
+                dtos.add(toStandingOrderView(order));
+            }
+        }
+        return dtos;
     }
 }

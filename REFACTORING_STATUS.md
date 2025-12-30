@@ -46,6 +46,19 @@ Scope: unbiased snapshot of structural debt and refactor priorities with focus o
 7) Centralize shared UI utilities (dialogs, currency formatting, navigation) to remove duplicated UI glue code and fix encoding issues in finance/cleaning controllers and FXML.
 8) Add tests around critical flows (balance calculations, settlement commands, cleaning task generation/rotation, sharing logic) using mocks or an in-memory DB to lock behavior before further refactors.
 
+## Progress (current iteration)
+- Session boundary tightened: `SessionManager` now stores only a lightweight snapshot (IDs + basic name/WG info) and fetches fresh entities on demand. Compatibility helpers remain to avoid breaking controllers.
+- Finance UI controllers (`TransactionsController`, `TransactionHistoryController`) now rely on session IDs for balance/history flows instead of holding onto cached `User` entities; interactions fetch fresh data per use.
+- Introduced core view models (`UserSummaryDTO`, `WgSummaryDTO`) and mappers plus finance view DTOs (`TransactionViewDTO`, `TransactionSplitViewDTO`, `BalanceViewDTO`) alongside mapper support, ready for controllers/services to consume without exposing entities.
+- Finance controllers are being moved to the new view DTOs: `TransactionHistoryController` now consumes view DTOs and the history fetch uses `getTransactionsForUserView`; `TransactionsController` uses `BalanceViewDTO`.
+- Began pulling settlement logic into services: `TransactionService` now exposes `settleBalance` and `transferCredit`; `TransactionsController` delegates to these service methods.
+- Standing order dialog now uses session IDs for action permissions and WG selection, calling `StandingOrderService.getActiveStandingOrdersDTO(wgId)` instead of passing entities.
+- Standing orders moved toward view DTOs: service provides `getActiveStandingOrdersView`, mapper builds nested user summaries, and `StandingOrdersDialogController` consumes the view DTOs, relying solely on IDs for permissions and WG lookup.
+- Standing order creation now respects provided WG IDs in the service (fallback to creator WG with validation).
+- Added view-returning standing order mutations (`createStandingOrderView`, `updateStandingOrderView`) and the dialog now calls these, keeping UI fully on view DTOs.
+- Encoding clean-up started: `TransactionHistoryController` uses ASCII-safe currency labels and button text (removed garbled symbols).
+- Next up: introduce shared DTO/view-model definitions for the UI layer and route controllers through them (reducing direct entity exposure), then move settlement/filter logic into dedicated services.
+
 ## Follow-ups Needed
 - Decide target encoding (UTF-8) and update IDE/settings to stop producing garbled glyphs in controllers/FXML.
 - Agree on the DTO/view-model contract for the UI so services can stop returning entities.

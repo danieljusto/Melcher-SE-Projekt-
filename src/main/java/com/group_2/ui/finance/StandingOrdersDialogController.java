@@ -23,8 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.group_2.dto.finance.StandingOrderDTO;
-import com.group_2.dto.finance.StandingOrderDTO.DebtorShareDTO;
+import com.group_2.dto.finance.StandingOrderViewDTO;
 import com.group_2.model.User;
 import com.group_2.model.WG;
 import com.group_2.model.finance.StandingOrderFrequency;
@@ -41,21 +40,21 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
     @FXML
     private StackPane dialogOverlay;
     @FXML
-    private TableView<StandingOrderDTO> standingOrdersTable;
+    private TableView<StandingOrderViewDTO> standingOrdersTable;
     @FXML
-    private TableColumn<StandingOrderDTO, String> descriptionColumn;
+    private TableColumn<StandingOrderViewDTO, String> descriptionColumn;
     @FXML
-    private TableColumn<StandingOrderDTO, String> payerColumn;
+    private TableColumn<StandingOrderViewDTO, String> payerColumn;
     @FXML
-    private TableColumn<StandingOrderDTO, String> debtorsColumn;
+    private TableColumn<StandingOrderViewDTO, String> debtorsColumn;
     @FXML
-    private TableColumn<StandingOrderDTO, String> amountColumn;
+    private TableColumn<StandingOrderViewDTO, String> amountColumn;
     @FXML
-    private TableColumn<StandingOrderDTO, String> frequencyColumn;
+    private TableColumn<StandingOrderViewDTO, String> frequencyColumn;
     @FXML
-    private TableColumn<StandingOrderDTO, String> nextExecutionColumn;
+    private TableColumn<StandingOrderViewDTO, String> nextExecutionColumn;
     @FXML
-    private TableColumn<StandingOrderDTO, Void> actionsColumn;
+    private TableColumn<StandingOrderViewDTO, Void> actionsColumn;
     @FXML
     private VBox emptyState;
 
@@ -90,7 +89,8 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         descriptionColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().description()));
 
         // Payer column
-        payerColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().creditorName()));
+        payerColumn.setCellValueFactory(cellData -> new SimpleStringProperty(
+                cellData.getValue().creditor() != null ? cellData.getValue().creditor().displayName() : "Unknown"));
 
         // Debtors column
         debtorsColumn.setCellValueFactory(cellData -> {
@@ -103,7 +103,8 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                 cellData -> new SimpleStringProperty(currencyFormat.format(cellData.getValue().totalAmount())));
 
         // Frequency column
-        frequencyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(formatFrequency(cellData.getValue())));
+        frequencyColumn
+                .setCellValueFactory(cellData -> new SimpleStringProperty(formatFrequency(cellData.getValue())));
 
         // Next execution column
         nextExecutionColumn.setCellValueFactory(cellData -> {
@@ -113,20 +114,20 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
             }
             return new SimpleStringProperty(nextDate);
         });
-        actionsColumn.setCellFactory(col -> new TableCell<StandingOrderDTO, Void>() {
+        actionsColumn.setCellFactory(col -> new TableCell<StandingOrderViewDTO, Void>() {
             private final Button editBtn = new Button("Edit");
             private final Button deleteBtn = new Button("Delete");
 
             {
                 editBtn.getStyleClass().addAll("table-action-button", "table-edit-button");
                 editBtn.setOnAction(e -> {
-                    StandingOrderDTO order = getTableView().getItems().get(getIndex());
+                    StandingOrderViewDTO order = getTableView().getItems().get(getIndex());
                     showEditDialog(order);
                 });
 
                 deleteBtn.getStyleClass().addAll("table-action-button", "table-delete-button");
                 deleteBtn.setOnAction(e -> {
-                    StandingOrderDTO order = getTableView().getItems().get(getIndex());
+                    StandingOrderViewDTO order = getTableView().getItems().get(getIndex());
                     confirmAndDelete(order);
                 });
             }
@@ -137,11 +138,11 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    StandingOrderDTO order = getTableView().getItems().get(getIndex());
-                    User currentUser = sessionManager.getCurrentUser();
+                    StandingOrderViewDTO order = getTableView().getItems().get(getIndex());
+                    Long currentUserId = sessionManager.getCurrentUserId();
 
                     // Only show actions for creator
-                    if (currentUser != null && order.createdById().equals(currentUser.getId())) {
+                    if (currentUserId != null && order.createdById().equals(currentUserId)) {
                         HBox buttons = new HBox(5, editBtn, deleteBtn);
                         setGraphic(buttons);
                     } else {
@@ -154,17 +155,17 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         // Add double click listener
         standingOrdersTable.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2 && standingOrdersTable.getSelectionModel().getSelectedItem() != null) {
-                StandingOrderDTO selectedOrder = standingOrdersTable.getSelectionModel().getSelectedItem();
-                User currentUser = sessionManager.getCurrentUser();
+                StandingOrderViewDTO selectedOrder = standingOrdersTable.getSelectionModel().getSelectedItem();
+                Long currentUserId = sessionManager.getCurrentUserId();
 
-                if (currentUser != null && selectedOrder.createdById().equals(currentUser.getId())) {
+                if (currentUserId != null && selectedOrder.createdById().equals(currentUserId)) {
                     showEditDialog(selectedOrder);
                 }
             }
         });
     }
 
-    private String formatFrequency(StandingOrderDTO order) {
+    private String formatFrequency(StandingOrderViewDTO order) {
         StandingOrderFrequency freq = order.frequency();
         switch (freq) {
         case WEEKLY:
@@ -200,18 +201,22 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         }
     }
 
-    private String parseDebtorNames(List<DebtorShareDTO> debtors) {
+    private String parseDebtorNames(List<StandingOrderViewDTO.DebtorShareViewDTO> debtors) {
         if (debtors == null || debtors.isEmpty()) {
             return "None";
         } else if (debtors.size() == 1) {
-            return debtors.get(0).userName();
+            return debtors.get(0).user() != null ? debtors.get(0).user().displayName() : "Unknown";
         } else {
-            return debtors.stream().map(d -> d.userName() + " (" + d.getFormattedPercentage() + ")")
-                    .collect(Collectors.joining(", "));
+            return debtors.stream()
+                    .map(d -> {
+                        String name = d.user() != null ? d.user().displayName() : "Unknown";
+                        String pct = String.format("%.1f%%", d.percentage());
+                        return name + " (" + pct + ")";
+                    }).collect(Collectors.joining(", "));
         }
     }
 
-    private void confirmAndDelete(StandingOrderDTO order) {
+    private void confirmAndDelete(StandingOrderViewDTO order) {
         Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
         boolean confirmed = showConfirmDialog("Delete Standing Order", "Are you sure?",
                 "This will deactivate the standing order: " + order.description(), owner);
@@ -238,13 +243,13 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
     }
 
     private void loadStandingOrders() {
-        WG wg = sessionManager.getCurrentUser().getWg();
-        if (wg == null) {
+        Long wgId = sessionManager.getCurrentWgId();
+        if (wgId == null) {
             showEmptyState(true);
             return;
         }
 
-        List<StandingOrderDTO> orders = standingOrderService.getActiveStandingOrdersDTO(wg);
+        List<StandingOrderViewDTO> orders = standingOrderService.getActiveStandingOrdersView(wgId);
 
         if (orders.isEmpty()) {
             showEmptyState(true);
@@ -265,7 +270,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         this.onOrdersChanged = callback;
     }
 
-    private void showEditDialog(StandingOrderDTO order) {
+    private void showEditDialog(StandingOrderViewDTO order) {
         // Create edit dialog
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Edit Standing Order");
@@ -692,18 +697,16 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
 
                 // Create or Update
                 if (order == null) {
-                    // Create mode
-                    standingOrderService.createStandingOrderDTO(sessionManager.getCurrentUser().getId(), // Creator
-                            sessionManager.getCurrentUser().getId(), // Creditor (self)
-                            sessionManager.getCurrentUser().getWg().getId(), // WG
-                            newAmount, newDescription, newFrequency, null, // Start date (defaults to now/next execution
-                                                                           // in service?) Service expect LocalDate
-                                                                           // startDate
-                            debtorIds, percentages.isEmpty() ? null : percentages, newMonthlyDay, newMonthlyLastDay);
+                    Long currentUserId = sessionManager.getCurrentUserId();
+                    Long wgId = sessionManager.getCurrentWgId();
+                    standingOrderService.createStandingOrderView(currentUserId, // Creator
+                            currentUserId, // Creditor (self)
+                            wgId, newAmount, newDescription, newFrequency, null, debtorIds,
+                            percentages.isEmpty() ? null : percentages, newMonthlyDay, newMonthlyLastDay);
                 } else {
-                    // Update mode
-                    standingOrderService.updateStandingOrderDTO(order.id(), sessionManager.getCurrentUser().getId(),
-                            order.creditorId(), newAmount, newDescription, newFrequency, debtorIds,
+                    Long currentUserId = sessionManager.getCurrentUserId();
+                    standingOrderService.updateStandingOrderView(order.id(), currentUserId, order.creditor().id(),
+                            newAmount, newDescription, newFrequency, debtorIds,
                             percentages.isEmpty() ? null : percentages, newMonthlyDay, newMonthlyLastDay);
                 }
 
@@ -728,11 +731,12 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         }
     }
 
-    private void parseDebtorDataForEdit(List<DebtorShareDTO> debtors, List<Long> debtorIds, List<Double> percentages) {
+    private void parseDebtorDataForEdit(List<StandingOrderViewDTO.DebtorShareViewDTO> debtors, List<Long> debtorIds,
+            List<Double> percentages) {
         if (debtors == null)
             return;
 
-        for (DebtorShareDTO d : debtors) {
+        for (StandingOrderViewDTO.DebtorShareViewDTO d : debtors) {
             debtorIds.add(d.userId());
             percentages.add(d.percentage());
         }

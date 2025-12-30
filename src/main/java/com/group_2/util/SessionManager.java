@@ -3,81 +3,124 @@ package com.group_2.util;
 import com.group_2.model.User;
 import com.group_2.model.WG;
 import com.group_2.service.core.UserService;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 /**
- * Spring-managed session manager that maintains the current user state.
- * This is a singleton bean that holds the logged-in user for the application
- * session.
+ * Spring-managed session manager that maintains only the session snapshot (IDs and
+ * basic profile data) instead of holding onto JPA entities. Controllers can still
+ * fetch a fresh User on demand via the provided helpers, but the authoritative
+ * state is the lightweight snapshot.
  */
 @Component
 public class SessionManager {
 
-    private User currentUser;
+    private final UserService userService;
 
-    @Autowired
-    private UserService userService;
+    private Long currentUserId;
+    private Long currentWgId;
+    private String currentUserName;
+    private String currentUserSurname;
 
-    /**
-     * Sets the currently logged-in user.
-     *
-     * @param user The User object representing the logged-in user.
-     */
-    public void setCurrentUser(User user) {
-        this.currentUser = user;
+    public SessionManager(UserService userService) {
+        this.userService = userService;
     }
 
     /**
-     * Retrieves the currently logged-in user.
-     *
-     * @return The User object representing the logged-in user.
+     * Sets the currently logged-in user by snapshotting only the necessary data.
+     */
+    public void setCurrentUser(User user) {
+        if (user == null) {
+            clear();
+            return;
+        }
+        this.currentUserId = user.getId();
+        this.currentWgId = user.getWg() != null ? user.getWg().getId() : null;
+        this.currentUserName = user.getName();
+        this.currentUserSurname = user.getSurname();
+    }
+
+    /**
+     * Returns the current user snapshot (id, name, surname, wgId) if logged in.
+     */
+    public Optional<UserSession> getCurrentUserSession() {
+        if (currentUserId == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new UserSession(currentUserId, currentUserName, currentUserSurname, currentWgId));
+    }
+
+    /**
+     * Retrieves the currently logged-in user entity (fresh from the database).
+     * Kept for backward compatibility while gradually removing direct entity use
+     * from controllers.
      */
     public User getCurrentUser() {
-        return currentUser;
+        if (currentUserId == null) {
+            return null;
+        }
+        return userService.getUser(currentUserId).orElse(null);
     }
 
     /**
      * Retrieves the user ID of the currently logged-in user.
-     *
-     * @return The user ID, or null if no user is logged in.
      */
     public Long getCurrentUserId() {
-        return currentUser != null ? currentUser.getId() : null;
+        return currentUserId;
     }
 
     /**
-     * Retrieves the WG of the currently logged-in user.
-     *
-     * @return The user's WG, or null if not set.
+     * Retrieves the WG ID of the currently logged-in user if known.
+     */
+    public Long getCurrentWgId() {
+        return currentWgId;
+    }
+
+    /**
+     * Retrieves the WG of the currently logged-in user (fresh entity).
      */
     public WG getCurrentUserWG() {
-        return currentUser != null ? currentUser.getWg() : null;
+        User user = getCurrentUser();
+        return user != null ? user.getWg() : null;
     }
 
     /**
      * Checks if a user is currently logged in.
-     *
-     * @return true if a user is logged in, false otherwise.
      */
     public boolean isLoggedIn() {
-        return currentUser != null;
+        return currentUserId != null;
     }
 
     /**
-     * Clears the session by resetting the current user to null.
+     * Clears the session snapshot.
      */
     public void clear() {
-        currentUser = null;
+        currentUserId = null;
+        currentWgId = null;
+        currentUserName = null;
+        currentUserSurname = null;
     }
 
     /**
-     * Refreshes the current user by fetching the latest data from the database.
+     * Refreshes the current user data from the database and updates the snapshot.
      */
     public void refreshCurrentUser() {
-        if (currentUser != null) {
-            currentUser = userService.getUser(currentUser.getId()).orElse(null);
+        if (currentUserId == null) {
+            return;
+        }
+        userService.getUser(currentUserId).ifPresentOrElse(this::setCurrentUser, this::clear);
+    }
+
+    /**
+     * Snapshot of minimal user information for UI consumption.
+     */
+    public record UserSession(Long userId, String name, String surname, Long wgId) {
+        public String displayName() {
+            if (surname == null || surname.isBlank()) {
+                return name;
+            }
+            return name + " " + surname;
         }
     }
 }

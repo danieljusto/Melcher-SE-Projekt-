@@ -11,6 +11,7 @@ import com.group_2.repository.UserRepository;
 import com.group_2.repository.finance.StandingOrderRepository;
 import com.group_2.dto.finance.FinanceMapper;
 import com.group_2.dto.finance.StandingOrderDTO;
+import com.group_2.repository.WGRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,15 +37,17 @@ public class StandingOrderService {
     private final ObjectMapper objectMapper;
     private final FinanceMapper financeMapper;
     private final UserRepository userRepository;
+    private final WGRepository wgRepository;
 
     @Autowired
     public StandingOrderService(StandingOrderRepository standingOrderRepository, TransactionService transactionService,
-            FinanceMapper financeMapper, UserRepository userRepository) {
+            FinanceMapper financeMapper, UserRepository userRepository, WGRepository wgRepository) {
         this.standingOrderRepository = standingOrderRepository;
         this.transactionService = transactionService;
         this.objectMapper = new ObjectMapper();
         this.financeMapper = financeMapper;
         this.userRepository = userRepository;
+        this.wgRepository = wgRepository;
     }
 
     /**
@@ -321,6 +324,35 @@ public class StandingOrderService {
         return financeMapper.toStandingOrderDTOList(orders);
     }
 
+    public List<StandingOrderViewDTO> getActiveStandingOrdersView(WG wg) {
+        List<StandingOrder> orders = getActiveStandingOrders(wg);
+        return financeMapper.toStandingOrderViewList(orders);
+    }
+
+    /**
+     * Get all active standing orders for a WG by ID as DTOs.
+     */
+    public List<StandingOrderDTO> getActiveStandingOrdersDTO(Long wgId) {
+        if (wgId == null) {
+            return List.of();
+        }
+        WG wg = wgRepository.findById(wgId).orElse(null);
+        if (wg == null) {
+            return List.of();
+        }
+        return getActiveStandingOrdersDTO(wg);
+    }
+
+    public List<StandingOrderViewDTO> getActiveStandingOrdersView(Long wgId) {
+        if (wgId == null) {
+            return List.of();
+        }
+        WG wg = wgRepository.findById(wgId).orElse(null);
+        if (wg == null) {
+            return List.of();
+        }
+        return getActiveStandingOrdersView(wg);
+    }
     /**
      * Get a standing order by ID as DTO
      */
@@ -353,11 +385,33 @@ public class StandingOrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Creator not found"));
         User creditor = userRepository.findById(creditorId)
                 .orElseThrow(() -> new IllegalArgumentException("Creditor not found"));
-        WG wg = creator.getWg(); // Assuming WG from creator for consistency, or fetch by ID if needed
+        WG wg = null;
+        if (wgId != null) {
+            wg = wgRepository.findById(wgId).orElse(null);
+        }
+        if (wg == null) {
+            wg = creator.getWg();
+        }
+        if (wg == null) {
+            throw new IllegalArgumentException("WG not found for standing order creation");
+        }
 
         StandingOrder order = createStandingOrder(creator, creditor, wg, totalAmount, description, frequency, startDate,
                 debtorIds, percentages, monthlyDay, monthlyLastDay);
         return financeMapper.toDTO(order);
+    }
+
+    /**
+     * Create a standing order (using IDs) and return as view DTO
+     */
+    @Transactional
+    public StandingOrderViewDTO createStandingOrderView(Long creatorId, Long creditorId, Long wgId, Double totalAmount,
+            String description, StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds,
+            List<Double> percentages, Integer monthlyDay, Boolean monthlyLastDay) {
+
+        StandingOrderDTO dto = createStandingOrderDTO(creatorId, creditorId, wgId, totalAmount, description, frequency,
+                startDate, debtorIds, percentages, monthlyDay, monthlyLastDay);
+        return getStandingOrderByIdView(dto.id());
     }
 
     /**
@@ -386,5 +440,18 @@ public class StandingOrderService {
         StandingOrder order = updateStandingOrder(id, currentUserId, newCreditor, totalAmount, description, frequency,
                 debtorIds, percentages, monthlyDay, monthlyLastDay);
         return financeMapper.toDTO(order);
+    }
+
+    /**
+     * Update a standing order (using IDs) and return as view DTO
+     */
+    @Transactional
+    public StandingOrderViewDTO updateStandingOrderView(Long id, Long currentUserId, Long newCreditorId,
+            Double totalAmount, String description, StandingOrderFrequency frequency, List<Long> debtorIds,
+            List<Double> percentages, Integer monthlyDay, Boolean monthlyLastDay) {
+
+        StandingOrderDTO dto = updateStandingOrderDTO(id, currentUserId, newCreditorId, totalAmount, description,
+                frequency, debtorIds, percentages, monthlyDay, monthlyLastDay);
+        return getStandingOrderByIdView(dto.id());
     }
 }

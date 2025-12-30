@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 import java.text.DecimalFormat;
 import java.util.*;
 
-import com.group_2.dto.finance.BalanceDTO;
+import com.group_2.dto.finance.BalanceViewDTO;
 
 @Component
 public class TransactionsController extends Controller {
@@ -63,7 +63,7 @@ public class TransactionsController extends Controller {
     @FXML
     private VBox balanceCard;
 
-    private DecimalFormat currencyFormat = new DecimalFormat("€#,##0.00");
+    private DecimalFormat currencyFormat = new DecimalFormat("EUR #,##0.00");
 
     @Autowired
     public TransactionsController(TransactionService transactionService, SessionManager sessionManager) {
@@ -74,7 +74,7 @@ public class TransactionsController extends Controller {
     @FXML
     public void initialize() {
         if (navbarController != null) {
-            navbarController.setTitle("💰 Transactions");
+            navbarController.setTitle("Transactions");
         }
         setupBalanceTable();
     }
@@ -167,11 +167,11 @@ public class TransactionsController extends Controller {
     }
 
     private void updateBalanceDisplay() {
-        User currentUser = sessionManager.getCurrentUser();
-        if (currentUser == null)
+        Long currentUserId = sessionManager.getCurrentUserId();
+        if (currentUserId == null)
             return;
 
-        double totalBalance = transactionService.getTotalBalance(currentUser.getId());
+        double totalBalance = transactionService.getTotalBalance(currentUserId);
         totalBalanceText.setText(currencyFormat.format(totalBalance));
 
         // Change card color based on balance
@@ -193,19 +193,21 @@ public class TransactionsController extends Controller {
     }
 
     private void updateBalanceSheet() {
-        User currentUser = sessionManager.getCurrentUser();
+        Long currentUserId = sessionManager.getCurrentUserId();
 
         balanceTable.getItems().clear();
 
-        if (currentUser == null) {
+        if (currentUserId == null) {
             return;
         }
 
-        // Use DTO method instead of entity-based calculation
-        List<BalanceDTO> balances = transactionService.calculateAllBalancesDTO(currentUser.getId());
+        // Use view DTO method instead of entity-based calculation
+        List<BalanceViewDTO> balances = transactionService.calculateAllBalancesView(currentUserId);
 
-        for (BalanceDTO dto : balances) {
-            balanceTable.getItems().add(new BalanceEntry(dto.userName(), dto.balance(), dto.userId()));
+        for (BalanceViewDTO dto : balances) {
+            if (dto.user() != null) {
+                balanceTable.getItems().add(new BalanceEntry(dto.user().displayName(), dto.balance(), dto.user().id()));
+            }
         }
 
         // The listener will automatically update the height
@@ -214,7 +216,11 @@ public class TransactionsController extends Controller {
     }
 
     private void showSettlementDialog(BalanceEntry entry) {
-        User currentUser = sessionManager.getCurrentUser();
+        Long currentUserId = sessionManager.getCurrentUserId();
+        if (currentUserId == null)
+            return;
+
+        User currentUser = userService.getUser(currentUserId).orElse(null);
         if (currentUser == null)
             return;
 
@@ -245,7 +251,7 @@ public class TransactionsController extends Controller {
         content.setPrefWidth(500);
 
         // Header icon
-        Text headerIcon = new Text(balance < 0 ? "💸" : "💰");
+        Text headerIcon = new Text(balance < 0 ? "-" : "+");
         headerIcon.getStyleClass().add("dialog-header-icon");
 
         // Message
@@ -271,11 +277,11 @@ public class TransactionsController extends Controller {
 
         // Create payment method buttons
         // Cash button
-        Button cashButton = new Button("💵  Cash");
+        Button cashButton = new Button("Cash");
         cashButton.getStyleClass().addAll("payment-button", "payment-button-cash");
 
         // Bank transfer button
-        Button bankButton = new Button("🏦  Bank Transfer");
+        Button bankButton = new Button("Bank Transfer");
         bankButton.getStyleClass().addAll("payment-button", "payment-button-bank");
 
         // PayPal button with icon
@@ -288,7 +294,7 @@ public class TransactionsController extends Controller {
             paypalIcon.setPreserveRatio(true);
             paypalButton.setGraphic(paypalIcon);
         } catch (Exception e) {
-            paypalButton.setText("💳  PayPal");
+            paypalButton.setText("PayPal");
         }
         paypalButton.getStyleClass().addAll("payment-button", "payment-button-paypal");
 
@@ -337,11 +343,11 @@ public class TransactionsController extends Controller {
 
             if (!availableCredits.isEmpty()) {
                 // Add separator
-                Text orText = new Text("— or —");
+                Text orText = new Text("-- or --");
                 orText.getStyleClass().add("or-separator-text");
 
                 // Credit Transfer button
-                Button creditTransferButton = new Button("🔄  Credit Transfer");
+                Button creditTransferButton = new Button("Credit Transfer");
                 creditTransferButton.getStyleClass()
                         .addAll("payment-button", "payment-button-credit", "payment-button-wide");
 
@@ -409,7 +415,7 @@ public class TransactionsController extends Controller {
         confirmDialog.getDialogPane().getStyleClass().add("dialog-content");
 
         // Add custom buttons
-        ButtonType confirmButton = new ButtonType("✓ Confirm", ButtonBar.ButtonData.OK_DONE);
+        ButtonType confirmButton = new ButtonType("Confirm", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         confirmDialog.getButtonTypes().setAll(confirmButton, cancelButton);
 
@@ -428,33 +434,12 @@ public class TransactionsController extends Controller {
     private void createSettlementTransaction(User currentUser, User otherUser, double amount, String paymentMethod,
             boolean currentUserPays) {
         try {
-            // Determine payer and debtor
-            Long payerId;
-            Long debtorId;
-            String description;
+            transactionService.settleBalance(currentUser.getId(), otherUser.getId(), amount, currentUserPays,
+                    paymentMethod);
 
-            if (currentUserPays) {
-                // Current user is paying off their debt
-                payerId = currentUser.getId();
-                debtorId = otherUser.getId();
-                description = "Settlement via " + paymentMethod;
-            } else {
-                // Other user is paying off their debt to current user
-                payerId = otherUser.getId();
-                debtorId = currentUser.getId();
-                description = "Settlement via " + paymentMethod;
-            }
-
-            // Create the transaction (current user is always the creator)
-            transactionService.createTransactionDTO(currentUser.getId(), // creator
-                    payerId, List.of(debtorId), null, // Equal split (100% to single debtor)
-                    amount, description);
-
-            // Refresh the display
             updateBalanceDisplay();
             updateBalanceSheet();
 
-            // Show success message
             showSuccessAlert("Settlement Complete", "The balance with " + otherUser.getName()
                     + (otherUser.getSurname() != null ? " " + otherUser.getSurname() : "") + " has been settled.",
                     balanceTable.getScene().getWindow());
@@ -501,7 +486,7 @@ public class TransactionsController extends Controller {
         content.setPrefWidth(450);
 
         // Header
-        Text headerIcon = new Text("🔄");
+        Text headerIcon = new Text("Transfer");
         headerIcon.getStyleClass().add("dialog-header-icon");
 
         Text titleText = new Text("Select Credit Source");
@@ -526,7 +511,7 @@ public class TransactionsController extends Controller {
             creditButton.getStyleClass().addAll("credit-option-button", "credit-option-button-wide",
                     "credit-option-button-accent");
             creditButton.setText(credit.getMemberName() + " owes you " + currencyFormat.format(availableAmount)
-                    + "\n→ Transfer " + currencyFormat.format(transferAmount));
+                    + "\n-> Transfer " + currencyFormat.format(transferAmount));
 
             final BalanceEntry selectedCredit = credit;
             creditButton.setOnAction(e -> {
@@ -571,7 +556,7 @@ public class TransactionsController extends Controller {
 
         String message = String.format(
                 "Transfer %s of credit from %s to settle your debt with %s.\n\n" + "This will:\n"
-                        + "• Reduce %s's credit with you by %s\n" + "• Reduce your debt to %s by %s\n\n"
+                        + "- Reduce %s's credit with you by %s\n" + "- Reduce your debt to %s by %s\n\n"
                         + "Do you want to proceed?",
                 currencyFormat.format(amount), creditSourceName, debtorName, creditSourceName,
                 currencyFormat.format(amount), debtorName, currencyFormat.format(amount));
@@ -580,7 +565,7 @@ public class TransactionsController extends Controller {
         confirmDialog.initOwner(balanceTable.getScene().getWindow());
         confirmDialog.getDialogPane().getStyleClass().add("dialog-content");
 
-        ButtonType confirmButton = new ButtonType("✓ Confirm Transfer", ButtonBar.ButtonData.OK_DONE);
+        ButtonType confirmButton = new ButtonType("Confirm Transfer", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         confirmDialog.getButtonTypes().setAll(confirmButton, cancelButton);
 
@@ -596,23 +581,8 @@ public class TransactionsController extends Controller {
     private void executeCreditTransfer(User currentUser, User creditSource, User debtorTo, double amount,
             String creditSourceName, String debtorName) {
         try {
-            // Create a transaction that represents: creditSource pays debtorTo on behalf of
-            // currentUser
-            // This is recorded as: currentUser pays debtorTo (settling the debt)
-            // And: creditSource's credit with currentUser is reduced
+            transactionService.transferCredit(currentUser.getId(), creditSource.getId(), debtorTo.getId(), amount);
 
-            // Transaction 1: Current user settles debt with debtorTo
-            transactionService.createTransactionDTO(currentUser.getId(), // creator
-                    currentUser.getId(), // creditor (payer)
-                    List.of(debtorTo.getId()), null, amount, "Settlement via Credit Transfer (settled debt)");
-
-            // Transaction 2: Credit source settles their debt with current user
-            transactionService.createTransactionDTO(currentUser.getId(), // creator (current user is creating this on
-                                                                            // behalf of credit source)
-                    creditSource.getId(), // creditor (credit source is the payer)
-                    List.of(currentUser.getId()), null, amount, "Settlement via Credit Transfer (used credit)");
-
-            // Refresh displays
             updateBalanceDisplay();
             updateBalanceSheet();
 
@@ -670,7 +640,7 @@ public class TransactionsController extends Controller {
         private final String memberName;
         private final double balance;
         private final Long userId;
-        private final DecimalFormat format = new DecimalFormat("€#,##0.00");
+        private final DecimalFormat format = new DecimalFormat("EUR #,##0.00");
 
         public BalanceEntry(String memberName, double balance, Long userId) {
             this.memberName = memberName;
