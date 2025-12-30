@@ -59,6 +59,23 @@
     -fx-font-family: -font-base;
 }
 
+/* ===== HYPERLINKS ===== */
+.hyperlink {
+    -fx-text-fill: white;
+}
+
+.hyperlink:hover {
+    -fx-text-fill: #e5e7eb;
+}
+
+.hyperlink:visited {
+    -fx-text-fill: white;
+}
+
+.hyperlink:pressed {
+    -fx-text-fill: #c7d2fe;
+}
+
 /* ===== NAVBAR STYLES ===== */
 .navbar {
     -fx-background-color: linear-gradient(to right, #1e293b, #334155);
@@ -271,6 +288,26 @@
     -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     -fx-font-size: 13px;
     -fx-fill: #475569;
+}
+
+/* ===== MAIN SCREEN CARD MODIFIER ===== */
+.card.main-card {
+    -fx-border-color: white;
+    -fx-border-width: 2;
+    -fx-border-radius: 16;
+}
+
+.card.main-card:hover,
+.card.main-card:focused,
+.card.main-card:pressed {
+    -fx-border-color: -color-primary;
+    -fx-border-width: 2;
+    -fx-border-radius: 16;
+}
+
+.card.main-card:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
 /* ===== BUTTONS ===== */
