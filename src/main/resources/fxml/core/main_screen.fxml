@@ -5,6 +5,7 @@
 <?import javafx.scene.text.*?>
 <?import javafx.scene.image.*?>
 
+<?import java.lang.String?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.group_2.ui.core.MainScreenController"
@@ -24,17 +25,24 @@
                 <Text text="Hommunity" styleClass="navbar-title"/>
             </HBox>
             <Region HBox.hgrow="ALWAYS"/>
-            
-            <!-- WG Settings -->
-            <HBox spacing="10" alignment="CENTER_RIGHT">
-                <Button text="Settings" onAction="#navigateToSettings" styleClass="navbar-settings-button"/>
-            </HBox>
-            
-            <!-- Separator -->
-            <Region style="-fx-background-color: rgba(255,255,255,0.3); -fx-min-width: 1; -fx-pref-width: 1; -fx-min-height: 30;"/>
-            
-            <!-- User Profile -->
-            <HBox spacing="12" alignment="CENTER_RIGHT">
+
+            <!-- Navigation Icons -->
+            <HBox spacing="16" alignment="CENTER_RIGHT">
+                <!-- Settings Icon -->
+                <Button onAction="#navigateToSettings" styleClass="navbar-settings-button">
+                    <graphic>
+                        <ImageView fitWidth="22"
+                                   fitHeight="22"
+                                   preserveRatio="true">
+                            <Image url="@/pictures/settings.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <!-- Separator -->
+                <Region style="-fx-background-color: rgba(255,255,255,0.3); -fx-min-width: 1; -fx-pref-width: 1; -fx-min-height: 30;"/>
+
+                <!-- User Profile -->
                 <VBox alignment="CENTER_RIGHT" spacing="2">
                     <Text fx:id="headerUserName" text="User Name" styleClass="navbar-user-name"/>
                     <Text fx:id="headerWgName" text="Home Name" styleClass="navbar-wg-name"/>
@@ -42,65 +50,77 @@
                 <StackPane styleClass="avatar" onMouseClicked="#navigateToProfile" style="-fx-cursor: hand; -fx-pref-width: 50; -fx-pref-height: 50; -fx-min-width: 50; -fx-min-height: 50;">
                     <Text fx:id="headerAvatar" text="?" styleClass="avatar-text" style="-fx-font-size: 20px;"/>
                 </StackPane>
-            </HBox>
+                </HBox>
         </HBox>
     </top>
 
     <!-- Main Content -->
     <center>
         <VBox alignment="CENTER" style="-fx-background-color: #f8fafc; -fx-padding: 30;" VBox.vgrow="ALWAYS">
-            
+
             <!-- Main Action Cards - Horizontal Row -->
             <HBox spacing="30" alignment="CENTER" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                
+
                 <!-- Cleaning Schedule Card -->
-                <VBox styleClass="card" spacing="25" alignment="CENTER" 
+                <VBox spacing="25" alignment="TOP_CENTER"
                       style="-fx-cursor: hand;"
                       HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS"
                       onMouseClicked="#navigateToCleaningSchedule">
+                    <styleClass>
+                        <String fx:value="card"/>
+                        <String fx:value="main-card"/>
+                    </styleClass>
                     <Region VBox.vgrow="ALWAYS"/>
                     <StackPane style="-fx-background-color: linear-gradient(to bottom right, #10b981, #059669); -fx-background-radius: 25; -fx-pref-width: 140; -fx-pref-height: 140; -fx-min-width: 140; -fx-min-height: 140;" VBox.vgrow="NEVER">
                         <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
-                            <image>
-                                <Image url="@/pictures/icon_cleaning.png"/>
-                            </image>
+                            <Image url="@/pictures/cleaning-schedule.png"/>
                         </ImageView>
                     </StackPane>
                     <Text text="Cleaning Schedule" styleClass="card-title" style="-fx-font-size: 26px;"/>
-                    <Text text="Organize cleaning duties and schedules for your home."
-                          styleClass="card-subtitle" wrappingWidth="280" style="-fx-text-alignment: center; -fx-font-size: 16px;"/>
+                    <Label text="Organize cleaning duties and schedules for your home."
+                           styleClass="card-subtitle" wrapText="true" prefWidth="280" prefHeight="48" alignment="CENTER"/>
                     <Region VBox.vgrow="ALWAYS"/>
-
                 </VBox>
 
                 <!-- Shopping List Card -->
-                <VBox styleClass="card" spacing="25" alignment="CENTER" 
+                <VBox spacing="25" alignment="TOP_CENTER"
                       style="-fx-cursor: hand;"
                       HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS"
                       onMouseClicked="#navigateToShoppingList">
+                    <styleClass>
+                        <String fx:value="card"/>
+                        <String fx:value="main-card"/>
+                    </styleClass>
                     <Region VBox.vgrow="ALWAYS"/>
                     <StackPane style="-fx-background-color: linear-gradient(to bottom right, #ec4899, #db2777); -fx-background-radius: 25; -fx-pref-width: 140; -fx-pref-height: 140; -fx-min-width: 140; -fx-min-height: 140;" VBox.vgrow="NEVER">
-                        <Text text="Shop" style="-fx-font-size: 40px; -fx-fill: white; -fx-font-weight: bold;"/>
+                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                            <Image url="@/pictures/shopping-list.png"/>
+                        </ImageView>
                     </StackPane>
                     <Text text="Shopping List" styleClass="card-title" style="-fx-font-size: 26px;"/>
-                    <Text text="Create shared shopping lists for your home."
-                          styleClass="card-subtitle" wrappingWidth="280" style="-fx-text-alignment: center; -fx-font-size: 16px;"/>
+                    <Label text="Create shared shopping lists for your home."
+                          styleClass="card-subtitle" wrapText="true" prefWidth="280" prefHeight="48" alignment="CENTER"/>
                     <Region VBox.vgrow="ALWAYS"/>
-
                 </VBox>
 
                 <!-- Transactions Card -->
-                <VBox styleClass="card" spacing="25" alignment="CENTER" 
+                <VBox spacing="25" alignment="TOP_CENTER"
                       style="-fx-cursor: hand;"
                       HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS"
                       onMouseClicked="#navigateToExpenses">
+                    <styleClass>
+                        <String fx:value="card"/>
+                        <String fx:value="main-card"/>
+                    </styleClass>
                     <Region VBox.vgrow="ALWAYS"/>
                     <StackPane style="-fx-background-color: linear-gradient(to bottom right, #f59e0b, #d97706); -fx-background-radius: 25; -fx-pref-width: 140; -fx-pref-height: 140; -fx-min-width: 140; -fx-min-height: 140;" VBox.vgrow="NEVER">
-                        <Text text="\$" style="-fx-font-size: 70px; -fx-fill: white;"/>
+                        <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                            <Image url="@/pictures/transactions.png"/>
+                        </ImageView>
                     </StackPane>
                     <Text text="Transactions" styleClass="card-title" style="-fx-font-size: 26px;"/>
-                    <Text text="Track and split shared costs fairly."
-                          styleClass="card-subtitle" wrappingWidth="280" style="-fx-text-alignment: center; -fx-font-size: 16px;"/>
+                    <Label text="Track and split shared costs fairly."
+                           styleClass="card-subtitle" wrapText="true" prefWidth="280" prefHeight="48" alignment="CENTER"/>
                     <Region VBox.vgrow="ALWAYS"/>
 
                 </VBox>
