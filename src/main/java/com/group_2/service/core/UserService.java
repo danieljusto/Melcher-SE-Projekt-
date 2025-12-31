@@ -1,5 +1,7 @@
 package com.group_2.service.core;
 
+import com.group_2.dto.core.CoreMapper;
+import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.model.User;
 import com.group_2.repository.UserRepository;
 
@@ -17,11 +19,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncryptionService passwordEncryptionService;
+    private final CoreMapper coreMapper;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncryptionService passwordEncryptionService) {
+    public UserService(UserRepository userRepository, PasswordEncryptionService passwordEncryptionService,
+            CoreMapper coreMapper) {
         this.userRepository = userRepository;
         this.passwordEncryptionService = passwordEncryptionService;
+        this.coreMapper = coreMapper;
     }
 
     @Transactional
@@ -42,6 +47,14 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * Register a user and return a summary for UI usage.
+     */
+    @Transactional
+    public UserSummaryDTO registerUserSummary(String name, String surname, String email, String password) {
+        return coreMapper.toUserSummary(registerUser(name, surname, email, password));
+    }
+
     public Optional<User> authenticate(String email, String password) {
         // Find user by email, then verify password using BCrypt
         return userRepository.findAll().stream()
@@ -51,8 +64,22 @@ public class UserService {
                 .findFirst();
     }
 
+    /**
+     * Authenticate and return a lightweight user summary for UI usage.
+     */
+    public Optional<UserSummaryDTO> authenticateSummary(String email, String password) {
+        return authenticate(email, password).map(coreMapper::toUserSummary);
+    }
+
     public Optional<User> getUser(Long id) {
         return userRepository.findById(id);
+    }
+
+    /**
+     * Get a user summary by ID for UI usage.
+     */
+    public Optional<UserSummaryDTO> getUserSummary(Long id) {
+        return userRepository.findById(id).map(coreMapper::toUserSummary);
     }
 
     public List<User> getAllUsers() {

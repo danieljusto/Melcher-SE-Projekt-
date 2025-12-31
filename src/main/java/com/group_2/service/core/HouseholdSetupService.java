@@ -5,6 +5,7 @@ import com.group_2.dto.cleaning.RoomDTO;
 import com.group_2.model.WG;
 import com.group_2.model.cleaning.Room;
 import com.group_2.repository.WGRepository;
+import com.group_2.repository.cleaning.RoomRepository;
 import com.group_2.service.cleaning.RoomService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +26,15 @@ public class HouseholdSetupService {
     private final RoomService roomService;
     private final CleaningMapper cleaningMapper;
     private final WGRepository wgRepository;
+    private final RoomRepository roomRepository;
 
     @Autowired
-    public HouseholdSetupService(RoomService roomService, CleaningMapper cleaningMapper, WGRepository wgRepository) {
+    public HouseholdSetupService(RoomService roomService, CleaningMapper cleaningMapper, WGRepository wgRepository,
+            RoomRepository roomRepository) {
         this.roomService = roomService;
         this.cleaningMapper = cleaningMapper;
         this.wgRepository = wgRepository;
+        this.roomRepository = roomRepository;
     }
 
     // ========== Room Management (delegating to cleaning domain) ==========
@@ -84,10 +88,10 @@ public class HouseholdSetupService {
      * Get rooms for a WG as DTOs.
      */
     public List<RoomDTO> getRoomsForWgDTO(WG wg) {
-        if (wg == null || wg.rooms == null) {
+        if (wg == null || wg.getId() == null) {
             return List.of();
         }
-        return cleaningMapper.toRoomDTOList(wg.rooms);
+        return cleaningMapper.toRoomDTOList(roomRepository.findByWgId(wg.getId()));
     }
 
     /**
@@ -97,8 +101,7 @@ public class HouseholdSetupService {
         if (wgId == null) {
             return List.of();
         }
-        WG wg = wgRepository.findById(wgId).orElse(null);
-        return getRoomsForWgDTO(wg);
+        return cleaningMapper.toRoomDTOList(roomRepository.findByWgId(wgId));
     }
 
     /**
@@ -148,5 +151,17 @@ public class HouseholdSetupService {
     @Transactional
     public void deleteRoomById(Long roomId, WG wg) {
         getRoom(roomId).ifPresent(room -> deleteRoom(room, wg));
+    }
+
+    /**
+     * Delete a room by ID with full cleanup using WG ID (UI-friendly).
+     */
+    @Transactional
+    public void deleteRoomById(Long roomId, Long wgId) {
+        if (wgId == null) {
+            throw new RuntimeException("WG ID is required to delete room");
+        }
+        WG wg = wgRepository.findById(wgId).orElseThrow(() -> new RuntimeException("WG not found"));
+        deleteRoomById(roomId, wg);
     }
 }

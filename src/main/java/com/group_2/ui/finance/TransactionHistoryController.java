@@ -1,8 +1,9 @@
 package com.group_2.ui.finance;
 
+import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.dto.finance.TransactionViewDTO;
 import com.group_2.dto.finance.TransactionSplitViewDTO;
-import com.group_2.model.User;
+import com.group_2.service.core.WGService;
 import com.group_2.service.finance.TransactionService;
 import com.group_2.ui.core.Controller;
 import com.group_2.util.SessionManager;
@@ -34,6 +35,7 @@ public class TransactionHistoryController extends Controller {
 
     private final TransactionService transactionService;
     private final SessionManager sessionManager;
+    private final WGService wgService;
 
     @Autowired
     private org.springframework.context.ApplicationContext applicationContext;
@@ -81,9 +83,11 @@ public class TransactionHistoryController extends Controller {
             "July", "August", "September", "October", "November", "December" };
 
     @Autowired
-    public TransactionHistoryController(TransactionService transactionService, SessionManager sessionManager) {
+    public TransactionHistoryController(TransactionService transactionService, SessionManager sessionManager,
+            WGService wgService) {
         this.transactionService = transactionService;
         this.sessionManager = sessionManager;
+        this.wgService = wgService;
     }
 
     @FXML
@@ -263,9 +267,10 @@ public class TransactionHistoryController extends Controller {
         if (currentUserId == null)
             return;
 
-        User currentUser = sessionManager.getCurrentUser();
-        if (currentUser == null)
+        Long wgId = sessionManager.getCurrentWgId();
+        if (wgId == null) {
             return;
+        }
 
         // Populate year filter from transaction dates
         List<String> yearOptions = new ArrayList<>();
@@ -300,14 +305,9 @@ public class TransactionHistoryController extends Controller {
         List<UserDisplay> members = new ArrayList<>();
         members.add(new UserDisplay(null, "All")); // "All" option
 
-        if (currentUser.getWg() != null && currentUser.getWg().getMitbewohner() != null) {
-            for (User member : currentUser.getWg().getMitbewohner()) {
-                String name = member.getName();
-                if (member.getSurname() != null) {
-                    name += " " + member.getSurname();
-                }
-                members.add(new UserDisplay(member, name));
-            }
+        List<UserSummaryDTO> memberSummaries = wgService.getMemberSummaries(wgId);
+        for (UserSummaryDTO member : memberSummaries) {
+            members.add(new UserDisplay(member, member.displayName()));
         }
 
         payerFilter.setItems(FXCollections.observableArrayList(members));
@@ -347,7 +347,7 @@ public class TransactionHistoryController extends Controller {
 
             // Payer filter
             if (selectedPayer != null && selectedPayer.getUser() != null) {
-                if (t.creditor() == null || !t.creditor().id().equals(selectedPayer.getUser().getId())) {
+                if (t.creditor() == null || !t.creditor().id().equals(selectedPayer.getUser().id())) {
                     return false;
                 }
             }
@@ -355,7 +355,7 @@ public class TransactionHistoryController extends Controller {
             // Debtor filter
             if (selectedDebtor != null && selectedDebtor.getUser() != null) {
                 boolean hasDebtor = t.splits().stream()
-                        .anyMatch(s -> s.debtor() != null && s.debtor().id().equals(selectedDebtor.getUser().getId()));
+                        .anyMatch(s -> s.debtor() != null && s.debtor().id().equals(selectedDebtor.getUser().id()));
                 if (!hasDebtor) {
                     return false;
                 }
@@ -732,15 +732,15 @@ public class TransactionHistoryController extends Controller {
 
     // Helper class for displaying users in ComboBox
     private static class UserDisplay {
-        private final User user;
+        private final UserSummaryDTO user;
         private final String displayName;
 
-        public UserDisplay(User user, String displayName) {
+        public UserDisplay(UserSummaryDTO user, String displayName) {
             this.user = user;
             this.displayName = displayName;
         }
 
-        public User getUser() {
+        public UserSummaryDTO getUser() {
             return user;
         }
 

@@ -59,6 +59,20 @@ public class WGService {
         return wg;
     }
 
+    /**
+     * Create a WG using IDs to keep controllers off entities.
+     */
+    @Transactional
+    public WG createWGWithRoomIds(String name, Long adminUserId, List<Long> roomIds) {
+        if (adminUserId == null) {
+            throw new RuntimeException("Admin user ID is required");
+        }
+        User admin = userRepository.findById(adminUserId)
+                .orElseThrow(() -> new RuntimeException("Admin user not found"));
+        List<Room> rooms = roomIds == null ? List.of() : roomRepository.findAllById(roomIds);
+        return createWG(name, admin, rooms);
+    }
+
     @Transactional
     public WG addMitbewohner(Long wgId, User user) {
         // Check if user is already in a WG
@@ -71,6 +85,18 @@ public class WGService {
         // Reset cleaning schedule to include new member and clear all reassignments
         cleaningScheduleService.resetScheduleForMembershipChange(savedWg);
         return savedWg;
+    }
+
+    /**
+     * Add a member using IDs to keep controllers off entities.
+     */
+    @Transactional
+    public WG addMitbewohner(Long wgId, Long userId) {
+        if (userId == null) {
+            throw new RuntimeException("User ID is required");
+        }
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return addMitbewohner(wgId, user);
     }
 
     public List<WG> getAllWGs() {
@@ -116,15 +142,27 @@ public class WGService {
         return savedWg;
     }
 
+    /**
+     * Add a member by invite code using IDs to keep controllers off entities.
+     */
     @Transactional
-    public WG updateWG(Long id, String name, User admin) {
+    public WG addMitbewohnerByInviteCode(String inviteCode, Long userId) {
+        if (userId == null) {
+            throw new RuntimeException("User ID is required");
+        }
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return addMitbewohnerByInviteCode(inviteCode, user);
+    }
+
+    @Transactional
+    public WG updateWG(Long id, String name, Long adminUserId) {
         WG wg = wgRepository.findById(id).orElseThrow(() -> new RuntimeException("WG not found"));
         wg.name = name; // Accessing public field directly as per WG.java
 
-        if (admin != null) {
+        if (adminUserId != null) {
             // Find the managed user entity from the WG's member list by ID
             // This avoids JPA merge issues with detached entities
-            User managedAdmin = wg.getMitbewohner().stream().filter(m -> m.getId().equals(admin.getId())).findFirst()
+            User managedAdmin = wg.getMitbewohner().stream().filter(m -> m.getId().equals(adminUserId)).findFirst()
                     .orElseThrow(() -> new RuntimeException("User is not a member of this WG"));
             wg.admin = managedAdmin;
         }

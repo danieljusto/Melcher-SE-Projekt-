@@ -1,47 +1,30 @@
-refectoring:
+# To dos
 
-- logging
-- structure
-- responsibilities
-- abstractions
+## Refactoring (next)
+- Remove remaining direct WG entity field access (`wg.mitbewohner`, `wg.rooms`) in services/mappers; rely on repositories/DTOs.
+- Add WG membership validation in finance create/update flows; stop direct `wg.mitbewohner` access.
+- Introduce domain facades for finance/cleaning/shopping to move workflow logic out of controllers.
+- Split `CleaningScheduleService` into smaller services; inject a clock/time provider.
+- Encapsulate `WG` fields and add `equals/hashCode` where needed.
+- Centralize UI utilities (dialogs, currency formatting, navigation) and fix encoding settings.
 
+## Features
+- Leaving WG: block leaving with negative balance; allow leaving with positive balance but warn.
+- Transactions: improve wording for single-debtor case (e.g., "Daniel paid for [User]").
+- Transaction history: include transactions of former members.
+- Notifications for cleaning schedule and transactions.
 
-Functions:
+## UI/Style
+- Fix duplicate Transaction History header.
+- Improve icons and dialog window styling.
 
-leaving:
--cant leave with a negative balance
-- can choose to leave with a positive, well be warned tho
+## Data/Security
+- Password hashing/encryption.
+- Access handling and validation.
 
-transactions:
-- daniel paid fo1 1 person -> daniel paid for [User]
+## Testing
+- Add tests for balances, settlements, and cleaning schedule generation/rotation.
 
-Transaction History
-- including transactions of former memebrs
-
-
-Style:
-UI:
-- Transaction History Header doppelt
-- icons
-- dialog fenster fixen die sind aus irgendeinem grund so häslich
-
-
-Data:
-DB:
-- encrytion
-- access handling
-
-
-testing
-
---------
-extras
---------
-settings:
-- currency setting
-
-- Mitteilung Putzplan, transactions.
-
-shopping list
-extras:
-- payment link (necassary?)
+## Extras
+- Settings: currency selection.
+- Shopping list: payment link (optional).

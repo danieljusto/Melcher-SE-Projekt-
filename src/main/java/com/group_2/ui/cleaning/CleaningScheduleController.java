@@ -2,6 +2,7 @@ package com.group_2.ui.cleaning;
 
 import com.group_2.dto.cleaning.RoomDTO;
 import com.group_2.dto.cleaning.CleaningTaskDTO;
+import com.group_2.dto.core.UserSessionDTO;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.service.cleaning.CleaningScheduleService;
 import com.group_2.service.core.HouseholdSetupService;
@@ -100,7 +101,7 @@ public class CleaningScheduleController extends Controller {
     private void loadCalendarDays() {
         calendarDaysContainer.getChildren().clear();
 
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null)
             return;
 
@@ -220,7 +221,7 @@ public class CleaningScheduleController extends Controller {
     private void loadRoomCards() {
         roomCardsContainer.getChildren().clear();
 
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             showEmptyState();
             return;
@@ -411,7 +412,7 @@ public class CleaningScheduleController extends Controller {
     }
 
     private void updateStats() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             completedTasksText.setText("0/0");
             myTasksCountText.setText("0");
@@ -457,7 +458,7 @@ public class CleaningScheduleController extends Controller {
 
     @FXML
     public void showAddTaskDialog() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             showErrorAlert("Error", "You must be in a WG to add tasks.", getOwnerWindow(weekTitle));
             return;
@@ -581,7 +582,7 @@ public class CleaningScheduleController extends Controller {
     }
 
     private void showReassignDialog(CleaningTaskDTO task) {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null)
             return;
 
@@ -693,7 +694,7 @@ public class CleaningScheduleController extends Controller {
 
     @FXML
     public void saveAsTemplate() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             showErrorAlert("Error", "You must be in a WG.", getOwnerWindow(weekTitle));
             return;
@@ -717,7 +718,7 @@ public class CleaningScheduleController extends Controller {
 
     @FXML
     public void loadFromTemplate() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             showErrorAlert("Error", "You must be in a WG.", getOwnerWindow(weekTitle));
             return;

@@ -16,6 +16,7 @@ import com.group_2.repository.cleaning.CleaningTaskRepository;
 import com.group_2.repository.cleaning.CleaningTaskTemplateRepository;
 import com.group_2.repository.cleaning.RoomAssignmentQueueRepository;
 import com.group_2.repository.cleaning.RoomRepository;
+import com.group_2.util.MonthlyScheduleUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -158,7 +159,10 @@ public class CleaningScheduleService {
                 continue; // Skip if no valid assignee
             }
 
-            LocalDate dueDate = weekStart.plusDays(template.getDayOfWeek() - 1);
+            LocalDate dueDate = resolveDueDateForWeek(template, weekStart);
+            if (dueDate == null) {
+                continue;
+            }
             CleaningTask task = new CleaningTask(template.getRoom(), assignee, wg, weekStart, dueDate);
             newTasks.add(cleaningTaskRepository.save(task));
 
@@ -677,7 +681,13 @@ public class CleaningScheduleService {
      */
     @Transactional
     public CleaningTaskTemplate addTemplate(WG wg, Room room, DayOfWeek dayOfWeek, RecurrenceInterval interval) {
-        LocalDate weekStart = getCurrentWeekStart();
+        return addTemplate(wg, room, dayOfWeek, interval, null);
+    }
+
+    @Transactional
+    public CleaningTaskTemplate addTemplate(WG wg, Room room, DayOfWeek dayOfWeek, RecurrenceInterval interval,
+            LocalDate baseWeekStart) {
+        LocalDate weekStart = baseWeekStart != null ? baseWeekStart : getCurrentWeekStart();
         CleaningTaskTemplate template = new CleaningTaskTemplate(room, wg, dayOfWeek, interval, weekStart);
         template = templateRepository.save(template);
 
@@ -696,8 +706,14 @@ public class CleaningScheduleService {
     @Transactional
     public CleaningTaskTemplateDTO addTemplateByRoomId(WG wg, Long roomId, DayOfWeek dayOfWeek,
             RecurrenceInterval interval) {
+        return addTemplateByRoomId(wg, roomId, dayOfWeek, interval, null);
+    }
+
+    @Transactional
+    public CleaningTaskTemplateDTO addTemplateByRoomId(WG wg, Long roomId, DayOfWeek dayOfWeek,
+            RecurrenceInterval interval, LocalDate baseWeekStart) {
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        CleaningTaskTemplate template = addTemplate(wg, room, dayOfWeek, interval);
+        CleaningTaskTemplate template = addTemplate(wg, room, dayOfWeek, interval, baseWeekStart);
         return cleaningMapper.toTemplateDTO(template);
     }
 
@@ -708,6 +724,12 @@ public class CleaningScheduleService {
     public CleaningTaskTemplateDTO addTemplateByRoomId(Long wgId, Long roomId, DayOfWeek dayOfWeek,
             RecurrenceInterval interval) {
         return addTemplateByRoomId(requireWg(wgId), roomId, dayOfWeek, interval);
+    }
+
+    @Transactional
+    public CleaningTaskTemplateDTO addTemplateByRoomId(Long wgId, Long roomId, DayOfWeek dayOfWeek,
+            RecurrenceInterval interval, LocalDate baseWeekStart) {
+        return addTemplateByRoomId(requireWg(wgId), roomId, dayOfWeek, interval, baseWeekStart);
     }
 
     /**
@@ -721,21 +743,22 @@ public class CleaningScheduleService {
         LocalDate currentWeekStart = getCurrentWeekStart();
 
         // Update due dates only for current and future tasks, not past ones
-        List<CleaningTask> tasks = cleaningTaskRepository.findByWgAndRoom(template.getWg(), template.getRoom());
-        for (CleaningTask task : tasks) {
-            // Only update tasks from current week onwards
-            if (!task.getWeekStartDate().isBefore(currentWeekStart)) {
-                LocalDate newDueDate = task.getWeekStartDate().plusDays(newDay.getValue() - 1);
-                task.setDueDate(newDueDate);
-                cleaningTaskRepository.save(task);
-            }
-        }
-
         template.setDayOfWeek(newDay);
         template.setRecurrenceInterval(newInterval);
         // Reset base week when interval changes to current week for predictable
         // behavior
         template.setBaseWeekStart(getCurrentWeekStart());
+        List<CleaningTask> tasks = cleaningTaskRepository.findByWgAndRoom(template.getWg(), template.getRoom());
+        for (CleaningTask task : tasks) {
+            // Only update tasks from current week onwards
+            if (!task.getWeekStartDate().isBefore(currentWeekStart)) {
+                LocalDate newDueDate = resolveDueDateForWeek(template, task.getWeekStartDate());
+                if (newDueDate != null) {
+                    task.setDueDate(newDueDate);
+                    cleaningTaskRepository.save(task);
+                }
+            }
+        }
         return templateRepository.save(template);
     }
 
@@ -767,10 +790,10 @@ public class CleaningScheduleService {
     public void clearTemplates(WG wg) {
         LocalDate currentWeekStart = getCurrentWeekStart();
 
-        // Delete only current and future tasks for this WG, preserve past tasks
+        // Delete only current and future tasks for this WG, preserve past tasks and manual overrides
         List<CleaningTask> allTasks = cleaningTaskRepository.findByWg(wg);
         for (CleaningTask task : allTasks) {
-            if (!task.getWeekStartDate().isBefore(currentWeekStart)) {
+            if (!task.getWeekStartDate().isBefore(currentWeekStart) && !task.isManualOverride()) {
                 cleaningTaskRepository.delete(task);
             }
         }
@@ -854,18 +877,22 @@ public class CleaningScheduleService {
                 CleaningTask task = existing.get();
                 if (!task.isManualOverride()) {
                     // Update due date if changed in template
-                    LocalDate correctDueDate = weekStart.plusDays(template.getDayOfWeek() - 1);
-                    task.setDueDate(correctDueDate);
-                    cleaningTaskRepository.save(task);
+                    LocalDate correctDueDate = resolveDueDateForWeek(template, weekStart);
+                    if (correctDueDate != null) {
+                        task.setDueDate(correctDueDate);
+                        cleaningTaskRepository.save(task);
+                    }
                 }
             } else {
                 // Create missing task
                 RoomAssignmentQueue queue = getOrCreateQueueForRoom(wg, template.getRoom(), members);
                 User assignee = getNextAssigneeFromQueue(queue, members);
                 if (assignee != null) {
-                    LocalDate dueDate = weekStart.plusDays(template.getDayOfWeek() - 1);
-                    CleaningTask task = new CleaningTask(template.getRoom(), assignee, wg, weekStart, dueDate);
-                    cleaningTaskRepository.save(task);
+                    LocalDate dueDate = resolveDueDateForWeek(template, weekStart);
+                    if (dueDate != null) {
+                        CleaningTask task = new CleaningTask(template.getRoom(), assignee, wg, weekStart, dueDate);
+                        cleaningTaskRepository.save(task);
+                    }
                 }
             }
         }
@@ -879,11 +906,49 @@ public class CleaningScheduleService {
         if (template.getRecurrenceInterval() == RecurrenceInterval.WEEKLY) {
             return true;
         }
+        if (template.getRecurrenceInterval() == RecurrenceInterval.MONTHLY) {
+            return resolveMonthlyDueDateForWeek(template, weekStart) != null;
+        }
 
         long weeksBetween = ChronoUnit.WEEKS.between(template.getBaseWeekStart(), weekStart);
         int intervalWeeks = template.getRecurrenceInterval().getWeeks();
 
         return weeksBetween % intervalWeeks == 0;
+    }
+
+    private LocalDate resolveDueDateForWeek(CleaningTaskTemplate template, LocalDate weekStart) {
+        if (template.getRecurrenceInterval() == RecurrenceInterval.MONTHLY) {
+            return resolveMonthlyDueDateForWeek(template, weekStart);
+        }
+        return weekStart.plusDays(template.getDayOfWeek() - 1);
+    }
+
+    private LocalDate resolveMonthlyDueDateForWeek(CleaningTaskTemplate template, LocalDate weekStart) {
+        LocalDate weekEnd = weekStart.plusDays(6);
+        int preferredDay = getTemplateBaseDueDate(template).getDayOfMonth();
+
+        LocalDate dueDate = resolveMonthlyDueDateForMonth(weekStart, preferredDay);
+        if (!dueDate.isBefore(weekStart) && !dueDate.isAfter(weekEnd)) {
+            return dueDate;
+        }
+
+        LocalDate dueDateEndMonth = resolveMonthlyDueDateForMonth(weekEnd, preferredDay);
+        if (!dueDateEndMonth.isBefore(weekStart) && !dueDateEndMonth.isAfter(weekEnd)) {
+            return dueDateEndMonth;
+        }
+
+        return null;
+    }
+
+    private LocalDate resolveMonthlyDueDateForMonth(LocalDate monthAnchor, int preferredDay) {
+        int effectiveDay = MonthlyScheduleUtil.getEffectiveDay(monthAnchor, preferredDay);
+        return monthAnchor.withDayOfMonth(effectiveDay);
+    }
+
+    private LocalDate getTemplateBaseDueDate(CleaningTaskTemplate template) {
+        LocalDate baseWeekStart = template.getBaseWeekStart() != null ? template.getBaseWeekStart()
+                : getCurrentWeekStart();
+        return baseWeekStart.plusDays(template.getDayOfWeek() - 1);
     }
 
     private WG requireWg(Long wgId) {

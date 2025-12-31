@@ -2,6 +2,7 @@ package com.group_2.ui.cleaning;
 
 import com.group_2.dto.cleaning.CleaningTaskTemplateDTO;
 import com.group_2.dto.cleaning.RoomDTO;
+import com.group_2.dto.core.UserSessionDTO;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.model.cleaning.RecurrenceInterval;
 import com.group_2.service.cleaning.CleaningScheduleService;
@@ -23,6 +24,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,6 +84,7 @@ public class TemplateEditorController extends Controller {
         String roomName;
         int dayOfWeek;
         RecurrenceInterval recurrenceInterval;
+        LocalDate baseWeekStart;
         boolean isDeleted = false; // marks for deletion on save
 
         WorkingTemplate(CleaningTaskTemplateDTO dto) {
@@ -88,13 +92,15 @@ public class TemplateEditorController extends Controller {
             this.roomName = dto.roomName();
             this.dayOfWeek = dto.dayOfWeek();
             this.recurrenceInterval = dto.recurrenceInterval();
+            this.baseWeekStart = dto.baseWeekStart();
         }
 
-        WorkingTemplate(Long roomId, String roomName, DayOfWeek day, RecurrenceInterval interval) {
+        WorkingTemplate(Long roomId, String roomName, LocalDate baseDate, RecurrenceInterval interval) {
             this.roomId = roomId;
             this.roomName = roomName;
-            this.dayOfWeek = day.getValue();
+            this.dayOfWeek = baseDate.getDayOfWeek().getValue();
             this.recurrenceInterval = interval;
+            this.baseWeekStart = baseDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         }
     }
 
@@ -124,7 +130,7 @@ public class TemplateEditorController extends Controller {
         workingTemplates.clear();
         hasUnsavedChanges = false;
 
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null)
             return;
 
@@ -141,7 +147,7 @@ public class TemplateEditorController extends Controller {
     private void refreshView() {
         clearColumns();
 
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null)
             return;
 
@@ -246,7 +252,7 @@ public class TemplateEditorController extends Controller {
 
     @FXML
     public void showAddTemplateDialog() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             showErrorAlert("Error", "You must be in a WG.", getOwnerWindow(headerTitle));
             return;
@@ -270,6 +276,7 @@ public class TemplateEditorController extends Controller {
         styleDialog(dialog);
         dialog.setTitle("Add Template Task");
         dialog.setHeaderText("Add a room to the cleaning schedule");
+        dialog.getDialogPane().setPrefWidth(520);
 
         ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
@@ -293,29 +300,42 @@ public class TemplateEditorController extends Controller {
             }
         });
 
-        // Day selection
-        ComboBox<DayOfWeek> dayCombo = new ComboBox<>();
-        dayCombo.getItems().addAll(DayOfWeek.values());
-        dayCombo.setPromptText("Day of week");
-        dayCombo.setConverter(new javafx.util.StringConverter<DayOfWeek>() {
-            @Override
-            public String toString(DayOfWeek d) {
-                if (d == null)
-                    return "";
-                return d.toString().substring(0, 1) + d.toString().substring(1).toLowerCase();
-            }
-
-            @Override
-            public DayOfWeek fromString(String s) {
-                return null;
-            }
-        });
-
         // Frequency selection
         ComboBox<RecurrenceInterval> freqCombo = new ComboBox<>();
         freqCombo.getItems().addAll(RecurrenceInterval.values());
         freqCombo.setValue(RecurrenceInterval.WEEKLY);
         freqCombo.setPromptText("Frequency");
+        freqCombo.getStyleClass().add("dialog-field");
+        freqCombo.setPrefWidth(150);
+
+        Text freqLabel = new Text("Frequency");
+        freqLabel.getStyleClass().add("dialog-label-secondary");
+        VBox freqBox = new VBox(4, freqLabel, freqCombo);
+
+        // Day picker (date selection)
+        DatePicker datePicker = new DatePicker();
+        datePicker.setPromptText("Select...");
+        datePicker.getStyleClass().add("dialog-field");
+        datePicker.setPrefWidth(130);
+
+        Text dateLabel = new Text("Day");
+        dateLabel.getStyleClass().add("dialog-label-secondary");
+        VBox dateBox = new VBox(4, dateLabel, datePicker);
+
+        // Monthly "last day" option
+        Text lastDaySpacer = new Text(" ");
+        lastDaySpacer.getStyleClass().add("dialog-label-muted");
+        CheckBox lastDayCheckbox = new CheckBox("Last day of month");
+        lastDayCheckbox.getStyleClass().add("dialog-label-muted");
+        VBox lastDayBox = new VBox(4, lastDaySpacer, lastDayCheckbox);
+        lastDayBox.setAlignment(Pos.CENTER_LEFT);
+        lastDayBox.setVisible(false);
+        lastDayBox.setManaged(false);
+
+        HBox scheduleRow = new HBox(12, freqBox, dateBox, lastDayBox);
+        scheduleRow.setAlignment(Pos.CENTER_LEFT);
+
+        updateScheduleControls(freqCombo.getValue(), dateLabel, dateBox, lastDayCheckbox, lastDayBox);
 
         // Info about round-robin
         HBox infoBox = new HBox(8);
@@ -327,22 +347,35 @@ public class TemplateEditorController extends Controller {
         infoText.getStyleClass().add("info-box-success-text");
         infoBox.getChildren().addAll(infoIcon, infoText);
 
-        content.getChildren().addAll(new Text("Room:"), roomCombo, new Text("Day:"), dayCombo, new Text("Frequency:"),
-                freqCombo, infoBox);
+        content.getChildren().addAll(new Text("Room:"), roomCombo, scheduleRow, infoBox);
 
         dialog.getDialogPane().setContent(content);
 
         dialog.getDialogPane().lookupButton(addButtonType).setDisable(true);
-        roomCombo.valueProperty()
-                .addListener((o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
-        dayCombo.valueProperty()
-                .addListener((o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, dayCombo));
+        roomCombo.valueProperty().addListener(
+                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, freqCombo, datePicker,
+                        lastDayCheckbox));
+        datePicker.valueProperty().addListener(
+                (o, oldV, newV) -> updateAddButton(dialog, addButtonType, roomCombo, freqCombo, datePicker,
+                        lastDayCheckbox));
+        freqCombo.valueProperty().addListener((o, oldV, newV) -> {
+            updateScheduleControls(newV, dateLabel, dateBox, lastDayCheckbox, lastDayBox);
+            updateAddButton(dialog, addButtonType, roomCombo, freqCombo, datePicker, lastDayCheckbox);
+        });
+        lastDayCheckbox.selectedProperty().addListener((o, oldV, newV) -> {
+            updateScheduleControls(freqCombo.getValue(), dateLabel, dateBox, lastDayCheckbox, lastDayBox);
+            updateAddButton(dialog, addButtonType, roomCombo, freqCombo, datePicker, lastDayCheckbox);
+        });
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
                 RoomDTO selectedRoom = roomCombo.getValue();
-                return new WorkingTemplate(selectedRoom.id(), selectedRoom.name(), dayCombo.getValue(),
-                        freqCombo.getValue());
+                LocalDate baseDate = resolveBaseDate(datePicker.getValue(), freqCombo.getValue(),
+                        lastDayCheckbox.isSelected(), null);
+                if (baseDate == null) {
+                    return null;
+                }
+                return new WorkingTemplate(selectedRoom.id(), selectedRoom.name(), baseDate, freqCombo.getValue());
             }
             return null;
         });
@@ -355,12 +388,70 @@ public class TemplateEditorController extends Controller {
     }
 
     private void updateAddButton(Dialog<?> dialog, ButtonType btnType, ComboBox<RoomDTO> room,
-            ComboBox<DayOfWeek> day) {
-        dialog.getDialogPane().lookupButton(btnType).setDisable(room.getValue() == null || day.getValue() == null);
+            ComboBox<RecurrenceInterval> freq, DatePicker datePicker, CheckBox lastDayCheckbox) {
+        boolean needsDate = isDateRequired(freq.getValue(), lastDayCheckbox.isSelected());
+        boolean hasDate = datePicker.getValue() != null;
+        dialog.getDialogPane().lookupButton(btnType)
+                .setDisable(room.getValue() == null || (needsDate && !hasDate));
+    }
+
+    private void updateSaveButton(Dialog<?> dialog, ButtonType btnType, ComboBox<RecurrenceInterval> freq,
+            DatePicker datePicker, CheckBox lastDayCheckbox) {
+        boolean needsDate = isDateRequired(freq.getValue(), lastDayCheckbox.isSelected());
+        boolean hasDate = datePicker.getValue() != null;
+        dialog.getDialogPane().lookupButton(btnType).setDisable(needsDate && !hasDate);
+    }
+
+    private boolean isDateRequired(RecurrenceInterval interval, boolean lastDaySelected) {
+        return interval != RecurrenceInterval.MONTHLY || !lastDaySelected;
+    }
+
+    private void updateScheduleControls(RecurrenceInterval interval, Text dateLabel, VBox dateBox,
+            CheckBox lastDayCheckbox, VBox lastDayBox) {
+        boolean isMonthly = interval == RecurrenceInterval.MONTHLY;
+        lastDayBox.setVisible(isMonthly);
+        lastDayBox.setManaged(isMonthly);
+
+        if (isMonthly) {
+            dateLabel.setText("Day of Month (select any date)");
+        } else {
+            dateLabel.setText("Day");
+            lastDayCheckbox.setSelected(false);
+        }
+
+        boolean showDate = !isMonthly || !lastDayCheckbox.isSelected();
+        dateBox.setVisible(showDate);
+        dateBox.setManaged(showDate);
+    }
+
+    private LocalDate resolveBaseDate(LocalDate selectedDate, RecurrenceInterval interval, boolean lastDaySelected,
+            LocalDate fallbackDate) {
+        if (interval == RecurrenceInterval.MONTHLY && lastDaySelected) {
+            LocalDate reference = fallbackDate != null ? fallbackDate : LocalDate.now();
+            return resolveLastDayBaseDate(reference);
+        }
+        return selectedDate != null ? selectedDate : fallbackDate;
+    }
+
+    private LocalDate resolveLastDayBaseDate(LocalDate reference) {
+        LocalDate base = reference.withDayOfMonth(1);
+        for (int i = 0; i < 12; i++) {
+            LocalDate month = base.plusMonths(i);
+            if (month.lengthOfMonth() >= 31) {
+                return month.withDayOfMonth(31);
+            }
+        }
+        return reference.withDayOfMonth(Math.min(31, reference.lengthOfMonth()));
+    }
+
+    private LocalDate getBaseDateForTemplate(WorkingTemplate template) {
+        LocalDate baseWeek = template.baseWeekStart != null ? template.baseWeekStart
+                : cleaningScheduleService.getCurrentWeekStart();
+        return baseWeek.plusDays(template.dayOfWeek - 1);
     }
 
     private void showEditTemplateDialog(WorkingTemplate template) {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null)
             return;
 
@@ -369,6 +460,7 @@ public class TemplateEditorController extends Controller {
         styleDialog(dialog);
         dialog.setTitle("Edit Template");
         dialog.setHeaderText("Edit \"" + template.roomName + "\"");
+        dialog.getDialogPane().setPrefWidth(520);
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
@@ -376,28 +468,48 @@ public class TemplateEditorController extends Controller {
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
 
-        // Day selection
-        ComboBox<DayOfWeek> dayCombo = new ComboBox<>();
-        dayCombo.getItems().addAll(DayOfWeek.values());
-        dayCombo.setValue(DayOfWeek.of(template.dayOfWeek));
-        dayCombo.setConverter(new javafx.util.StringConverter<DayOfWeek>() {
-            @Override
-            public String toString(DayOfWeek d) {
-                if (d == null)
-                    return "";
-                return d.toString().substring(0, 1) + d.toString().substring(1).toLowerCase();
-            }
-
-            @Override
-            public DayOfWeek fromString(String s) {
-                return null;
-            }
-        });
+        LocalDate initialBaseDate = getBaseDateForTemplate(template);
 
         // Frequency selection
         ComboBox<RecurrenceInterval> freqCombo = new ComboBox<>();
         freqCombo.getItems().addAll(RecurrenceInterval.values());
         freqCombo.setValue(template.recurrenceInterval);
+        freqCombo.getStyleClass().add("dialog-field");
+        freqCombo.setPrefWidth(150);
+
+        Text freqLabel = new Text("Frequency");
+        freqLabel.getStyleClass().add("dialog-label-secondary");
+        VBox freqBox = new VBox(4, freqLabel, freqCombo);
+
+        // Day picker (date selection)
+        DatePicker datePicker = new DatePicker();
+        datePicker.setPromptText("Select...");
+        datePicker.getStyleClass().add("dialog-field");
+        datePicker.setValue(initialBaseDate);
+        datePicker.setPrefWidth(130);
+
+        Text dateLabel = new Text("Day");
+        dateLabel.getStyleClass().add("dialog-label-secondary");
+        VBox dateBox = new VBox(4, dateLabel, datePicker);
+
+        // Monthly "last day" option
+        Text lastDaySpacer = new Text(" ");
+        lastDaySpacer.getStyleClass().add("dialog-label-muted");
+        CheckBox lastDayCheckbox = new CheckBox("Last day of month");
+        lastDayCheckbox.getStyleClass().add("dialog-label-muted");
+        VBox lastDayBox = new VBox(4, lastDaySpacer, lastDayCheckbox);
+        lastDayBox.setAlignment(Pos.CENTER_LEFT);
+        lastDayBox.setVisible(false);
+        lastDayBox.setManaged(false);
+
+        boolean isMonthly = template.recurrenceInterval == RecurrenceInterval.MONTHLY;
+        boolean isLastDay = isMonthly && initialBaseDate.getDayOfMonth() == 31;
+        lastDayCheckbox.setSelected(isLastDay);
+
+        HBox scheduleRow = new HBox(12, freqBox, dateBox, lastDayBox);
+        scheduleRow.setAlignment(Pos.CENTER_LEFT);
+
+        updateScheduleControls(freqCombo.getValue(), dateLabel, dateBox, lastDayCheckbox, lastDayBox);
 
         // Info about round-robin
         HBox infoBox = new HBox(8);
@@ -409,17 +521,35 @@ public class TemplateEditorController extends Controller {
         infoText.getStyleClass().add("info-box-success-text");
         infoBox.getChildren().addAll(infoIcon, infoText);
 
-        content.getChildren().addAll(new Text("Day of Week:"), dayCombo, new Text("Frequency:"), freqCombo, infoBox);
+        content.getChildren().addAll(scheduleRow, infoBox);
 
         dialog.getDialogPane().setContent(content);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                template.dayOfWeek = dayCombo.getValue().getValue();
+                LocalDate baseDate = resolveBaseDate(datePicker.getValue(), freqCombo.getValue(),
+                        lastDayCheckbox.isSelected(), initialBaseDate);
+                if (baseDate == null) {
+                    return null;
+                }
+                template.dayOfWeek = baseDate.getDayOfWeek().getValue();
+                template.baseWeekStart = baseDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
                 template.recurrenceInterval = freqCombo.getValue();
                 hasUnsavedChanges = true;
             }
             return null;
+        });
+
+        dialog.getDialogPane().lookupButton(saveButtonType).setDisable(false);
+        datePicker.valueProperty().addListener(
+                (o, oldV, newV) -> updateSaveButton(dialog, saveButtonType, freqCombo, datePicker, lastDayCheckbox));
+        freqCombo.valueProperty().addListener((o, oldV, newV) -> {
+            updateScheduleControls(newV, dateLabel, dateBox, lastDayCheckbox, lastDayBox);
+            updateSaveButton(dialog, saveButtonType, freqCombo, datePicker, lastDayCheckbox);
+        });
+        lastDayCheckbox.selectedProperty().addListener((o, oldV, newV) -> {
+            updateScheduleControls(freqCombo.getValue(), dateLabel, dateBox, lastDayCheckbox, lastDayBox);
+            updateSaveButton(dialog, saveButtonType, freqCombo, datePicker, lastDayCheckbox);
         });
 
         dialog.showAndWait();
@@ -439,7 +569,7 @@ public class TemplateEditorController extends Controller {
 
     @FXML
     public void saveAndApplyTemplate() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             showErrorAlert("Error", "You must be in a WG.", getOwnerWindow(headerTitle));
             return;
@@ -453,7 +583,7 @@ public class TemplateEditorController extends Controller {
             if (wt.isDeleted)
                 continue;
             cleaningScheduleService.addTemplateByRoomId(session.wgId(), wt.roomId, DayOfWeek.of(wt.dayOfWeek),
-                    wt.recurrenceInterval);
+                    wt.recurrenceInterval, wt.baseWeekStart);
         }
 
         hasUnsavedChanges = false;
@@ -467,7 +597,7 @@ public class TemplateEditorController extends Controller {
 
     @FXML
     public void clearAllTemplates() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null)
             return;
 

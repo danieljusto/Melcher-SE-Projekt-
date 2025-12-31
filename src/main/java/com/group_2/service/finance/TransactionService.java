@@ -199,12 +199,13 @@ public class TransactionService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         WG wg = currentUser.getWg();
-        if (wg == null || wg.mitbewohner == null) {
+        if (wg == null || wg.getId() == null) {
             return new HashMap<>();
         }
 
         Map<Long, Double> balances = new HashMap<>();
-        for (User member : wg.mitbewohner) {
+        List<User> members = userRepository.findByWgId(wg.getId());
+        for (User member : members) {
             if (!member.getId().equals(currentUserId)) {
                 double balance = calculateBalanceWithUser(currentUserId, member.getId());
                 balances.put(member.getId(), balance);
@@ -376,11 +377,12 @@ public class TransactionService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         WG wg = currentUser.getWg();
-        if (wg == null || wg.mitbewohner == null) {
+        if (wg == null || wg.getId() == null) {
             return List.of();
         }
 
-        return wg.mitbewohner.stream().filter(member -> !member.getId().equals(currentUserId)).map(member -> {
+        return userRepository.findByWgId(wg.getId()).stream()
+                .filter(member -> !member.getId().equals(currentUserId)).map(member -> {
             double balance = calculateBalanceWithUser(currentUserId, member.getId());
             return financeMapper.toBalanceDTO(member, balance);
         }).filter(dto -> dto != null).toList();
@@ -395,11 +397,12 @@ public class TransactionService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         WG wg = currentUser.getWg();
-        if (wg == null || wg.mitbewohner == null) {
+        if (wg == null || wg.getId() == null) {
             return List.of();
         }
 
-        return wg.mitbewohner.stream().filter(member -> !member.getId().equals(currentUserId)).map(member -> {
+        return userRepository.findByWgId(wg.getId()).stream()
+                .filter(member -> !member.getId().equals(currentUserId)).map(member -> {
             double balance = calculateBalanceWithUser(currentUserId, member.getId());
             return financeMapper.toBalanceView(member, balance);
         }).filter(dto -> dto != null).toList();

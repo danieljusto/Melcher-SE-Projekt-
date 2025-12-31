@@ -1,5 +1,6 @@
 package com.group_2.ui.shopping;
 
+import com.group_2.dto.core.UserSessionDTO;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.dto.shopping.ShoppingListDTO;
 import com.group_2.dto.shopping.ShoppingListItemDTO;
@@ -84,7 +85,7 @@ public class ShoppingListController extends Controller {
     }
 
     private void loadLists() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null)
             return;
 
@@ -114,7 +115,7 @@ public class ShoppingListController extends Controller {
     }
 
     private HBox createListCard(ShoppingListDTO list) {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         HBox card = new HBox(12);
         card.setAlignment(Pos.CENTER_LEFT);
         card.getStyleClass().add("list-item");
@@ -167,7 +168,7 @@ public class ShoppingListController extends Controller {
 
     private void selectList(ShoppingListDTO list) {
         this.selectedList = list;
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         Long currentUserId = session != null ? session.userId() : null;
 
         // Show details view
@@ -244,7 +245,7 @@ public class ShoppingListController extends Controller {
     }
 
     private HBox createItemRow(ShoppingListItemDTO item, boolean isBought) {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("list-item");
@@ -322,7 +323,7 @@ public class ShoppingListController extends Controller {
             return;
         }
 
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null)
             return;
 
@@ -352,7 +353,7 @@ public class ShoppingListController extends Controller {
 
     @FXML
     public void showCreateListDialog() {
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null) {
             showErrorAlert("Error", "You must be in a WG to create shopping lists.", getOwnerWindow(listsContainer));
             return;
@@ -437,7 +438,7 @@ public class ShoppingListController extends Controller {
         if (selectedList == null)
             return;
 
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || !selectedList.isCreator(session.userId())) {
             showWarningAlert("Permission Denied", "Only the list creator can manage sharing.",
                     getOwnerWindow(listsContainer));
@@ -509,7 +510,7 @@ public class ShoppingListController extends Controller {
         if (selectedList == null)
             return;
 
-        SessionManager.UserSession session = sessionManager.getCurrentUserSession().orElse(null);
+        UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || !selectedList.isCreator(session.userId())) {
             showWarningAlert("Permission Denied", "Only the list creator can delete this list.",
                     getOwnerWindow(listsContainer));
