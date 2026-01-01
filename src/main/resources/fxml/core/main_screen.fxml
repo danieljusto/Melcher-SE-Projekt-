@@ -73,7 +73,7 @@
                     <Region VBox.vgrow="ALWAYS"/>
                     <StackPane style="-fx-background-color: linear-gradient(to bottom right, #10b981, #059669); -fx-background-radius: 25; -fx-pref-width: 140; -fx-pref-height: 140; -fx-min-width: 140; -fx-min-height: 140;" VBox.vgrow="NEVER">
                         <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
-                            <Image url="@/pictures/cleaning-schedule.png"/>
+                            <Image url="@/pictures/cleaning-schedule-white.png"/>
                         </ImageView>
                     </StackPane>
                     <Text text="Cleaning Schedule" styleClass="card-title" style="-fx-font-size: 26px;"/>
@@ -94,7 +94,7 @@
                     <Region VBox.vgrow="ALWAYS"/>
                     <StackPane style="-fx-background-color: linear-gradient(to bottom right, #ec4899, #db2777); -fx-background-radius: 25; -fx-pref-width: 140; -fx-pref-height: 140; -fx-min-width: 140; -fx-min-height: 140;" VBox.vgrow="NEVER">
                         <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
-                            <Image url="@/pictures/shopping-list.png"/>
+                            <Image url="@/pictures/shoppinglist-white.png"/>
                         </ImageView>
                     </StackPane>
                     <Text text="Shopping List" styleClass="card-title" style="-fx-font-size: 26px;"/>
@@ -115,7 +115,7 @@
                     <Region VBox.vgrow="ALWAYS"/>
                     <StackPane style="-fx-background-color: linear-gradient(to bottom right, #f59e0b, #d97706); -fx-background-radius: 25; -fx-pref-width: 140; -fx-pref-height: 140; -fx-min-width: 140; -fx-min-height: 140;" VBox.vgrow="NEVER">
                         <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
-                            <Image url="@/pictures/transactions.png"/>
+                            <Image url="@/pictures/transactions-white.png"/>
                         </ImageView>
                     </StackPane>
                     <Text text="Transactions" styleClass="card-title" style="-fx-font-size: 26px;"/>

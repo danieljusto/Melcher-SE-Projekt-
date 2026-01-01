@@ -3,12 +3,22 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.group_2.ui.core.NavbarController"
       styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
-    <Button fx:id="backButton" text="&lt; Back" onAction="#backToHome" styleClass="navbar-back-button"/>
+
+    <Button fx:id="backButton" onAction="#backToHome" styleClass="navbar-back-button">
+        <graphic>
+            <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                <Image url="@/pictures/home-white.png"/>
+            </ImageView>
+        </graphic>
+    </Button>
+
     <Text fx:id="titleText" text="Title" styleClass="navbar-title"/>
     <Region HBox.hgrow="ALWAYS"/>
 </HBox>

@@ -153,12 +153,6 @@ public class SettingsController extends Controller {
         item.getStyleClass().add("list-item");
         item.setPadding(new Insets(10, 15, 10, 15));
 
-        StackPane iconPane = new StackPane();
-        iconPane.getStyleClass().addAll("avatar", "avatar-green");
-        Text iconText = new Text("??");
-        iconText.getStyleClass().add("avatar-text");
-        iconPane.getChildren().add(iconText);
-
         VBox info = new VBox(3);
         javafx.scene.layout.HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
         Text nameText = new Text(room.name());
@@ -167,7 +161,7 @@ public class SettingsController extends Controller {
         idText.getStyleClass().add("list-item-subtitle");
         info.getChildren().addAll(nameText, idText);
 
-        item.getChildren().addAll(iconPane, info);
+        item.getChildren().addAll(info);
 
         // Admin actions for rooms
         if (isAdmin) {
