@@ -21,7 +21,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>17.0.2</javafx.version>
-        <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
     </properties>
 
     <dependencies>
@@ -39,7 +38,7 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
-
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -86,25 +85,14 @@
             </properties>
         </profile>
         <profile>
-            <id>mac-x64</id>
+            <id>mac</id>
             <activation>
                 <os>
                     <family>mac</family>
-                    <arch>x86_64</arch>
-                </os> </activation>
-            <properties>
-                <javafx.platform>mac</javafx.platform>
-            </properties> </profile>
-        <profile>
-            <id>mac-aarch64</id>
-            <activation>
-                <os>
-                    <family>mac</family>
-                    <arch>aarch64</arch>
                 </os>
             </activation>
             <properties>
-                <javafx.platform>mac-aarch64</javafx.platform>
+                <javafx.platform>mac</javafx.platform>
             </properties>
         </profile>
         <profile>
@@ -129,7 +117,7 @@
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
-                <version>${javafx.maven.plugin.version}</version>
+                <version>${javafx.version}</version>
                 <configuration>
                     <mainClass>com.group_2.Main</mainClass>
                 </configuration>
