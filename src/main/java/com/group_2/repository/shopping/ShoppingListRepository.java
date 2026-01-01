@@ -29,4 +29,16 @@ public interface ShoppingListRepository extends JpaRepository<ShoppingList, Long
     @Query("SELECT DISTINCT sl FROM ShoppingList sl LEFT JOIN sl.sharedWith sw " +
             "WHERE sl.creator = :user OR sw = :user")
     List<ShoppingList> findAllAccessibleByUser(@Param("user") User user);
+
+    /**
+     * Find all shopping lists created by a user (by ID).
+     */
+    @Query("SELECT sl FROM ShoppingList sl WHERE sl.creator.id = :userId")
+    List<ShoppingList> findByCreatorId(@Param("userId") Long userId);
+
+    /**
+     * Find all shopping lists where the user (by ID) is in the sharedWith list.
+     */
+    @Query("SELECT sl FROM ShoppingList sl JOIN sl.sharedWith sw WHERE sw.id = :userId")
+    List<ShoppingList> findBySharedWithUserId(@Param("userId") Long userId);
 }

@@ -137,7 +137,7 @@
                     <VBox fx:id="startDateBox" spacing="4" visible="false" managed="false">
                         <Text fx:id="startDateLabel" text="Start Date" styleClass="dialog-label-secondary"/>
                         <DatePicker fx:id="startDatePicker" promptText="Select..."
-                                    styleClass="dialog-field" prefWidth="130"/>
+                                    styleClass="dialog-field" prefWidth="180"/>
                     </VBox>
                     <VBox fx:id="monthlyLastDayBox" spacing="4" alignment="CENTER_LEFT" visible="false" managed="false">
                         <Text text=" " styleClass="dialog-label-muted"/>

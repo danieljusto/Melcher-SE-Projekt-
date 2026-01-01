@@ -261,4 +261,67 @@ public class ShoppingListService {
         ShoppingList updated = shareList(list, sharedWith);
         return shoppingMapper.toDTO(updated);
     }
+
+    /**
+     * Clean up all shopping list data for a departing WG member.
+     * This will:
+     * 1. Delete all shopping lists created by the user
+     * 2. Remove the user from all lists they were shared with
+     * 
+     * @param userId The ID of the user leaving the WG
+     */
+    public void cleanupListsForDepartingUser(Long userId) {
+        if (userId == null) {
+            return;
+        }
+
+        // 1. Delete all lists created by this user
+        List<ShoppingList> createdLists = shoppingListRepository.findByCreatorId(userId);
+        for (ShoppingList list : createdLists) {
+            shoppingListRepository.delete(list);
+        }
+
+        // 2. Remove user from all lists they were shared with (using ID-based query)
+        List<ShoppingList> sharedLists = shoppingListRepository.findBySharedWithUserId(userId);
+        for (ShoppingList list : sharedLists) {
+            // Use removeIf with ID comparison for reliability
+            list.getSharedWith(); // Force load if lazy
+            shoppingListRepository.findById(list.getId()).ifPresent(managedList -> {
+                // Get the actual internal list and modify it
+                User userToRemove = userRepository.findById(userId).orElse(null);
+                if (userToRemove != null) {
+                    managedList.removeSharedUser(userToRemove);
+                    shoppingListRepository.save(managedList);
+                }
+            });
+        }
+    }
+
+    /**
+     * Remove a user from all shopping lists where they are in the sharedWith list.
+     * This is called when a WG member leaves to clean up their access to shared
+     * lists.
+     * Note: Lists created by this user are not deleted; they remain for the user.
+     * 
+     * @deprecated Use cleanupListsForDepartingUser instead for complete cleanup
+     */
+    @Deprecated
+    public void removeUserFromAllSharedLists(User user) {
+        if (user == null || user.getId() == null) {
+            return;
+        }
+        cleanupListsForDepartingUser(user.getId());
+    }
+
+    /**
+     * Remove a user from all shopping lists by user ID.
+     * This is called when a WG member leaves to clean up their access to shared
+     * lists.
+     * 
+     * @deprecated Use cleanupListsForDepartingUser instead for complete cleanup
+     */
+    @Deprecated
+    public void removeUserFromAllSharedLists(Long userId) {
+        cleanupListsForDepartingUser(userId);
+    }
 }

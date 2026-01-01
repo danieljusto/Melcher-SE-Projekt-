@@ -157,9 +157,7 @@ public class SettingsController extends Controller {
         javafx.scene.layout.HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
         Text nameText = new Text(room.name());
         nameText.getStyleClass().add("list-item-title");
-        Text idText = new Text("Room ID: " + room.id());
-        idText.getStyleClass().add("list-item-subtitle");
-        info.getChildren().addAll(nameText, idText);
+        info.getChildren().add(nameText);
 
         item.getChildren().addAll(info);
 

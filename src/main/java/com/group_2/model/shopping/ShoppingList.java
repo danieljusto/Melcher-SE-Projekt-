@@ -81,7 +81,10 @@ public class ShoppingList {
     }
 
     public void removeSharedUser(User user) {
-        sharedWith.remove(user);
+        if (user == null || user.getId() == null) {
+            return;
+        }
+        sharedWith.removeIf(u -> u.getId().equals(user.getId()));
     }
 
     public List<ShoppingListItem> getItems() {

@@ -478,4 +478,21 @@ public class StandingOrderService {
                 frequency, debtorIds, percentages, monthlyDay, monthlyLastDay);
         return getStandingOrderByIdView(dto.id());
     }
+
+    /**
+     * Deactivate all standing orders where the user is the creditor or creator.
+     * This is called when a WG member leaves to clean up their standing orders.
+     */
+    @Transactional
+    public void deactivateStandingOrdersForUser(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        List<StandingOrder> orders = standingOrderRepository.findActiveByCreditorOrCreator(userId);
+        for (StandingOrder order : orders) {
+            order.setIsActive(false);
+            standingOrderRepository.save(order);
+            log.info("Deactivated standing order {} for departing user {}", order.getId(), userId);
+        }
+    }
 }

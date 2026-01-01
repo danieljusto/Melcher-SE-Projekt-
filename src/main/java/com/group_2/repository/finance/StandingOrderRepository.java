@@ -38,4 +38,10 @@ public interface StandingOrderRepository extends JpaRepository<StandingOrder, Lo
      * Find all active standing orders for a WG
      */
     List<StandingOrder> findByWgAndIsActiveTrue(WG wg);
+
+    /**
+     * Find all active standing orders where the user is creditor or creator
+     */
+    @Query("SELECT s FROM StandingOrder s WHERE s.isActive = true AND (s.creditor.id = :userId OR s.createdBy.id = :userId)")
+    List<StandingOrder> findActiveByCreditorOrCreator(@Param("userId") Long userId);
 }

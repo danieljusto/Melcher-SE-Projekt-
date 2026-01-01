@@ -9,6 +9,8 @@ import com.group_2.repository.UserRepository;
 import com.group_2.repository.WGRepository;
 import com.group_2.repository.cleaning.RoomRepository;
 import com.group_2.service.cleaning.CleaningScheduleService;
+import com.group_2.service.finance.StandingOrderService;
+import com.group_2.service.shopping.ShoppingListService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -25,15 +27,20 @@ public class WGService {
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
     private final CleaningScheduleService cleaningScheduleService;
+    private final ShoppingListService shoppingListService;
+    private final StandingOrderService standingOrderService;
     private final CoreMapper coreMapper;
 
     @Autowired
     public WGService(WGRepository wgRepository, UserRepository userRepository, RoomRepository roomRepository,
-            @Lazy CleaningScheduleService cleaningScheduleService, CoreMapper coreMapper) {
+            @Lazy CleaningScheduleService cleaningScheduleService, @Lazy ShoppingListService shoppingListService,
+            @Lazy StandingOrderService standingOrderService, CoreMapper coreMapper) {
         this.wgRepository = wgRepository;
         this.userRepository = userRepository;
         this.roomRepository = roomRepository;
         this.cleaningScheduleService = cleaningScheduleService;
+        this.shoppingListService = shoppingListService;
+        this.standingOrderService = standingOrderService;
         this.coreMapper = coreMapper;
     }
 
@@ -192,10 +199,19 @@ public class WGService {
         // Let's find the user in the list.
         User userToRemove = wg.getMitbewohner().stream().filter(u -> u.getId().equals(userId)).findFirst()
                 .orElseThrow(() -> new RuntimeException("User not found in WG"));
+
+        // Clean up all shopping lists for the departing user (delete created lists,
+        // remove from shared)
+        shoppingListService.cleanupListsForDepartingUser(userId);
+
+        // Deactivate all standing orders where the user is creditor or creator
+        standingOrderService.deactivateStandingOrdersForUser(userId);
+
         wg.removeMitbewohner(userToRemove);
 
         // Regenerate invite code to prevent removed user from rejoining with old code
-        // Ensure unique invite code with retry logic
+        // Ensure unique invite code with retry logic, excluding the current WG from the
+        // check
         int maxRetries = 10;
         do {
             wg.regenerateInviteCode();
@@ -203,7 +219,7 @@ public class WGService {
             if (maxRetries <= 0) {
                 throw new RuntimeException("Failed to generate unique invite code after multiple attempts");
             }
-        } while (wgRepository.existsByInviteCode(wg.getInviteCode()));
+        } while (wgRepository.existsByInviteCodeAndIdNot(wg.getInviteCode(), wg.getId()));
 
         WG savedWg = wgRepository.save(wg);
 
