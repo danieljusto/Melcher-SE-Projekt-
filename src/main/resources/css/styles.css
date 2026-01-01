@@ -2062,6 +2062,8 @@
     -fx-cursor: hand;
     -fx-min-width: 140;
     -fx-pref-width: 140;
+    -fx-min-height: 54;
+    -fx-pref-height: 54;
 }
 
 .payment-button-cash {
@@ -2081,11 +2083,13 @@
 }
 
 .payment-button-paypal {
-    -fx-background-color: linear-gradient(to bottom right, #0070ba, #003087);
+    -fx-background-color: #e2e8f0;
+    -fx-padding: 10 16;
+    -fx-alignment: center;
 }
 
 .payment-button-paypal:hover {
-    -fx-background-color: linear-gradient(to bottom right, #003087, #001f5f);
+    -fx-background-color: #cbd5e1;
 }
 
 .payment-button-credit {
