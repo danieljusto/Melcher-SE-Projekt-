@@ -243,10 +243,6 @@ public class TransactionsController extends Controller {
         content.getStyleClass().add("dialog-content");
         content.setPrefWidth(500);
 
-        // Header icon
-        Text headerIcon = new Text(balance < 0 ? "-" : "+");
-        headerIcon.getStyleClass().add("dialog-header-icon");
-
         // Message
         Text messageText;
         if (balance < 0) {
@@ -341,7 +337,7 @@ public class TransactionsController extends Controller {
             }
         }
 
-        content.getChildren().addAll(headerIcon, messageText, amountText, paymentLabel, paymentButtons);
+        content.getChildren().addAll(messageText, amountText, paymentLabel, paymentButtons);
         if (!creditTransferSection.getChildren().isEmpty()) {
             content.getChildren().add(creditTransferSection);
         }
