@@ -227,6 +227,11 @@ public class TransactionsController extends Controller {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Settle Balance");
 
+        // Set styling sheet
+        dialog.getDialogPane().getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+
         // Set owner window
         Window owner = balanceTable.getScene().getWindow();
         dialog.initOwner(owner);
@@ -237,10 +242,6 @@ public class TransactionsController extends Controller {
         content.setAlignment(Pos.CENTER);
         content.getStyleClass().add("dialog-content");
         content.setPrefWidth(500);
-
-        // Header icon
-        Text headerIcon = new Text(balance < 0 ? "-" : "+");
-        headerIcon.getStyleClass().add("dialog-header-icon");
 
         // Message
         Text messageText;
@@ -273,12 +274,11 @@ public class TransactionsController extends Controller {
         bankButton.getStyleClass().addAll("payment-button", "payment-button-bank");
 
         // PayPal button with icon
-        Button paypalButton = new Button("PayPal");
+        Button paypalButton = new Button();
         try {
-            Image paypalImage = new Image(getClass().getResourceAsStream("/pictures/icon_paypal.png"));
+            Image paypalImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/pictures/icon_paypal.png")));
             ImageView paypalIcon = new ImageView(paypalImage);
-            paypalIcon.setFitWidth(20);
-            paypalIcon.setFitHeight(20);
+            paypalIcon.setFitHeight(42);
             paypalIcon.setPreserveRatio(true);
             paypalButton.setGraphic(paypalIcon);
         } catch (Exception e) {
@@ -337,7 +337,7 @@ public class TransactionsController extends Controller {
             }
         }
 
-        content.getChildren().addAll(headerIcon, messageText, amountText, paymentLabel, paymentButtons);
+        content.getChildren().addAll(messageText, amountText, paymentLabel, paymentButtons);
         if (!creditTransferSection.getChildren().isEmpty()) {
             content.getChildren().add(creditTransferSection);
         }
