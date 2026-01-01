@@ -49,7 +49,7 @@ public class TransactionDialogController extends com.group_2.ui.core.Controller 
     @FXML
     private VBox debtorListBox;
     @FXML
-    private Button selectAllDebtorsButton;
+    private ToggleButton selectAllDebtorsButton;
     @FXML
     private Text step1ValidationError;
 
@@ -587,19 +587,8 @@ public class TransactionDialogController extends com.group_2.ui.core.Controller 
 
     private void updateSelectAllButtonText() {
         boolean allSelected = state.getParticipants().size() == allWgMembers.size();
-        if (allSelected) {
-            selectAllDebtorsButton.setText("Deselect All");
-            selectAllDebtorsButton.getStyleClass().removeAll("select-all-button-inactive");
-            if (!selectAllDebtorsButton.getStyleClass().contains("select-all-button-active")) {
-                selectAllDebtorsButton.getStyleClass().add("select-all-button-active");
-            }
-        } else {
-            selectAllDebtorsButton.setText("Select All");
-            selectAllDebtorsButton.getStyleClass().removeAll("select-all-button-active");
-            if (!selectAllDebtorsButton.getStyleClass().contains("select-all-button-inactive")) {
-                selectAllDebtorsButton.getStyleClass().add("select-all-button-inactive");
-            }
-        }
+        selectAllDebtorsButton.setSelected(allSelected);
+        selectAllDebtorsButton.setText(allSelected ? "Deselect All" : "Select All");
     }
 
     private void updateStep2Summary() {

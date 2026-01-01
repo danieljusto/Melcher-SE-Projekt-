@@ -3,8 +3,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<?import javafx.geometry.Insets?>
 
+<?import java.lang.String?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.group_2.ui.finance.TransactionsController"
@@ -19,22 +19,19 @@
             <fx:include source="../core/navbar.fxml" fx:id="navbar"/>
         </top>
 
-
         <!-- Main Content -->
         <center>
-            <ScrollPane fitToWidth="true" styleClass="scroll-pane">
+            <ScrollPane fitToWidth="true" styleClass="scroll-pane transactions-scroll">
+                <styleClass>
+                    <String fx:value="scroll-pane"/>
+                    <String fx:value="transactions-scroll"/>
+                </styleClass>
                 <VBox styleClass="main-content" spacing="30">
-                    
-                    <!-- Page Header -->
-                    <VBox styleClass="content-header" spacing="8">
-                        <Text text="Transaction Management" styleClass="page-title"/>
-                        <Text text="Track shared expenses and balances with your flatmates" styleClass="page-subtitle"/>
-                    </VBox>
 
                     <!-- Total Balance Card -->
                     <VBox fx:id="balanceCard" styleClass="finance-card-primary" spacing="15">
                         <Text text="Your Total Balance" styleClass="finance-card-header"/>
-                        <Text fx:id="totalBalanceText" text="€0.00" 
+                        <Text fx:id="totalBalanceText" text="€0.00"
                               styleClass="finance-card-title"/>
                         <Text text="Sum of all balances with WG members" styleClass="finance-card-subtitle"/>
                     </VBox>
@@ -44,17 +41,17 @@
                         <HBox alignment="CENTER_LEFT">
                             <Text text="Balance Sheet" styleClass="card-title"/>
                             <Region HBox.hgrow="ALWAYS"/>
-                            <Button text="Standing Orders" onAction="#showStandingOrders" 
-                                    styleClass="finance-pill"/>
+                            <Button text="Standing Orders" onAction="#showStandingOrders"
+                                    styleClass="secondary-button"/>
                             <Region prefWidth="10"/>
-                            <Button text="History" onAction="#navigateToHistory" 
-                                    styleClass="finance-pill"/>
+                            <Button text="History" onAction="#navigateToHistory"
+                                    styleClass="secondary-button"/>
                             <Region prefWidth="10"/>
                             <Button text="+ Add Transaction" styleClass="primary-button" onAction="#showAddTransactionDialog" />
                         </HBox>
-                        
+
                         <Text text="Your balances with each WG member" styleClass="card-subtitle"/>
-                        
+
                         <TableView fx:id="balanceTable" fixedCellSize="50" styleClass="table-view">
                             <columns>
                                 <TableColumn fx:id="memberColumn" text="Member" prefWidth="400"/>
@@ -73,9 +70,9 @@
     </BorderPane>
 
     <!-- Transaction Dialog Overlay -->
-    <fx:include source="transaction_dialog.fxml" fx:id="transactionDialog"/>
+    <fx:include source="transaction_dialog.fxml"/>
 
     <!-- Standing Orders Dialog Overlay -->
-    <fx:include source="standing_orders_dialog.fxml" fx:id="standingOrdersDialog"/>
+    <fx:include source="standing_orders_dialog.fxml"/>
 
 </StackPane>

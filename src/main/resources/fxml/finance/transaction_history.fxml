@@ -4,6 +4,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.group_2.ui.finance.TransactionHistoryController"
@@ -14,29 +16,29 @@
     <BorderPane>
         <!-- Top Header -->
         <top>
-            <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
-                <Button text="&lt; Back" onAction="#returnToTransactions" styleClass="navbar-back-button"/>
-                <Text text="Transaction History" styleClass="navbar-title"/>
-                <Region HBox.hgrow="ALWAYS"/>
-            </HBox>
-        </top>
+        <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
+            <Button onAction="#returnToTransactions" styleClass="navbar-back-button">
+                <graphic>
+                    <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                        <Image url="@/pictures/chevron-left-white.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Text text="Transaction History" styleClass="navbar-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+    </top>
 
         <!-- Main Content -->
         <center>
             <ScrollPane fitToWidth="true" styleClass="scroll-pane">
                 <VBox styleClass="main-content" spacing="16" >
-                    
-                    <!-- Page Header -->
-                    <VBox styleClass="content-header" spacing="8">
-                        <Text text="Transaction History" styleClass="page-title"/>
-                        <Text text="View all your past transactions with your flatmates" styleClass="page-subtitle"/>
-                    </VBox>
 
                     <!-- Hidden counter placeholder (used by controller) -->
                     <Text fx:id="transactionCountText" text="" visible="false" managed="false"/>
 
                     <!-- Filter Bar -->
-                    <VBox styleClass="card" spacing="15">
+                    <VBox styleClass="card" spacing="10">
                         <HBox spacing="15" alignment="CENTER_LEFT">
                             <Text text="Filter by:" styleClass="card-title"/>
                             <Region HBox.hgrow="ALWAYS"/>
@@ -72,9 +74,9 @@
                             <Text text="Transactions" styleClass="card-title"/>
                             <Region HBox.hgrow="ALWAYS"/>
                         </HBox>
-                        
+
                         <Text text="Filtered transaction history" styleClass="card-subtitle"/>
-                        
+
                         <TableView fx:id="historyTable" VBox.vgrow="ALWAYS" styleClass="table-view" fixedCellSize="50">
                             <columns>
                                 <TableColumn fx:id="dateColumn" text="Date" prefWidth="100"/>

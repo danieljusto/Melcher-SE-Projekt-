@@ -10,8 +10,10 @@ import com.group_2.service.core.HouseholdSetupService;
 import com.group_2.ui.core.Controller;
 import com.group_2.ui.core.MainScreenController;
 import com.group_2.ui.core.NavbarController;
+import com.group_2.ui.finance.TransactionsController;
 import com.group_2.util.SessionManager;
 
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -551,6 +553,11 @@ public class TemplateEditorController extends Controller {
 
         dialog.showAndWait();
         refreshView();
+    }
+
+    @FXML
+    public void returnToCleaningSchedule(ActionEvent actionEvent) {
+        loadScene(headerTitle.getScene(), "/cleaning/cleaning_schedule.fxml");
     }
 
     private void deleteTemplate(WorkingTemplate template) {

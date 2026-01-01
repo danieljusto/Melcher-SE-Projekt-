@@ -41,7 +41,7 @@
             <VBox styleClass="main-content" spacing="20" HBox.hgrow="ALWAYS">
                 <!-- Placeholder when no list selected -->
                 <VBox fx:id="noListSelectedView" alignment="CENTER" spacing="15" VBox.vgrow="ALWAYS">
-                    <Text text="LIST" style="-fx-font-size: 48px;"/>
+                    <Text text="No shopping lists yet" style="-fx-font-size: 48px;"/>
                     <Text text="Create a new list and add items" styleClass="card-subtitle"/>
                 </VBox>
 
@@ -61,7 +61,7 @@
                     <VBox styleClass="card" spacing="15">
                         <Text text="Add Item" styleClass="card-title"/>
                         <HBox spacing="10" alignment="CENTER_LEFT">
-                            <TextField fx:id="newItemField" promptText="Enter item name..." 
+                            <TextField fx:id="newItemField" promptText="Enter item name..."
                                        styleClass="modern-text-field" HBox.hgrow="ALWAYS"/>
                             <Button text="+ Add" styleClass="primary-button" onAction="#addItem"/>
                         </HBox>

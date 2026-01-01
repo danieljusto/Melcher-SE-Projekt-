@@ -3,8 +3,9 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<?import javafx.geometry.Insets?>
 
+<?import javafx.css.StyleClass?>
+<?import java.lang.String?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.group_2.ui.cleaning.CleaningScheduleController"
@@ -20,35 +21,45 @@
     <!-- Main Content Area - Calendar View -->
     <center>
         <VBox styleClass="cleaning-page">
-            
+
             <!-- Header Row with Week Navigation -->
             <HBox alignment="CENTER_LEFT" spacing="20" styleClass="cleaning-header">
                 <!-- Week Navigation -->
                 <HBox spacing="12" alignment="CENTER_LEFT">
-                    <Button text="&lt;" styleClass="icon-button nav-button-light" onAction="#previousWeek"/>
+                    <Button text="‹" onAction="#previousWeek">
+                        <styleClass>
+                            <String fx:value="icon-button"/>
+                            <String fx:value="nav-button-light"/>
+                        </styleClass>
+                    </Button>
                     <VBox spacing="2" alignment="CENTER_LEFT">
-                        <Text fx:id="weekTitle" text="Week 52, 2024" 
+                        <Text fx:id="weekTitle" text="Week 52, 2024"
                               styleClass="text-title-cleaning"/>
-                        <Text fx:id="weekDateRange" text="December 23 - December 29" 
+                        <Text fx:id="weekDateRange" text="December 23 - December 29"
                               styleClass="text-subtitle-cleaning"/>
                     </VBox>
-                    <Button text="&gt;" styleClass="icon-button nav-button-light" onAction="#nextWeek"/>
+                    <Button text="›" onAction="#nextWeek">
+                        <styleClass>
+                            <String fx:value="icon-button"/>
+                            <String fx:value="nav-button-light"/>
+                        </styleClass>
+                    </Button>
                     <Button text="Today" styleClass="nav-button-primary" onAction="#goToCurrentWeek"/>
                 </HBox>
-                
+
                 <Region HBox.hgrow="ALWAYS"/>
-                
+
                 <!-- Progress Stats -->
                 <HBox spacing="15" alignment="CENTER">
-                    <VBox alignment="CENTER" spacing="2" 
+                    <VBox alignment="CENTER" spacing="2"
                           styleClass="cleaning-stat-card">
-                        <Text fx:id="completedTasksText" text="0/0" 
+                        <Text fx:id="completedTasksText" text="0/0"
                               styleClass="text-stat-green"/>
                         <Text text="Completed" styleClass="text-caption-muted"/>
                     </VBox>
-                    <VBox alignment="CENTER" spacing="2" 
+                    <VBox alignment="CENTER" spacing="2"
                           styleClass="cleaning-stat-card">
-                        <Text fx:id="myTasksCountText" text="0" 
+                        <Text fx:id="myTasksCountText" text="0"
                               styleClass="text-stat-primary"/>
                         <Text text="My Tasks" styleClass="text-caption-muted"/>
                     </VBox>
@@ -60,9 +71,9 @@
 
                 <Button text="+ Add Task" onAction="#showAddTaskDialog"
                         styleClass="action-button-light"/>
-                
+
                 <Region prefWidth="20"/>
-                
+
                 <Button text="Edit Template" onAction="#openTemplateEditor"
                         styleClass="action-button-light"/>
             </HBox>
@@ -71,7 +82,7 @@
             <!-- Calendar Grid -->
             <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-pane">
                 <VBox spacing="0">
-                    
+
                     <!-- Day Headers -->
                     <HBox styleClass="calendar-header" spacing="0">
                         <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
@@ -104,9 +115,9 @@
 
                     <!-- Tasks by Room Section -->
                     <VBox spacing="15" styleClass="section-top">
-                        <Text text="All Cleaning Tasks" 
+                        <Text text="All Cleaning Tasks"
                               styleClass="section-title-cleaning"/>
-                        
+
                         <FlowPane fx:id="roomCardsContainer" hgap="15" vgap="15" alignment="TOP_LEFT">
                             <!-- Room task cards will be added dynamically -->
                         </FlowPane>

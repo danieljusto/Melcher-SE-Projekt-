@@ -89,16 +89,7 @@ public class ShoppingListController extends Controller {
         List<ShoppingListDTO> lists = shoppingListService.getAccessibleListsDTO(session.userId());
 
         if (lists.isEmpty()) {
-            VBox emptyState = new VBox(10);
-            emptyState.setAlignment(Pos.CENTER);
-            emptyState.setPadding(new Insets(30));
-            Text emptyIcon = new Text("SL");
-            emptyIcon.getStyleClass().add("empty-state-icon-large");
-            Text emptyText = new Text("Create your first list!");
-            emptyText.getStyleClass().add("empty-state-subtitle");
-            emptyState.getStyleClass().add("empty-state-card");
-            emptyState.getChildren().addAll(emptyIcon, emptyText);
-            listsContainer.getChildren().add(emptyState);
+            selectedList = null;
         } else {
             for (ShoppingListDTO list : lists) {
                 listsContainer.getChildren().add(createListCard(list));
@@ -253,13 +244,13 @@ public class ShoppingListController extends Controller {
 
         // Circular checkbox
         Button checkBox = new Button();
-        checkBox.setPrefSize(28, 28);
-        checkBox.setMinSize(28, 28);
-        checkBox.setMaxSize(28, 28);
+        checkBox.setPrefSize(30, 30);
+        checkBox.setMinSize(30, 30);
+        checkBox.setMaxSize(30, 30);
         checkBox.getStyleClass().add("shopping-check-button");
 
         if (isBought) {
-            checkBox.setText("X");
+            checkBox.setText("⏎");
             checkBox.getStyleClass().remove("shopping-check-unchecked");
             checkBox.getStyleClass().add("shopping-check-checked");
         } else {
@@ -288,7 +279,7 @@ public class ShoppingListController extends Controller {
         info.getChildren().addAll(nameText, creatorText);
 
         // Delete button
-        Button deleteBtn = new Button("X");
+        Button deleteBtn = new Button("✕");
         deleteBtn.getStyleClass().addAll("icon-button", "icon-button-danger");
         deleteBtn.setOnAction(e -> removeItem(item));
 

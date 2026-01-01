@@ -4,6 +4,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import java.lang.String?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.group_2.ui.core.SettingsController"
@@ -14,8 +17,14 @@
     <!-- Top Header -->
     <top>
         <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
-            <Button text="&lt; Back" onAction="#backToHome" styleClass="navbar-back-button"/>
-            <Text text="Home Settings" styleClass="navbar-title"/>
+            <Button onAction="#backToHome" styleClass="navbar-back-button">
+                <graphic>
+                    <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
+                        <Image url="@/pictures/home-white.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Text text="WG Settings" styleClass="navbar-title"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Text fx:id="wgNameHeader" text="Home Name" styleClass="navbar-wg-name"/>
         </HBox>
@@ -32,13 +41,17 @@
 
                         <Text text="Invitation Code" styleClass="card-title"/>
                     </HBox>
-                    <Text text="Share this code with others to invite them to your home" styleClass="card-subtitle"/>
+                    <Text text="Share this code with others to invite them to your WG" styleClass="card-subtitle"/>
                     <HBox spacing="15" alignment="CENTER_LEFT">
-                        <StackPane style="-fx-background-color: #f1f5f9; -fx-background-radius: 8; -fx-padding: 15 25;">
+                        <StackPane style="-fx-background-color: #f1f5f9; -fx-background-radius: 8; -fx-padding: 0 25;" minHeight="48">
                             <Text fx:id="inviteCodeText" text="ABCD1234" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #6366f1; -fx-font-family: monospace;"/>
                         </StackPane>
-                        <Button text="Copy" onAction="#copyInviteCode"
-                                style="-fx-background-color: #e0e7ff; -fx-text-fill: #4338ca; -fx-background-radius: 8; -fx-padding: 12 20; -fx-cursor: hand;"/>
+                        <Button text="Copy Invite Code" onAction="#copyInviteCode" minHeight="48">
+                            <styleClass>
+                                <String fx:value="secondary-button"/>
+                                <String fx:value="accent"/>
+                            </styleClass>
+                        </Button>
                     </HBox>
                 </VBox>
 
@@ -48,12 +61,17 @@
 
                         <Text text="Admin Controls" styleClass="card-title"/>
                     </HBox>
-                    <Text text="You are the admin of this home" styleClass="card-subtitle"/>
+                    <Text text="You are the admin of this WG" styleClass="card-subtitle"/>
                     <HBox spacing="15">
-                        <Button text="Edit Home Name" onAction="#editWgName"
-                                style="-fx-background-color: #dbeafe; -fx-text-fill: #1d4ed8; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;"/>
-                        <Button text="Delete Home" onAction="#deleteWG"
-                                style="-fx-background-color: #fef2f2; -fx-text-fill: #dc2626; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;"/>
+                        <Button text="Edit Home Name" onAction="#editWgName">
+                            <styleClass>
+                                <String fx:value="secondary-button"/>
+                                <String fx:value="accent"/>
+                            </styleClass>
+                        </Button>
+                        <Button text="Delete Home"
+                                onAction="#deleteWG"
+                                styleClass="danger-button"/>
                     </HBox>
                 </VBox>
 
@@ -82,8 +100,12 @@
                             <Text text="Members" styleClass="card-title"/>
                         </HBox>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Button text="Copy Invite Code" onAction="#copyInviteCode"
-                                style="-fx-background-color: #e0e7ff; -fx-text-fill: #4338ca; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;"/>
+                        <Button text="Copy Invite Code" onAction="#copyInviteCode">
+                            <styleClass>
+                                <String fx:value="secondary-button"/>
+                                <String fx:value="accent"/>
+                            </styleClass>
+                        </Button>
                     </HBox>
                     <Text fx:id="memberCountText" text="0 members in your home" styleClass="card-subtitle"/>
                     <VBox fx:id="membersBox" spacing="10">

@@ -34,14 +34,26 @@
     -fx-text-fill: white;
 }
 
+.btn.btn-primary:hover {
+    -fx-background-color: -color-primary-strong;
+}
+
 .btn-success {
     -fx-background-color: linear-gradient(to right, -color-success, -color-success-strong);
     -fx-text-fill: white;
 }
 
+.btn.btn-success:hover {
+    -fx-background-color: #15803d;
+}
+
 .btn-danger {
     -fx-background-color: linear-gradient(to right, -color-danger, -color-danger-strong);
     -fx-text-fill: white;
+}
+
+.btn.btn-danger:hover {
+    -fx-background-color: #b91c1c;
 }
 
 .btn-secondary {
@@ -79,6 +91,9 @@
 /* ===== NAVBAR STYLES ===== */
 .navbar {
     -fx-background-color: linear-gradient(to right, #1e293b, #334155);
+    -fx-min-height: 100px;
+    -fx-pref-height: 100px;
+    -fx-max-height: 100px;
     -fx-padding: 25 38;
     -fx-spacing: 25;
     -fx-alignment: center-left;
@@ -91,17 +106,53 @@
     -fx-fill: white;
 }
 
+/*.navbar-back-button {*/
+/*    -fx-background-color: rgba(255, 255, 255, 0.1);*/
+/*    -fx-text-fill: white;*/
+/*    -fx-background-radius: 10;*/
+/*    -fx-padding: 10 20;*/
+/*    -fx-cursor: hand;*/
+/*    -fx-font-size: 18px;*/
+/*}*/
+
+/*.navbar-back-button:hover {*/
+/*    -fx-background-color: rgba(255, 255, 255, 0.2);*/
+/*}*/
+
+/*.navbar-back-button {*/
+/*    -fx-background-color: transparent;*/
+/*    -fx-text-fill: rgba(255, 255, 255, 0.9);*/
+/*    -fx-font-size: 16px;*/
+/*    -fx-font-weight: 500;*/
+/*    -fx-padding: 6 8;*/
+/*    -fx-cursor: hand;*/
+/*}*/
+
+/*.navbar-back-button:hover {*/
+/*    -fx-text-fill: white;*/
+/*}*/
+
+/*.navbar-back-button:pressed {*/
+/*    -fx-text-fill: rgba(255, 255, 255, 0.75);*/
+/*}*/
+
 .navbar-back-button {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-text-fill: white;
-    -fx-background-radius: 10;
-    -fx-padding: 10 20;
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.75);
+    -fx-font-size: 14px;
+    -fx-font-weight: 400;
+    -fx-padding: 6 10;
     -fx-cursor: hand;
-    -fx-font-size: 18px;
+    -fx-background-radius: 6;
 }
 
 .navbar-back-button:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-text-fill: white;
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-back-button:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
 }
 
 .navbar-settings-button {
@@ -324,7 +375,6 @@
 
 .primary-button:hover {
     -fx-background-color: linear-gradient(to right, #4f46e5, #7c3aed);
-    -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.4), 15, 0, 0, 4);
 }
 
 .success-button {
@@ -340,7 +390,6 @@
 
 .success-button:hover {
     -fx-background-color: linear-gradient(to right, #059669, #047857);
-    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.4), 15, 0, 0, 4);
 }
 
 .danger-button {
@@ -356,7 +405,20 @@
 
 .danger-button:hover {
     -fx-background-color: linear-gradient(to right, #dc2626, #b91c1c);
-    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 15, 0, 0, 4);
+}
+
+.danger-button.subtle {
+    -fx-background-color: #fef2f2;
+    -fx-background-radius: 10;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #fecaca;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+.danger-button.subtle:hover {
+    -fx-background-color: #fee2e2;
+    -fx-effect: none;
 }
 
 .secondary-button {
@@ -385,6 +447,34 @@
     -fx-background-color: #dc2626;
 }
 
+.secondary-button.accent {
+    -fx-background-color: #e0e7ff;
+    -fx-text-fill: #4338ca;
+}
+
+.secondary-button.accent:hover {
+    -fx-background-color: #c7d2fe;
+}
+
+.secondary-button.select-all-toggle {
+    -fx-min-width: 140;
+    -fx-pref-width: 140;
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+}
+
+.secondary-button.select-all-toggle:selected {
+    -fx-background-color: #e0e7ff;
+    -fx-text-fill: #4338ca;
+    -fx-border-color: #a5b4fc;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+.secondary-button.select-all-toggle:selected:hover {
+    -fx-background-color: #c7d2fe;
+}
+
 .icon-button {
     -fx-background-color: transparent;
     -fx-text-fill: #475569;
@@ -411,42 +501,39 @@
     -fx-background-color: #f1f5f9;
     -fx-background-radius: 12;
     -fx-text-fill: #475569;
-    -fx-font-size: 18px;
+    -fx-font-size: 13px;
     -fx-padding: 8 12;
     -fx-cursor: hand;
     -fx-border-color: #e2e8f0;
     -fx-border-radius: 12;
     -fx-border-width: 1;
     -fx-min-width: -1;
-    /* Reset to allow pref size */
 }
 
 .task-action-button:hover {
     -fx-background-color: #eef2ff;
     -fx-text-fill: #6366f1;
     -fx-border-color: #6366f1;
-    -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.2), 8, 0, 0, 2);
 }
 
 .task-delete-button {
     -fx-background-color: rgba(239, 68, 68, 0.1);
     -fx-background-radius: 50;
     -fx-text-fill: #ef4444;
-    -fx-font-size: 16px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-padding: 2 8;
+    -fx-alignment: center;
     -fx-cursor: hand;
     -fx-border-color: transparent;
-    -fx-min-width: 24;
-    -fx-min-height: 24;
-    -fx-max-width: 24;
-    -fx-max-height: 24;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-max-width: 28;
+    -fx-max-height: 28;
 }
 
 .task-delete-button:hover {
     -fx-background-color: #ef4444;
     -fx-text-fill: white;
-    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 8, 0, 0, 2);
 }
 
 /* ===== TEXT FIELDS ===== */
@@ -466,7 +553,6 @@
 .modern-text-field:focused {
     -fx-border-color: #6366f1;
     -fx-background-color: white;
-    -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.15), 10, 0, 0, 0);
 }
 
 .field-label {
@@ -521,7 +607,13 @@
     -fx-background-color: #22c55e;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-font-size: 14px;
+    -fx-font-size: 10px;
+    -fx-background-radius: 14;
+}
+
+.shopping-check-checked:hover {
+    -fx-border-color: #16a34a;
+    -fx-border-radius: 14;
 }
 
 .shopping-check-unchecked {
@@ -529,6 +621,11 @@
     -fx-border-color: #d1d5db;
     -fx-border-radius: 14;
     -fx-background-radius: 14;
+}
+
+.shopping-check-unchecked:hover {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #6366f1;
 }
 
 /* ===== AVATAR ===== */
@@ -651,6 +748,10 @@
 
 .scroll-bar .thumb:hover {
     -fx-background-color: #94a3b8;
+}
+
+.scroll-pane.transactions-scroll > .viewport {
+    -fx-background-color: transparent;
 }
 
 /* ===== USER PROFILE SECTION ===== */
@@ -1079,6 +1180,10 @@
     -fx-cursor: hand;
 }
 
+.nav-button-primary:hover {
+    -fx-background-color: -color-primary-strong;
+}
+
 .action-button-light {
     -fx-background-color: white;
     -fx-text-fill: #475569;
@@ -1088,6 +1193,10 @@
     -fx-font-size: 13px;
     -fx-border-color: #e2e8f0;
     -fx-border-radius: 8;
+}
+
+.action-button-light:hover {
+    -fx-background-color: #f8fafc;
 }
 
 .action-button-primary {
@@ -1255,7 +1364,7 @@
     -fx-text-fill: white;
     -fx-background-radius: 10;
     -fx-padding: 8 14;
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-cursor: hand;
 }
 
@@ -1778,10 +1887,16 @@
 
 .dialog-close-button {
     -fx-background-color: transparent;
-    -fx-text-fill: #6b7280;
-    -fx-font-size: 20px;
     -fx-cursor: hand;
-    -fx-padding: 4;
+    -fx-fill: #6b7280;
+    -fx-padding: 6;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.dialog-close-button:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+    -fx-background-radius: 8;
 }
 
 .dialog-body {
@@ -1807,6 +1922,10 @@
     -fx-font-size: 13px;
 }
 
+.dialog-footer-button-light:hover {
+    -fx-background-color: #e5e7eb;
+}
+
 .dialog-footer-button-primary {
     -fx-background-color: -color-primary;
     -fx-text-fill: white;
@@ -1815,6 +1934,10 @@
     -fx-cursor: hand;
     -fx-font-weight: 600;
     -fx-font-size: 13px;
+}
+
+.dialog-footer-button-primary:hover {
+    -fx-background-color: -color-primary-strong;
 }
 
 .dialog-title {
@@ -1937,7 +2060,6 @@
     -fx-padding: 15 25;
     -fx-background-radius: 12;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2);
     -fx-min-width: 140;
     -fx-pref-width: 140;
 }
@@ -2206,17 +2328,6 @@
 .date-cell-disabled {
     -fx-background-color: #e0e0e0;
     -fx-text-fill: #999999;
-}
-
-/* Select All Button Styles */
-.select-all-button-active {
-    -fx-background-color: #10b981;
-    -fx-text-fill: white;
-}
-
-.select-all-button-inactive {
-    -fx-background-color: #e5e7eb;
-    -fx-text-fill: #374151;
 }
 
 /* Remove Button (small red) */

@@ -235,6 +235,7 @@ public class CleaningScheduleController extends Controller {
         // Create a card for each task
         for (CleaningTaskDTO task : weekTasks) {
             VBox card = createRoomCard(task, session.userId());
+            card.setPrefWidth(300);
             roomCardsContainer.getChildren().add(card);
         }
     }
@@ -242,7 +243,6 @@ public class CleaningScheduleController extends Controller {
     private VBox createRoomCard(CleaningTaskDTO task, Long currentUserId) {
         VBox card = new VBox(12);
         card.setPadding(new Insets(25, 15, 20, 15)); // Extra top padding for delete button
-        card.setPrefWidth(220);
         card.setAlignment(Pos.TOP_CENTER);
 
         boolean isCompleted = task.completed();
@@ -262,7 +262,7 @@ public class CleaningScheduleController extends Controller {
 
         // Only show delete button for manually created tasks (not template-generated)
         if (task.manualOverride()) {
-            Button deleteBtn = new Button("X");
+            Button deleteBtn = new Button("✕");
             deleteBtn.getStyleClass().add("task-delete-button");
             deleteBtn.setTooltip(new Tooltip("Delete task"));
             deleteBtn.setOnAction(e -> showDeleteConfirmDialog(task));
@@ -325,7 +325,11 @@ public class CleaningScheduleController extends Controller {
         HBox actions = new HBox(8);
         actions.setAlignment(Pos.CENTER);
 
-        Button completeBtn = new Button(isCompleted ? "Undo" : "Done");
+        Button completeBtn = new Button(isCompleted ? "⏎" : "✓");
+        completeBtn.setPrefHeight(34);
+        completeBtn.setMinHeight(Region.USE_PREF_SIZE);
+        completeBtn.setPrefWidth(50);
+        completeBtn.setMinWidth(Region.USE_PREF_SIZE);
         completeBtn.getStyleClass().add("complete-button");
         if (isCompleted) {
             completeBtn.getStyleClass().add("complete-button-done");
@@ -345,16 +349,22 @@ public class CleaningScheduleController extends Controller {
         if (isMyTask) {
             Button reassignBtn = new Button("Assign");
             reassignBtn.getStyleClass().add("task-action-button");
+            reassignBtn.setPrefWidth(80);
             reassignBtn.setMinWidth(Region.USE_PREF_SIZE);
+            reassignBtn.setPrefHeight(34);
+            reassignBtn.setMinHeight(Region.USE_PREF_SIZE);
             reassignBtn.setTooltip(new Tooltip("Reassign to someone else"));
             reassignBtn.setOnAction(e -> showReassignDialog(task));
             actions.getChildren().add(reassignBtn);
         }
 
-        Button rescheduleBtn = new Button("Cal");
+        Button rescheduleBtn = new Button("Reschedule");
         rescheduleBtn.getStyleClass().add("task-action-button");
+        rescheduleBtn.setPrefWidth(120);
         rescheduleBtn.setMinWidth(Region.USE_PREF_SIZE);
-        rescheduleBtn.setTooltip(new Tooltip("Reschedule"));
+        rescheduleBtn.setPrefHeight(34);
+        rescheduleBtn.setMinHeight(Region.USE_PREF_SIZE);
+        rescheduleBtn.setTooltip(new Tooltip("Reschedule to another day"));
         rescheduleBtn.setOnAction(e -> showRescheduleDialog(task));
 
         actions.getChildren().add(rescheduleBtn);
@@ -363,6 +373,13 @@ public class CleaningScheduleController extends Controller {
 
         // Return the wrapper as a VBox containing the StackPane
         VBox wrapper = new VBox(cardWrapper);
+        wrapper.setPrefWidth(300);
+        wrapper.setMinWidth(Region.USE_PREF_SIZE);
+
+        cardWrapper.setPrefWidth(300);
+        cardWrapper.setMinWidth(Region.USE_PREF_SIZE);
+
+        card.setMaxWidth(Double.MAX_VALUE);
         return wrapper;
     }
 
@@ -387,9 +404,6 @@ public class CleaningScheduleController extends Controller {
         emptyState.setPrefWidth(400);
         emptyState.getStyleClass().add("empty-state-card");
 
-        Text emptyIcon = new Text("LIST");
-        emptyIcon.getStyleClass().add("empty-state-icon-large");
-
         Text emptyTitle = new Text("No Tasks This Week");
         emptyTitle.getStyleClass().add("empty-state-title");
 
@@ -404,7 +418,7 @@ public class CleaningScheduleController extends Controller {
         addBtn.setOnAction(e -> showAddTaskDialog());
 
         buttons.getChildren().addAll(addBtn);
-        emptyState.getChildren().addAll(emptyIcon, emptyTitle, emptySubtitle, buttons);
+        emptyState.getChildren().addAll(emptyTitle, emptySubtitle, buttons);
         roomCardsContainer.getChildren().add(emptyState);
     }
 
