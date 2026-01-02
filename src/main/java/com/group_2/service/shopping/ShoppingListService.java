@@ -40,9 +40,6 @@ public class ShoppingListService {
         this.coreMapper = coreMapper;
     }
 
-    /**
-     * Get WG member summaries for shopping UI by WG ID.
-     */
     public List<UserSummaryDTO> getMemberSummaries(Long wgId) {
         if (wgId == null) {
             return List.of();
@@ -50,99 +47,60 @@ public class ShoppingListService {
         return coreMapper.toUserSummaries(userRepository.findByWgId(wgId));
     }
 
-    /**
-     * Create a new shopping list.
-     */
     public ShoppingList createList(String name, User creator, List<User> sharedWith) {
         ShoppingList list = new ShoppingList(name, creator, sharedWith);
         return shoppingListRepository.save(list);
     }
 
-    /**
-     * Create a private shopping list (no sharing).
-     */
     public ShoppingList createPrivateList(String name, User creator) {
         return createList(name, creator, null);
     }
 
-    /**
-     * Get all shopping lists accessible to a user (own + shared).
-     */
     public List<ShoppingList> getAccessibleLists(User user) {
         return shoppingListRepository.findAllAccessibleByUser(user);
     }
 
-    /**
-     * Get a shopping list by ID.
-     */
     public Optional<ShoppingList> getList(Long id) {
         return shoppingListRepository.findById(id);
     }
 
-    /**
-     * Update the sharing settings for a list.
-     */
     public ShoppingList shareList(ShoppingList list, List<User> users) {
         list.setSharedWith(users);
         return shoppingListRepository.save(list);
     }
 
-    /**
-     * Add a user to the sharedWith list.
-     */
     public ShoppingList addSharedUser(ShoppingList list, User user) {
         list.addSharedUser(user);
         return shoppingListRepository.save(list);
     }
 
-    /**
-     * Remove a user from the sharedWith list.
-     */
     public ShoppingList removeSharedUser(ShoppingList list, User user) {
         list.removeSharedUser(user);
         return shoppingListRepository.save(list);
     }
 
-    /**
-     * Delete a shopping list.
-     */
     public void deleteList(ShoppingList list) {
         shoppingListRepository.delete(list);
     }
 
-    /**
-     * Add an item to a shopping list.
-     */
     public ShoppingListItem addItem(ShoppingList list, String itemName, User creator) {
         ShoppingListItem item = new ShoppingListItem(itemName, creator, list);
         return itemRepository.save(item);
     }
 
-    /**
-     * Remove an item from a shopping list.
-     */
     public void removeItem(ShoppingListItem item) {
         itemRepository.delete(item);
     }
 
-    /**
-     * Get all items in a shopping list.
-     */
     public List<ShoppingListItem> getItemsForList(ShoppingList list) {
         return itemRepository.findByShoppingList(list);
     }
 
-    /**
-     * Update an item's name.
-     */
     public ShoppingListItem updateItem(ShoppingListItem item, String newName) {
         item.setName(newName);
         return itemRepository.save(item);
     }
 
-    /**
-     * Toggle the bought status of an item.
-     */
     public ShoppingListItem toggleBought(ShoppingListItem item) {
         item.setBought(!Boolean.TRUE.equals(item.getBought()));
         return itemRepository.save(item);
@@ -150,16 +108,10 @@ public class ShoppingListService {
 
     // ========== DTO Methods ==========
 
-    /**
-     * Get all shopping lists accessible to a user as DTOs.
-     */
     public List<ShoppingListDTO> getAccessibleListsDTO(User user) {
         return shoppingMapper.toDTOList(getAccessibleLists(user));
     }
 
-    /**
-     * Get all shopping lists accessible to a user by ID as DTOs.
-     */
     public List<ShoppingListDTO> getAccessibleListsDTO(Long userId) {
         if (userId == null) {
             return List.of();
@@ -167,16 +119,10 @@ public class ShoppingListService {
         return userRepository.findById(userId).map(this::getAccessibleListsDTO).orElseGet(List::of);
     }
 
-    /**
-     * Get a shopping list by ID as DTO.
-     */
     public Optional<ShoppingListDTO> getListDTO(Long id) {
         return getList(id).map(shoppingMapper::toDTO);
     }
 
-    /**
-     * Get items for a list by list ID as DTOs.
-     */
     public List<ShoppingListItemDTO> getItemsForListDTO(Long listId) {
         Optional<ShoppingList> list = getList(listId);
         if (list.isEmpty()) {
@@ -185,9 +131,6 @@ public class ShoppingListService {
         return shoppingMapper.toItemDTOList(getItemsForList(list.get()));
     }
 
-    /**
-     * Create a shopping list with shared user IDs (for DTO-based controller).
-     */
     public ShoppingListDTO createListByUserIds(String name, Long creatorId, List<Long> sharedWithIds) {
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new IllegalArgumentException("Creator not found"));
@@ -203,9 +146,6 @@ public class ShoppingListService {
         return shoppingMapper.toDTO(list);
     }
 
-    /**
-     * Add an item to a shopping list by IDs (for DTO-based controller).
-     */
     public ShoppingListItemDTO addItemByIds(Long listId, String itemName, Long creatorId) {
         ShoppingList list = shoppingListRepository.findById(listId)
                 .orElseThrow(() -> new IllegalArgumentException("Shopping list not found"));
@@ -216,9 +156,6 @@ public class ShoppingListService {
         return shoppingMapper.toItemDTO(item);
     }
 
-    /**
-     * Toggle the bought status of an item by ID (for DTO-based controller).
-     */
     public ShoppingListItemDTO toggleBoughtById(Long itemId) {
         ShoppingListItem item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
@@ -226,27 +163,18 @@ public class ShoppingListService {
         return shoppingMapper.toItemDTO(updated);
     }
 
-    /**
-     * Remove an item by ID (for DTO-based controller).
-     */
     public void removeItemById(Long itemId) {
         ShoppingListItem item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
         removeItem(item);
     }
 
-    /**
-     * Delete a shopping list by ID (for DTO-based controller).
-     */
     public void deleteListById(Long listId) {
         ShoppingList list = shoppingListRepository.findById(listId)
                 .orElseThrow(() -> new IllegalArgumentException("Shopping list not found"));
         deleteList(list);
     }
 
-    /**
-     * Update sharing settings by IDs (for DTO-based controller).
-     */
     public ShoppingListDTO shareListByIds(Long listId, List<Long> sharedWithIds) {
         ShoppingList list = shoppingListRepository.findById(listId)
                 .orElseThrow(() -> new IllegalArgumentException("Shopping list not found"));
@@ -262,14 +190,8 @@ public class ShoppingListService {
         return shoppingMapper.toDTO(updated);
     }
 
-    /**
-     * Clean up all shopping list data for a departing WG member.
-     * This will:
-     * 1. Delete all shopping lists created by the user
-     * 2. Remove the user from all lists they were shared with
-     * 
-     * @param userId The ID of the user leaving the WG
-     */
+    // Called when WG member leaves - deletes their lists and removes them from
+    // shared lists
     public void cleanupListsForDepartingUser(Long userId) {
         if (userId == null) {
             return;
@@ -300,8 +222,8 @@ public class ShoppingListService {
     /**
      * Remove a user from all shopping lists where they are in the sharedWith list.
      * This is called when a WG member leaves to clean up their access to shared
-     * lists.
-     * Note: Lists created by this user are not deleted; they remain for the user.
+     * lists. Note: Lists created by this user are not deleted; they remain for the
+     * user.
      * 
      * @deprecated Use cleanupListsForDepartingUser instead for complete cleanup
      */
@@ -314,9 +236,8 @@ public class ShoppingListService {
     }
 
     /**
-     * Remove a user from all shopping lists by user ID.
-     * This is called when a WG member leaves to clean up their access to shared
-     * lists.
+     * Remove a user from all shopping lists by user ID. This is called when a WG
+     * member leaves to clean up their access to shared lists.
      * 
      * @deprecated Use cleanupListsForDepartingUser instead for complete cleanup
      */

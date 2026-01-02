@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-
 /**
  * DTO representing a transaction for display in the UI. Immutable record
  * containing only the display data needed by controllers.
@@ -15,30 +14,18 @@ public record TransactionDTO(Long id, Long creditorId, String creditorName, Long
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter FULL_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
-    /**
-     * Create a display-friendly amount string with Euro symbol
-     */
     public String getFormattedAmount() {
         return String.format("%.2f€", totalAmount);
     }
 
-    /**
-     * Get formatted date only
-     */
     public String getFormattedDate() {
         return timestamp.format(DATE_FORMATTER);
     }
 
-    /**
-     * Get formatted time only
-     */
     public String getFormattedTime() {
         return timestamp.format(TIME_FORMATTER);
     }
 
-    /**
-     * Get full formatted date and time
-     */
     public String getFormattedDateTime() {
         return timestamp.format(FULL_FORMATTER);
     }
@@ -50,9 +37,6 @@ public record TransactionDTO(Long id, Long creditorId, String creditorName, Long
         return createdById != null && createdById.equals(userId);
     }
 
-    /**
-     * Get a summary of debtors for display
-     */
     public String getDebtorsSummary() {
         if (splits == null || splits.isEmpty()) {
             return "No debtors";

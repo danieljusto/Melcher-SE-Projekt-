@@ -29,10 +29,7 @@ public abstract class Controller {
 
     // ========== Window Utilities ==========
 
-    /**
-     * Gets the owner window from any scene element. Used to properly parent dialogs
-     * for fullscreen compatibility.
-     */
+    // Gets owner window from any scene element for parenting dialogs
     protected Window getOwnerWindow(Node node) {
         if (node != null && node.getScene() != null) {
             return node.getScene().getWindow();
@@ -40,19 +37,13 @@ public abstract class Controller {
         return null;
     }
 
-    /**
-     * Configures a dialog with the owner window for proper fullscreen behavior.
-     */
     protected void configureDialogOwner(Dialog<?> dialog, Window owner) {
         if (owner != null) {
             dialog.initOwner(owner);
         }
     }
 
-    /**
-     * Applies consistent styling to any Dialog (including custom dialogs).
-     * Call this after creating a dialog to apply the application's visual theme.
-     */
+    // Applies consistent styling to any Dialog
     protected void styleDialog(Dialog<?> dialog) {
         DialogPane dialogPane = dialog.getDialogPane();
         dialogPane.getStyleClass().add("styled-dialog");
@@ -68,9 +59,6 @@ public abstract class Controller {
 
     // ========== Scene Navigation ==========
 
-    /**
-     * Loads and displays a new JavaFX scene using Spring's FXML loader.
-     */
     protected void loadScene(javafx.scene.Scene currentScene, String fxmlPath) {
         try {
             Parent root = fxmlLoader.load(fxmlPath);
@@ -84,16 +72,10 @@ public abstract class Controller {
 
     // ========== Typed Alert Methods ==========
 
-    /**
-     * Shows a success/information alert.
-     */
     protected void showSuccessAlert(String title, String message) {
         showSuccessAlert(title, message, null);
     }
 
-    /**
-     * Shows a success/information alert with owner window.
-     */
     protected void showSuccessAlert(String title, String message, Window owner) {
         Alert alert = createStyledAlert(Alert.AlertType.INFORMATION, owner);
         alert.setTitle(title);
@@ -102,16 +84,10 @@ public abstract class Controller {
         alert.showAndWait();
     }
 
-    /**
-     * Shows an error alert.
-     */
     protected void showErrorAlert(String title, String message) {
         showErrorAlert(title, message, null);
     }
 
-    /**
-     * Shows an error alert with owner window.
-     */
     protected void showErrorAlert(String title, String message, Window owner) {
         Alert alert = createStyledAlert(Alert.AlertType.ERROR, owner);
         alert.setTitle(title);
@@ -120,16 +96,10 @@ public abstract class Controller {
         alert.showAndWait();
     }
 
-    /**
-     * Shows a warning alert.
-     */
     protected void showWarningAlert(String title, String message) {
         showWarningAlert(title, message, null);
     }
 
-    /**
-     * Shows a warning alert with owner window.
-     */
     protected void showWarningAlert(String title, String message, Window owner) {
         Alert alert = createStyledAlert(Alert.AlertType.WARNING, owner);
         alert.setTitle(title);
@@ -138,16 +108,10 @@ public abstract class Controller {
         alert.showAndWait();
     }
 
-    /**
-     * Shows a confirmation dialog and returns true if confirmed.
-     */
     protected boolean showConfirmDialog(String title, String header, String message) {
         return showConfirmDialog(title, header, message, null);
     }
 
-    /**
-     * Shows a confirmation dialog with owner and returns true if confirmed.
-     */
     protected boolean showConfirmDialog(String title, String header, String message, Window owner) {
         Alert alert = createStyledAlert(Alert.AlertType.CONFIRMATION, owner);
         alert.setTitle(title);
@@ -157,10 +121,6 @@ public abstract class Controller {
         return result.isPresent() && result.get() == ButtonType.OK;
     }
 
-    /**
-     * Shows a confirmation dialog with custom button labels. Returns the chosen
-     * ButtonType.
-     */
     protected Optional<ButtonType> showConfirmDialogWithButtons(String title, String header, String message,
             Window owner, ButtonType... buttons) {
         Alert alert = createStyledAlert(Alert.AlertType.CONFIRMATION, owner);
@@ -173,20 +133,8 @@ public abstract class Controller {
         return alert.showAndWait();
     }
 
-    /**
-     * Creates a styled confirmation dialog with custom buttons for advanced use
-     * cases.
-     * The caller is responsible for showing the dialog and handling the result.
-     * 
-     * @param title   Dialog title
-     * @param header  Dialog header text
-     * @param message Dialog content text
-     * @param owner   Owner window for proper modal behavior
-     * @param buttons Custom button types
-     * @return The configured Alert dialog
-     */
-    protected Alert createStyledConfirmDialog(String title, String header, String message,
-            Window owner, ButtonType... buttons) {
+    protected Alert createStyledConfirmDialog(String title, String header, String message, Window owner,
+            ButtonType... buttons) {
         Alert alert = createStyledAlert(Alert.AlertType.CONFIRMATION, owner);
         alert.setTitle(title);
         alert.setHeaderText(header);
@@ -199,9 +147,6 @@ public abstract class Controller {
 
     // ========== Private Helpers ==========
 
-    /**
-     * Creates a styled alert with consistent appearance.
-     */
     private Alert createStyledAlert(Alert.AlertType type, Window owner) {
         Alert alert = new Alert(type);
         configureDialogOwner(alert, owner);
@@ -212,12 +157,12 @@ public abstract class Controller {
 
         // Add type-specific style class
         switch (type) {
-            case ERROR -> dialogPane.getStyleClass().add("alert-error");
-            case INFORMATION -> dialogPane.getStyleClass().add("alert-success");
-            case WARNING -> dialogPane.getStyleClass().add("alert-warning");
-            case CONFIRMATION -> dialogPane.getStyleClass().add("alert-confirm");
-            default -> {
-            }
+        case ERROR -> dialogPane.getStyleClass().add("alert-error");
+        case INFORMATION -> dialogPane.getStyleClass().add("alert-success");
+        case WARNING -> dialogPane.getStyleClass().add("alert-warning");
+        case CONFIRMATION -> dialogPane.getStyleClass().add("alert-confirm");
+        default -> {
+        }
         }
 
         // Try to load application stylesheet

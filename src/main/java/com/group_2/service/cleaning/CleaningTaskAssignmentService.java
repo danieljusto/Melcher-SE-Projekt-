@@ -22,8 +22,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 /**
- * Service for task assignment and reassignment operations.
- * Handles assigning tasks to users and managing membership changes.
+ * Service for task assignment and reassignment operations. Handles assigning
+ * tasks to users and managing membership changes.
  */
 @Service
 public class CleaningTaskAssignmentService {
@@ -47,21 +47,10 @@ public class CleaningTaskAssignmentService {
         this.queueManagementService = queueManagementService;
     }
 
-    /**
-     * Get the current week's Monday.
-     */
     private LocalDate getCurrentWeekStart() {
         return LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     }
 
-    /**
-     * Assign a cleaning task for a specific room to a user.
-     *
-     * @param room     the room
-     * @param assignee the user to assign
-     * @param wg       the WG
-     * @return the assigned task
-     */
     @Transactional
     public CleaningTask assignTask(Room room, User assignee, WG wg) {
         LocalDate weekStart = getCurrentWeekStart();
@@ -78,17 +67,11 @@ public class CleaningTaskAssignmentService {
         return cleaningTaskRepository.save(task);
     }
 
-    /**
-     * Assign a cleaning task and return as DTO.
-     */
     @Transactional
     public CleaningTaskDTO assignTaskDTO(Room room, User assignee, WG wg) {
         return cleaningMapper.toDTO(assignTask(room, assignee, wg));
     }
 
-    /**
-     * Assign a cleaning task by IDs.
-     */
     @Transactional
     public CleaningTaskDTO assignTaskByIds(Long roomId, Long assigneeId, WG wg) {
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found"));
@@ -97,10 +80,7 @@ public class CleaningTaskAssignmentService {
         return assignTaskDTO(room, assignee, wg);
     }
 
-    /**
-     * Assign a cleaning task for a specific room to a user with a custom due date.
-     * Always creates a new task (allows multiple tasks per room per day).
-     */
+    // Always creates new task (allows multiple tasks per room per day)
     @Transactional
     public CleaningTaskDTO assignTaskByIdsWithDate(Long roomId, Long assigneeId, WG wg, LocalDate dueDate) {
         if (dueDate.isBefore(LocalDate.now())) {
@@ -119,15 +99,7 @@ public class CleaningTaskAssignmentService {
         return cleaningMapper.toDTO(cleaningTaskRepository.save(task));
     }
 
-    /**
-     * Reassign a task to a different user by swapping with their next scheduled
-     * task. This preserves fairness: no tasks are created or removed, each person
-     * keeps the same total number of tasks.
-     *
-     * @param task        The task to reassign (current assignment)
-     * @param newAssignee The user who should take this task
-     * @return The updated task (now assigned to newAssignee)
-     */
+    // Swaps with target's next scheduled task to preserve fairness
     @Transactional
     public CleaningTask reassignTask(CleaningTask task, User newAssignee) {
         User originalAssignee = task.getAssignee();
@@ -166,9 +138,6 @@ public class CleaningTaskAssignmentService {
         return cleaningTaskRepository.save(task);
     }
 
-    /**
-     * Reassign a task by ID.
-     */
     @Transactional
     public CleaningTaskDTO reassignTask(Long taskId, Long newAssigneeId) {
         CleaningTask task = cleaningTaskRepository.findById(taskId)
@@ -179,13 +148,7 @@ public class CleaningTaskAssignmentService {
         return cleaningMapper.toDTO(updated);
     }
 
-    /**
-     * Reset the cleaning schedule when membership changes (join or leave). This
-     * deletes all current and future tasks and regenerates them fresh.
-     *
-     * @param wg                     the WG
-     * @param generateFromTemplateFn callback to regenerate tasks from template
-     */
+    // Deletes current/future tasks and regenerates fresh
     @Transactional
     public void resetScheduleForMembershipChange(WG wg, boolean hasTemplate,
             java.util.function.BiConsumer<WG, LocalDate> generateFromTemplateFn) {
@@ -215,12 +178,6 @@ public class CleaningTaskAssignmentService {
         }
     }
 
-    /**
-     * Reassign all incomplete tasks from a departing user to other members.
-     *
-     * @param wg             the WG
-     * @param departedUserId ID of the user leaving
-     */
     @Transactional
     public void reassignTasksFromDepartedMember(WG wg, Long departedUserId) {
         LocalDate currentWeekStart = getCurrentWeekStart();
@@ -247,13 +204,6 @@ public class CleaningTaskAssignmentService {
         }
     }
 
-    /**
-     * Get the next assignee for a specific room in a WG.
-     *
-     * @param wg   the WG
-     * @param room the room
-     * @return the next user to be assigned
-     */
     @Transactional
     public User getNextAssigneeForRoom(WG wg, Room room) {
         List<User> members = wg.getMitbewohner();

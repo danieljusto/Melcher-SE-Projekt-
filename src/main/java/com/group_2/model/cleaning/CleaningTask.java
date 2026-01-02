@@ -7,15 +7,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing a cleaning task for a specific room.
- * Each task is assigned to a user for a specific week.
+ * Entity representing a cleaning task for a specific room. Each task is
+ * assigned to a user for a specific week.
  */
 @Entity
-@Table(name = "tasks", indexes = {
-        @Index(name = "idx_tasks_wg_week", columnList = "wg_id, week_start_date"),
+@Table(name = "tasks", indexes = { @Index(name = "idx_tasks_wg_week", columnList = "wg_id, week_start_date"),
         @Index(name = "idx_tasks_room", columnList = "room_id"),
-        @Index(name = "idx_tasks_assignee", columnList = "assignee_id")
-})
+        @Index(name = "idx_tasks_assignee", columnList = "assignee_id") })
 public class CleaningTask {
 
     @Id
@@ -40,20 +38,14 @@ public class CleaningTask {
     @Column(nullable = false)
     private LocalDate weekStartDate;
 
-    /**
-     * The specific day the task should be completed by.
-     */
-    private LocalDate dueDate;
+    private LocalDate dueDate; // The specific day the task should be completed by
 
     @Column(nullable = false)
     private boolean completed = false;
 
     private LocalDateTime completedAt;
 
-    /**
-     * Flag to indicate if this task was manually modified (assignee or due date).
-     * If true, auto-generation from template will not overwrite this task.
-     */
+    // If true, auto-generation from template will not overwrite this task
     @Column(nullable = true)
     private Boolean manualOverride = false;
 
@@ -139,17 +131,11 @@ public class CleaningTask {
         this.completedAt = completedAt;
     }
 
-    /**
-     * Mark this task as completed with the current timestamp.
-     */
     public void markComplete() {
         this.completed = true;
         this.completedAt = LocalDateTime.now();
     }
 
-    /**
-     * Mark this task as incomplete.
-     */
     public void markIncomplete() {
         this.completed = false;
         this.completedAt = null;

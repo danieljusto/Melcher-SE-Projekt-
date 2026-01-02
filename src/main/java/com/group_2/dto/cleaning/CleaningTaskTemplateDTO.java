@@ -10,9 +10,6 @@ import java.time.LocalDate;
 public record CleaningTaskTemplateDTO(Long id, Long roomId, String roomName, int dayOfWeek,
         RecurrenceInterval recurrenceInterval, LocalDate baseWeekStart) {
 
-    /**
-     * Get display-friendly day name
-     */
     public String getDayName() {
         return switch (dayOfWeek) {
         case 1 -> "Monday";

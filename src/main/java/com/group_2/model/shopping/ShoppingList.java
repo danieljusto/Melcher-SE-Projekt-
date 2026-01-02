@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Entity representing a shopping list.
- * Lists can be private (creator only) or shared with specific WG members.
+ * Entity representing a shopping list. Lists can be private (creator only) or
+ * shared with specific WG members.
  */
 @Entity
 @Table(name = "shopping_list")
@@ -101,10 +101,7 @@ public class ShoppingList {
         item.setShoppingList(null);
     }
 
-    /**
-     * Check if a user has access to this list.
-     * A user has access if they are the creator or in the sharedWith list.
-     */
+    // Creator or shared user has access
     public boolean hasAccess(User user) {
         if (user == null)
             return false;
@@ -113,9 +110,6 @@ public class ShoppingList {
         return sharedWith.stream().anyMatch(u -> u.getId().equals(user.getId()));
     }
 
-    /**
-     * Check if this list is shared with anyone.
-     */
     public boolean isShared() {
         return !sharedWith.isEmpty();
     }

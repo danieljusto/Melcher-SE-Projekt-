@@ -40,24 +40,12 @@ public class CleaningTaskLifecycleService {
         this.cleaningMapper = cleaningMapper;
     }
 
-    /**
-     * Mark a cleaning task as complete.
-     *
-     * @param task the task to mark complete
-     * @return the updated task
-     */
     @Transactional
     public CleaningTask markTaskComplete(CleaningTask task) {
         task.markComplete();
         return cleaningTaskRepository.save(task);
     }
 
-    /**
-     * Mark a cleaning task as complete by ID.
-     *
-     * @param taskId the task ID
-     * @return DTO of the updated task
-     */
     @Transactional
     public CleaningTaskDTO markTaskComplete(Long taskId) {
         CleaningTask task = cleaningTaskRepository.findById(taskId)
@@ -66,24 +54,12 @@ public class CleaningTaskLifecycleService {
         return cleaningMapper.toDTO(updated);
     }
 
-    /**
-     * Mark a cleaning task as incomplete.
-     *
-     * @param task the task to mark incomplete
-     * @return the updated task
-     */
     @Transactional
     public CleaningTask markTaskIncomplete(CleaningTask task) {
         task.markIncomplete();
         return cleaningTaskRepository.save(task);
     }
 
-    /**
-     * Mark a cleaning task as incomplete by ID.
-     *
-     * @param taskId the task ID
-     * @return DTO of the updated task
-     */
     @Transactional
     public CleaningTaskDTO markTaskIncomplete(Long taskId) {
         CleaningTask task = cleaningTaskRepository.findById(taskId)
@@ -92,13 +68,6 @@ public class CleaningTaskLifecycleService {
         return cleaningMapper.toDTO(updated);
     }
 
-    /**
-     * Reschedule a task to a different day.
-     *
-     * @param task       the task to reschedule
-     * @param newDueDate the new due date
-     * @return the updated task
-     */
     @Transactional
     public CleaningTask rescheduleTask(CleaningTask task, LocalDate newDueDate) {
         if (newDueDate.isBefore(LocalDate.now())) {
@@ -109,13 +78,6 @@ public class CleaningTaskLifecycleService {
         return cleaningTaskRepository.save(task);
     }
 
-    /**
-     * Reschedule a task by ID.
-     *
-     * @param taskId     the task ID
-     * @param newDueDate the new due date
-     * @return DTO of the updated task
-     */
     @Transactional
     public CleaningTaskDTO rescheduleTask(Long taskId, LocalDate newDueDate) {
         CleaningTask task = cleaningTaskRepository.findById(taskId)
@@ -124,31 +86,15 @@ public class CleaningTaskLifecycleService {
         return cleaningMapper.toDTO(updated);
     }
 
-    /**
-     * Get a task by ID.
-     *
-     * @param id the task ID
-     * @return optional containing the task if found
-     */
     public Optional<CleaningTask> getTask(Long id) {
         return cleaningTaskRepository.findById(id);
     }
 
-    /**
-     * Delete a cleaning task.
-     *
-     * @param task the task to delete
-     */
     @Transactional
     public void deleteTask(CleaningTask task) {
         cleaningTaskRepository.delete(task);
     }
 
-    /**
-     * Delete a cleaning task by ID.
-     *
-     * @param taskId the task ID
-     */
     @Transactional
     public void deleteTask(Long taskId) {
         CleaningTask task = cleaningTaskRepository.findById(taskId)
@@ -156,12 +102,7 @@ public class CleaningTaskLifecycleService {
         cleaningTaskRepository.delete(task);
     }
 
-    /**
-     * Delete all cleaning-related data for a specific room. This must be called
-     * before deleting the room itself.
-     *
-     * @param room the room whose data should be deleted
-     */
+    // Must be called before deleting room itself
     @Transactional
     public void deleteRoomData(Room room) {
         // Delete all tasks for this room

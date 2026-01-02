@@ -52,9 +52,6 @@ public class StandingOrderService {
         this.wgRepository = wgRepository;
     }
 
-    /**
-     * Create a new standing order
-     */
     @Transactional
     public StandingOrder createStandingOrder(User creator, User creditor, WG wg, Double totalAmount, String description,
             StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds, List<Double> percentages,
@@ -119,19 +116,14 @@ public class StandingOrderService {
         return order;
     }
 
-    /**
-     * Process all due standing orders - runs at 12:00 PM daily
-     */
+    // Runs at 12:00 PM daily
     @Scheduled(cron = "0 0 12 * * ?")
     @Transactional
     public void processDueStandingOrdersScheduled() {
         processDueStandingOrders();
     }
 
-    /**
-     * Also process on application startup to catch any missed orders (e.g., if app
-     * wasn't running for several days)
-     */
+    // Also process on startup to catch missed orders
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void processOnStartup() {
@@ -139,9 +131,6 @@ public class StandingOrderService {
         processDueStandingOrders();
     }
 
-    /**
-     * Process all standing orders that are due
-     */
     @Transactional
     public void processDueStandingOrders() {
         LocalDate today = LocalDate.now();
@@ -161,9 +150,6 @@ public class StandingOrderService {
         }
     }
 
-    /**
-     * Execute a single standing order by creating a transaction
-     */
     @Transactional
     public void executeStandingOrder(StandingOrder order) {
         // Parse debtor data
@@ -178,9 +164,6 @@ public class StandingOrderService {
                 debtorIds, percentages.isEmpty() ? null : percentages, order.getTotalAmount(), description);
     }
 
-    /**
-     * Deactivate a standing order
-     */
     @Transactional
     public void deactivateStandingOrder(Long id) {
         StandingOrder order = standingOrderRepository.findById(id)
@@ -189,36 +172,15 @@ public class StandingOrderService {
         standingOrderRepository.save(order);
     }
 
-    /**
-     * Get all active standing orders for a WG
-     */
     public List<StandingOrder> getActiveStandingOrders(WG wg) {
         return standingOrderRepository.findByWgAndIsActiveTrue(wg);
     }
 
-    /**
-     * Get a standing order by ID
-     */
     public StandingOrder getStandingOrderById(Long id) {
         return standingOrderRepository.findById(id).orElseThrow(() -> new RuntimeException("Standing order not found"));
     }
 
-    /**
-     * Update an existing standing order Only the creditor (creator) can update a
-     * standing order
-     * 
-     * @param id             The ID of the standing order to update
-     * @param currentUserId  The ID of the user attempting the update
-     * @param newCreditor    The new creditor (can be different)
-     * @param totalAmount    Updated amount
-     * @param description    Updated description
-     * @param frequency      Updated frequency
-     * @param debtorIds      Updated list of debtor IDs
-     * @param percentages    Updated percentages (null for equal split)
-     * @param monthlyDay     Updated monthly day (for monthly frequency)
-     * @param monthlyLastDay Updated monthly last day flag
-     * @return The updated standing order
-     */
+    // Only creator can update
     @Transactional
     public StandingOrder updateStandingOrder(Long id, Long currentUserId, User newCreditor, Double totalAmount,
             String description, StandingOrderFrequency frequency, List<Long> debtorIds, List<Double> percentages,
@@ -318,9 +280,6 @@ public class StandingOrderService {
         }
     }
 
-    /**
-     * Helper method to resolve a user by ID for the FinanceMapper.
-     */
     private User resolveUser(Long userId) {
         if (userId == null) {
             return null;
@@ -331,9 +290,6 @@ public class StandingOrderService {
     // ==================== DTO METHODS ====================
     // These methods return DTOs instead of entities for UI consumption
 
-    /**
-     * Get all active standing orders for a WG as DTOs
-     */
     public List<StandingOrderDTO> getActiveStandingOrdersDTO(WG wg) {
         List<StandingOrder> orders = getActiveStandingOrders(wg);
         return financeMapper.toStandingOrderDTOList(orders, this::resolveUser);
@@ -344,9 +300,6 @@ public class StandingOrderService {
         return financeMapper.toStandingOrderViewList(orders, this::resolveUser);
     }
 
-    /**
-     * Get all active standing orders for a WG by ID as DTOs.
-     */
     public List<StandingOrderDTO> getActiveStandingOrdersDTO(Long wgId) {
         if (wgId == null) {
             return List.of();
@@ -369,25 +322,16 @@ public class StandingOrderService {
         return getActiveStandingOrdersView(wg);
     }
 
-    /**
-     * Get a standing order by ID as DTO
-     */
     public StandingOrderDTO getStandingOrderByIdDTO(Long id) {
         StandingOrder order = getStandingOrderById(id);
         return financeMapper.toDTO(order, this::resolveUser);
     }
 
-    /**
-     * Get a standing order by ID as view DTO
-     */
     public StandingOrderViewDTO getStandingOrderByIdView(Long id) {
         StandingOrder order = getStandingOrderById(id);
         return financeMapper.toStandingOrderView(order, this::resolveUser);
     }
 
-    /**
-     * Create a standing order and return as DTO
-     */
     @Transactional
     public StandingOrderDTO createStandingOrderDTO(User creator, User creditor, WG wg, Double totalAmount,
             String description, StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds,
@@ -397,9 +341,6 @@ public class StandingOrderService {
         return financeMapper.toDTO(order, this::resolveUser);
     }
 
-    /**
-     * Create a standing order (using IDs) and return as DTO
-     */
     @Transactional
     public StandingOrderDTO createStandingOrderDTO(Long creatorId, Long creditorId, Long wgId, Double totalAmount,
             String description, StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds,
@@ -425,9 +366,6 @@ public class StandingOrderService {
         return financeMapper.toDTO(order, this::resolveUser);
     }
 
-    /**
-     * Create a standing order (using IDs) and return as view DTO
-     */
     @Transactional
     public StandingOrderViewDTO createStandingOrderView(Long creatorId, Long creditorId, Long wgId, Double totalAmount,
             String description, StandingOrderFrequency frequency, LocalDate startDate, List<Long> debtorIds,
@@ -438,9 +376,6 @@ public class StandingOrderService {
         return getStandingOrderByIdView(dto.id());
     }
 
-    /**
-     * Update a standing order and return as DTO
-     */
     @Transactional
     public StandingOrderDTO updateStandingOrderDTO(Long id, Long currentUserId, User newCreditor, Double totalAmount,
             String description, StandingOrderFrequency frequency, List<Long> debtorIds, List<Double> percentages,
@@ -450,9 +385,6 @@ public class StandingOrderService {
         return financeMapper.toDTO(order, this::resolveUser);
     }
 
-    /**
-     * Update a standing order (using IDs) and return as DTO
-     */
     @Transactional
     public StandingOrderDTO updateStandingOrderDTO(Long id, Long currentUserId, Long newCreditorId, Double totalAmount,
             String description, StandingOrderFrequency frequency, List<Long> debtorIds, List<Double> percentages,
@@ -466,9 +398,6 @@ public class StandingOrderService {
         return financeMapper.toDTO(order, this::resolveUser);
     }
 
-    /**
-     * Update a standing order (using IDs) and return as view DTO
-     */
     @Transactional
     public StandingOrderViewDTO updateStandingOrderView(Long id, Long currentUserId, Long newCreditorId,
             Double totalAmount, String description, StandingOrderFrequency frequency, List<Long> debtorIds,
@@ -479,10 +408,7 @@ public class StandingOrderService {
         return getStandingOrderByIdView(dto.id());
     }
 
-    /**
-     * Deactivate all standing orders where the user is the creditor or creator.
-     * This is called when a WG member leaves to clean up their standing orders.
-     */
+    // Called when WG member leaves
     @Transactional
     public void deactivateStandingOrdersForUser(Long userId) {
         if (userId == null) {

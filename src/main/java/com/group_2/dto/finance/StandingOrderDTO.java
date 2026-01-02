@@ -30,23 +30,14 @@ public record StandingOrderDTO(Long id, Long creditorId, String creditorName, Lo
         }
     }
 
-    /**
-     * Create a display-friendly amount string with Euro symbol
-     */
     public String getFormattedAmount() {
         return String.format("%.2f€", totalAmount);
     }
 
-    /**
-     * Get formatted next execution date
-     */
     public String getFormattedNextExecution() {
         return nextExecution.format(DATE_FORMATTER);
     }
 
-    /**
-     * Get a human-readable frequency description
-     */
     public String getFrequencyDescription() {
         if (frequency == null)
             return "Unknown";
@@ -75,9 +66,6 @@ public record StandingOrderDTO(Long id, Long creditorId, String creditorName, Lo
         return createdById != null && createdById.equals(userId);
     }
 
-    /**
-     * Get a summary of debtors for display
-     */
     public String getDebtorsSummary() {
         if (debtors == null || debtors.isEmpty()) {
             return "No debtors";
@@ -88,9 +76,6 @@ public record StandingOrderDTO(Long id, Long creditorId, String creditorName, Lo
         return debtors.size() + " people";
     }
 
-    /**
-     * Get status text for display
-     */
     public String getStatusText() {
         return Boolean.TRUE.equals(isActive) ? "Active" : "Inactive";
     }

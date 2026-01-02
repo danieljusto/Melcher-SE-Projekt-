@@ -9,15 +9,8 @@ import com.group_2.model.WG;
 public interface WGRepository extends JpaRepository<WG, Long> {
     java.util.Optional<WG> findByInviteCode(String inviteCode);
 
-    /**
-     * Check if an invite code already exists in the database.
-     */
     boolean existsByInviteCode(String inviteCode);
 
-    /**
-     * Check if an invite code already exists in the database, excluding a specific
-     * WG.
-     * This is used when regenerating an invite code for an existing WG.
-     */
+    // Excludes specific WG - used when regenerating an invite code
     boolean existsByInviteCodeAndIdNot(String inviteCode, Long excludeWgId);
 }

@@ -7,11 +7,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entity representing a financial transaction between WG members.
+ */
 @Entity
-@Table(name = "transactions", indexes = {
-        @Index(name = "idx_transaction_wg", columnList = "wg_id"),
-        @Index(name = "idx_transaction_creditor", columnList = "creditor_id")
-})
+@Table(name = "transactions", indexes = { @Index(name = "idx_transaction_wg", columnList = "wg_id"),
+        @Index(name = "idx_transaction_creditor", columnList = "creditor_id") })
 public class Transaction {
 
     @Id

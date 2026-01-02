@@ -16,32 +16,17 @@ import java.util.List;
 @Repository
 public interface StandingOrderRepository extends JpaRepository<StandingOrder, Long> {
 
-    /**
-     * Find all standing orders for a WG
-     */
     List<StandingOrder> findByWg(WG wg);
 
-    /**
-     * Find all active standing orders that are due (next_execution <= today)
-     */
     List<StandingOrder> findByNextExecutionLessThanEqualAndIsActiveTrue(LocalDate date);
 
-    /**
-     * Find all active standing orders that are due with pessimistic lock.
-     * Prevents double-execution when scheduler runs concurrently.
-     */
+    // With lock to prevent double-execution when scheduler runs concurrently
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM StandingOrder s WHERE s.nextExecution <= :date AND s.isActive = true")
     List<StandingOrder> findDueOrdersForUpdate(@Param("date") LocalDate date);
 
-    /**
-     * Find all active standing orders for a WG
-     */
     List<StandingOrder> findByWgAndIsActiveTrue(WG wg);
 
-    /**
-     * Find all active standing orders where the user is creditor or creator
-     */
     @Query("SELECT s FROM StandingOrder s WHERE s.isActive = true AND (s.creditor.id = :userId OR s.createdBy.id = :userId)")
     List<StandingOrder> findActiveByCreditorOrCreator(@Param("userId") Long userId);
 }

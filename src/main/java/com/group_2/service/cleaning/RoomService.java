@@ -60,17 +60,7 @@ public class RoomService {
         roomRepository.deleteById(id);
     }
 
-    /**
-     * Delete a room and all its associated data in a single transaction.
-     * This method handles:
-     * 1. Deleting all cleaning-related data (tasks, templates, queues)
-     * 2. Removing the room from the WG's collection
-     * 3. Flushing changes to ensure the join table is updated
-     * 4. Deleting the room itself
-     * 
-     * @param room The room to delete
-     * @param wg   The WG that owns the room
-     */
+    // Deletes room and all associated data in single transaction
     @Transactional
     public void deleteRoom(Room room, WG wg) {
         // 1. Delete all cleaning-related data for this room

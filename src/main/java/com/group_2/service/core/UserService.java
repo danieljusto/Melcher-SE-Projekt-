@@ -47,9 +47,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    /**
-     * Register a user and return a summary for UI usage.
-     */
     @Transactional
     public UserSummaryDTO registerUserSummary(String name, String surname, String email, String password) {
         return coreMapper.toUserSummary(registerUser(name, surname, email, password));
@@ -57,16 +54,11 @@ public class UserService {
 
     public Optional<User> authenticate(String email, String password) {
         // Find user by email, then verify password using BCrypt
-        return userRepository.findAll().stream()
-                .filter(u -> u.getEmail() != null && u.getEmail().equals(email))
-                .filter(u -> u.getPassword() != null
-                        && passwordEncryptionService.verifyPassword(password, u.getPassword()))
+        return userRepository.findAll().stream().filter(u -> u.getEmail() != null && u.getEmail().equals(email)).filter(
+                u -> u.getPassword() != null && passwordEncryptionService.verifyPassword(password, u.getPassword()))
                 .findFirst();
     }
 
-    /**
-     * Authenticate and return a lightweight user summary for UI usage.
-     */
     public Optional<UserSummaryDTO> authenticateSummary(String email, String password) {
         return authenticate(email, password).map(coreMapper::toUserSummary);
     }
@@ -75,9 +67,6 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    /**
-     * Get a user summary by ID for UI usage.
-     */
     public Optional<UserSummaryDTO> getUserSummary(Long id) {
         return userRepository.findById(id).map(coreMapper::toUserSummary);
     }
@@ -101,18 +90,12 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    /**
-     * Returns a formatted display name for a user (e.g., "John D."). Returns
-     * "Unknown" if user not found.
-     */
+    // Returns "Unknown" if user not found
     public String getDisplayName(Long userId) {
         return userRepository.findById(userId).map(this::formatDisplayName).orElse("Unknown");
     }
 
-    /**
-     * Returns a map of userId -> display name for multiple users. Missing users are
-     * mapped to "Unknown".
-     */
+    // Returns map of userId -> display name, missing users mapped to "Unknown"
     public Map<Long, String> getDisplayNames(List<Long> userIds) {
         Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
                 .collect(Collectors.toMap(User::getId, u -> u));

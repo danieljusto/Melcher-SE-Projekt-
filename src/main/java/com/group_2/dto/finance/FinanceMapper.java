@@ -41,9 +41,6 @@ public class FinanceMapper {
         this.objectMapper = new ObjectMapper();
     }
 
-    /**
-     * Convert a Transaction entity to DTO
-     */
     public TransactionDTO toDTO(Transaction transaction) {
         if (transaction == null)
             return null;
@@ -61,9 +58,6 @@ public class FinanceMapper {
                 transaction.getTimestamp(), transaction.getWg().getId(), splitDTOs);
     }
 
-    /**
-     * Convert a TransactionSplit entity to DTO
-     */
     public TransactionSplitDTO toDTO(TransactionSplit split) {
         if (split == null)
             return null;
@@ -72,10 +66,7 @@ public class FinanceMapper {
                 split.getPercentage(), split.getAmount());
     }
 
-    /**
-     * Convert a StandingOrder entity to DTO.
-     * Requires a user resolver function to look up user names by ID.
-     */
+    // Requires user resolver for looking up user names by ID
     public StandingOrderDTO toDTO(StandingOrder order, Function<Long, User> userResolver) {
         if (order == null)
             return null;
@@ -89,16 +80,10 @@ public class FinanceMapper {
                 order.getCreatedAt(), order.getMonthlyDay(), order.getMonthlyLastDay(), debtorDTOs);
     }
 
-    /**
-     * Convert a StandingOrder entity to DTO (uses entity users directly).
-     */
     public StandingOrderDTO toDTO(StandingOrder order) {
         return toDTO(order, id -> null); // No external resolution needed if debtors are embedded
     }
 
-    /**
-     * Create a BalanceDTO from user entity and balance
-     */
     public BalanceDTO toBalanceDTO(User user, Double balance) {
         if (user == null)
             return null;
@@ -106,9 +91,6 @@ public class FinanceMapper {
         return new BalanceDTO(user.getId(), getDisplayName(user), balance);
     }
 
-    /**
-     * Convert a list of transactions to DTOs
-     */
     public List<TransactionDTO> toDTOList(List<Transaction> transactions) {
         List<TransactionDTO> dtos = new ArrayList<>();
         if (transactions != null) {
@@ -119,9 +101,6 @@ public class FinanceMapper {
         return dtos;
     }
 
-    /**
-     * Convert a list of standing orders to DTOs
-     */
     public List<StandingOrderDTO> toStandingOrderDTOList(List<StandingOrder> orders,
             Function<Long, User> userResolver) {
         List<StandingOrderDTO> dtos = new ArrayList<>();
@@ -133,16 +112,10 @@ public class FinanceMapper {
         return dtos;
     }
 
-    /**
-     * Convert a list of standing orders to DTOs (no external resolution)
-     */
     public List<StandingOrderDTO> toStandingOrderDTOList(List<StandingOrder> orders) {
         return toStandingOrderDTOList(orders, id -> null);
     }
 
-    /**
-     * Get display name for a user (first name + optional surname)
-     */
     private String getDisplayName(User user) {
         if (user == null)
             return "Unknown";
@@ -153,11 +126,6 @@ public class FinanceMapper {
         return name;
     }
 
-    /**
-     * Parse the JSON debtor data string from StandingOrder.
-     * Returns parsed data with percentage and amount calculations.
-     * User resolution is delegated to the provided function.
-     */
     private List<StandingOrderDTO.DebtorShareDTO> parseDebtorData(String json, Double totalAmount,
             Function<Long, User> userResolver) {
         List<StandingOrderDTO.DebtorShareDTO> debtors = new ArrayList<>();
