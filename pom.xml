@@ -85,16 +85,31 @@
             </properties>
         </profile>
         <profile>
-            <id>mac</id>
-            <activation>
-                <os>
-                    <family>mac</family>
-                </os>
-            </activation>
-            <properties>
-                <javafx.platform>mac</javafx.platform>
-            </properties>
-        </profile>
+    <id>mac-arm</id>
+    <activation>
+        <os>
+            <family>mac</family>
+            <arch>aarch64</arch>
+        </os>
+    </activation>
+    <properties>
+        <javafx.platform>mac-aarch64</javafx.platform>
+    </properties>
+</profile>
+
+<profile>
+    <id>mac-intel</id>
+    <activation>
+        <os>
+            <family>mac</family>
+            <arch>x86_64</arch>
+        </os>
+    </activation>
+    <properties>
+        <javafx.platform>mac</javafx.platform>
+    </properties>
+</profile>
+
         <profile>
             <id>linux</id>
             <activation>
