@@ -72,9 +72,6 @@ public class WGService {
         return wg;
     }
 
-    /**
-     * Create a WG using IDs to keep controllers off entities.
-     */
     @Transactional
     public WG createWGWithRoomIds(String name, Long adminUserId, List<Long> roomIds) {
         if (adminUserId == null) {
@@ -100,9 +97,6 @@ public class WGService {
         return savedWg;
     }
 
-    /**
-     * Add a member using IDs to keep controllers off entities.
-     */
     @Transactional
     public WG addMitbewohner(Long wgId, Long userId) {
         if (userId == null) {
@@ -120,9 +114,6 @@ public class WGService {
         return wgRepository.findById(id);
     }
 
-    /**
-     * Get WG member summaries for UI consumption by WG ID.
-     */
     public List<UserSummaryDTO> getMemberSummaries(Long wgId) {
         if (wgId == null) {
             return List.of();
@@ -155,9 +146,6 @@ public class WGService {
         return savedWg;
     }
 
-    /**
-     * Add a member by invite code using IDs to keep controllers off entities.
-     */
     @Transactional
     public WG addMitbewohnerByInviteCode(String inviteCode, Long userId) {
         if (userId == null) {
@@ -234,9 +222,6 @@ public class WGService {
         wgRepository.save(wg);
     }
 
-    /**
-     * Add room by ID (for DTO-based controller usage).
-     */
     @Transactional
     public void addRoomById(Long wgId, Long roomId) {
         WG wg = wgRepository.findById(wgId).orElseThrow(() -> new RuntimeException("WG not found"));

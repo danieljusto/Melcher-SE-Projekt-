@@ -7,10 +7,10 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 /**
- * Entity representing a template for cleaning tasks.
- * Templates define a default weekly schedule that can be applied to new weeks.
- * Each template specifies a room and day of week. Assignees are determined
- * by the RoomAssignmentQueue for round-robin distribution.
+ * Entity representing a template for cleaning tasks. Templates define a default
+ * weekly schedule that can be applied to new weeks. Each template specifies a
+ * room and day of week. Assignees are determined by the RoomAssignmentQueue for
+ * round-robin distribution.
  */
 @Entity
 @Table(name = "task_template")
@@ -28,20 +28,14 @@ public class CleaningTaskTemplate {
     @JoinColumn(name = "wg_id", nullable = false)
     private WG wg;
 
-    /**
-     * The day of the week this task should be scheduled on (1=Monday, 7=Sunday).
-     */
     @Column(nullable = false)
-    private int dayOfWeek;
+    private int dayOfWeek; // 1=Monday, 7=Sunday
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private RecurrenceInterval recurrenceInterval = RecurrenceInterval.WEEKLY;
 
-    /**
-     * The start of the week this template was anchored to.
-     * Used to calculate cycles for bi-weekly and monthly tasks.
-     */
+    // Anchor week for calculating bi-weekly/monthly cycles
     @Column(nullable = true)
     private LocalDate baseWeekStart;
 
@@ -123,10 +117,7 @@ public class CleaningTaskTemplate {
         this.baseWeekStart = baseWeekStart;
     }
 
-    /**
-     * Ensures that new fields have default values when loading existing records
-     * from the database that were created before these fields were added.
-     */
+    // Fills default values for records created before these fields existed
     @PostLoad
     private void fillDefaults() {
         if (recurrenceInterval == null) {

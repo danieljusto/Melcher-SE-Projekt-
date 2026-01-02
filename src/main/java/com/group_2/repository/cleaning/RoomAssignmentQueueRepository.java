@@ -19,36 +19,19 @@ import java.util.List;
 @Repository
 public interface RoomAssignmentQueueRepository extends JpaRepository<RoomAssignmentQueue, Long> {
 
-    /**
-     * Find the assignment queue for a specific room in a WG.
-     */
     List<RoomAssignmentQueue> findByWgAndRoom(WG wg, Room room);
 
-    /**
-     * Find the assignment queue for a specific room with pessimistic lock.
-     * Prevents concurrent queue rotation issues.
-     */
+    // With lock to prevent concurrent queue rotation issues
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT q FROM RoomAssignmentQueue q WHERE q.wg = :wg AND q.room = :room")
     List<RoomAssignmentQueue> findByWgAndRoomForUpdate(@Param("wg") WG wg, @Param("room") Room room);
 
-    /**
-     * Find all assignment queues for a WG.
-     */
     List<RoomAssignmentQueue> findByWg(WG wg);
 
-    /**
-     * Delete all assignment queues for a WG.
-     */
     void deleteByWg(WG wg);
 
-    /**
-     * Delete assignment queue for a specific room.
-     */
     void deleteByRoom(Room room);
 
-    /**
-     * Count queues for a WG (used to determine offset for new rooms).
-     */
+    // Used to determine offset for new rooms
     long countByWg(WG wg);
 }

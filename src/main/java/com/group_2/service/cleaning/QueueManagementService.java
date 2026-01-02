@@ -16,9 +16,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service for managing round-robin room assignment queues.
- * Handles queue creation, synchronization with WG members, and next assignee
- * selection.
+ * Service for managing round-robin room assignment queues. Handles queue
+ * creation, synchronization with WG members, and next assignee selection.
  */
 @Service
 public class QueueManagementService {
@@ -32,13 +31,6 @@ public class QueueManagementService {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Get the next assignee from a queue, validating the user still exists.
-     *
-     * @param queue          the room assignment queue
-     * @param currentMembers current WG members
-     * @return the next user to be assigned, or null if no valid assignee
-     */
     public User getNextAssigneeFromQueue(RoomAssignmentQueue queue, List<User> currentMembers) {
         Long nextId = queue.getNextAssigneeId();
         if (nextId == null) {
@@ -64,14 +56,6 @@ public class QueueManagementService {
         return userRepository.findById(nextId).orElse(null);
     }
 
-    /**
-     * Get existing queue or create a new one with the correct offset.
-     *
-     * @param wg      the WG
-     * @param room    the room
-     * @param members current WG members
-     * @return existing or newly created queue
-     */
     @Transactional
     public RoomAssignmentQueue getOrCreateQueueForRoom(WG wg, Room room, List<User> members) {
         // Use pessimistic lock to prevent concurrent queue rotation issues
@@ -86,14 +70,7 @@ public class QueueManagementService {
         return queueRepository.save(newQueue);
     }
 
-    /**
-     * Sync a queue with current WG members (add new members, remove departed ones).
-     * New members are added at the end of the queue, meaning they will be assigned
-     * after all current members have had their turn (end of current cycle).
-     *
-     * @param queue          the queue to sync
-     * @param currentMembers the current WG members
-     */
+    // New members added at end of queue (after all current members)
     public void syncQueueWithMembers(RoomAssignmentQueue queue, List<User> currentMembers) {
         List<Long> queueIds = queue.getMemberIds();
         List<Long> currentIds = new ArrayList<>();
@@ -115,12 +92,7 @@ public class QueueManagementService {
         queue.setMemberQueueOrder(queueIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
     }
 
-    /**
-     * Sync all queues for a WG with current members. Call this when members join or
-     * leave the WG.
-     *
-     * @param wg the WG whose queues should be synced
-     */
+    // Call when members join or leave WG
     @Transactional
     public void syncAllQueuesWithMembers(WG wg) {
         List<User> currentMembers = wg.getMitbewohner();
@@ -132,13 +104,6 @@ public class QueueManagementService {
         }
     }
 
-    /**
-     * Get the next assignee for a specific room in a WG.
-     *
-     * @param wg   the WG
-     * @param room the room
-     * @return the next user to be assigned, or null if unavailable
-     */
     @Transactional
     public User getNextAssigneeForRoom(WG wg, Room room) {
         List<User> members = wg.getMitbewohner();
@@ -150,32 +115,17 @@ public class QueueManagementService {
         return getNextAssigneeFromQueue(queue, members);
     }
 
-    /**
-     * Advance the queue to the next person in rotation.
-     *
-     * @param queue the queue to advance
-     */
     @Transactional
     public void advanceQueue(RoomAssignmentQueue queue) {
         queue.rotate();
         queueRepository.save(queue);
     }
 
-    /**
-     * Delete all queues for a room.
-     *
-     * @param room the room whose queues should be deleted
-     */
     @Transactional
     public void deleteQueuesForRoom(Room room) {
         queueRepository.deleteByRoom(room);
     }
 
-    /**
-     * Delete all queues for a WG.
-     *
-     * @param wg the WG whose queues should be deleted
-     */
     @Transactional
     public void deleteQueuesForWg(WG wg) {
         queueRepository.deleteByWg(wg);

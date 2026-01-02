@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service for managing cleaning task templates.
- * Handles template CRUD, sync operations, and recurrence calculations.
+ * Service for managing cleaning task templates. Handles template CRUD, sync
+ * operations, and recurrence calculations.
  */
 @Service
 public class CleaningTemplateService {
@@ -56,32 +56,20 @@ public class CleaningTemplateService {
 
     // ========== Template Query Methods ==========
 
-    /**
-     * Get all templates for a WG.
-     */
     public List<CleaningTaskTemplate> getTemplates(WG wg) {
         return templateRepository.findByWgOrderByDayOfWeekAsc(wg);
     }
 
-    /**
-     * Get all templates for a WG as DTOs.
-     */
     public List<CleaningTaskTemplateDTO> getTemplatesDTO(WG wg) {
         return cleaningMapper.toTemplateDTOList(getTemplates(wg));
     }
 
-    /**
-     * Check if templates exist for a WG.
-     */
     public boolean hasTemplate(WG wg) {
         return !templateRepository.findByWg(wg).isEmpty();
     }
 
     // ========== Template CRUD Methods ==========
 
-    /**
-     * Save current week's schedule as the default template.
-     */
     @Transactional
     public List<CleaningTaskTemplate> saveAsTemplate(WG wg) {
         LocalDate weekStart = getCurrentWeekStart();
@@ -110,9 +98,6 @@ public class CleaningTemplateService {
         return templates;
     }
 
-    /**
-     * Add a new template task.
-     */
     @Transactional
     public CleaningTaskTemplate addTemplate(WG wg, Room room, DayOfWeek dayOfWeek, RecurrenceInterval interval) {
         return addTemplate(wg, room, dayOfWeek, interval, null);
@@ -134,9 +119,6 @@ public class CleaningTemplateService {
         return template;
     }
 
-    /**
-     * Add a new template task by room ID.
-     */
     @Transactional
     public CleaningTaskTemplateDTO addTemplateByRoomId(WG wg, Long roomId, DayOfWeek dayOfWeek,
             RecurrenceInterval interval) {
@@ -151,9 +133,6 @@ public class CleaningTemplateService {
         return cleaningMapper.toTemplateDTO(template);
     }
 
-    /**
-     * Update an existing template.
-     */
     @Transactional
     public CleaningTaskTemplate updateTemplate(CleaningTaskTemplate template, DayOfWeek newDay,
             RecurrenceInterval newInterval) {
@@ -177,9 +156,6 @@ public class CleaningTemplateService {
         return templateRepository.save(template);
     }
 
-    /**
-     * Delete a single template.
-     */
     @Transactional
     public void deleteTemplate(CleaningTaskTemplate template) {
         LocalDate currentWeekStart = getCurrentWeekStart();
@@ -196,9 +172,6 @@ public class CleaningTemplateService {
         templateRepository.delete(template);
     }
 
-    /**
-     * Clear all templates for a WG.
-     */
     @Transactional
     public void clearTemplates(WG wg) {
         LocalDate currentWeekStart = getCurrentWeekStart();
@@ -217,9 +190,6 @@ public class CleaningTemplateService {
 
     // ========== Recurrence Calculation Methods ==========
 
-    /**
-     * Check if a task should be generated for a specific week.
-     */
     public boolean shouldGenerateTaskThisWeek(CleaningTaskTemplate template, LocalDate weekStart) {
         if (template.getRecurrenceInterval() == RecurrenceInterval.WEEKLY) {
             return true;
@@ -234,9 +204,6 @@ public class CleaningTemplateService {
         return weeksBetween % intervalWeeks == 0;
     }
 
-    /**
-     * Resolve the due date for a template in a specific week.
-     */
     public LocalDate resolveDueDateForWeek(CleaningTaskTemplate template, LocalDate weekStart) {
         if (template.getRecurrenceInterval() == RecurrenceInterval.MONTHLY) {
             return resolveMonthlyDueDateForWeek(template, weekStart);
@@ -274,9 +241,6 @@ public class CleaningTemplateService {
 
     // ========== Template Sync Methods ==========
 
-    /**
-     * Sync current week's schedule with templates.
-     */
     @Transactional
     public void syncCurrentWeekWithTemplate(WG wg, QueueManagementService queueManagementService) {
         LocalDate weekStart = getCurrentWeekStart();
@@ -310,8 +274,8 @@ public class CleaningTemplateService {
                 continue;
             }
 
-            var existing = existingTasks.stream()
-                    .filter(t -> t.getRoom().getId().equals(template.getRoom().getId())).findFirst();
+            var existing = existingTasks.stream().filter(t -> t.getRoom().getId().equals(template.getRoom().getId()))
+                    .findFirst();
 
             if (existing.isPresent()) {
                 CleaningTask task = existing.get();

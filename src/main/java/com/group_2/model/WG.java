@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entity representing a shared household (Wohngemeinschaft).
+ */
 @Entity
 public class WG {
 
@@ -43,7 +46,8 @@ public class WG {
         this.rooms = rooms != null ? new ArrayList<>(rooms) : new ArrayList<>();
         this.inviteCode = generateInviteCode();
         if (admin != null) {
-            // Defer setting User.wg until the WG is persisted to avoid transient reference flush issues.
+            // Defer setting User.wg until the WG is persisted to avoid transient reference
+            // flush issues.
             this.mitbewohner.add(admin);
         }
     }
@@ -58,10 +62,7 @@ public class WG {
         return code.toString();
     }
 
-    /**
-     * Regenerate the invite code. Call this after removing a member
-     * to prevent removed users from rejoining with the old code.
-     */
+    // Regenerate after removing a member to prevent rejoining with old code
     public void regenerateInviteCode() {
         this.inviteCode = generateInviteCode();
     }

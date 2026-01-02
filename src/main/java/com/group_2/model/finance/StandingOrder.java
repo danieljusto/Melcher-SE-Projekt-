@@ -9,14 +9,12 @@ import java.time.LocalDateTime;
 import com.group_2.util.MonthlyScheduleUtil;
 
 /**
- * Entity representing a standing order (recurring transaction).
- * Stores the template for transactions that will be created automatically.
+ * Entity representing a standing order (recurring transaction). Stores the
+ * template for transactions that will be created automatically.
  */
 @Entity
-@Table(name = "standing_orders", indexes = {
-        @Index(name = "idx_standing_order_wg", columnList = "wg_id"),
-        @Index(name = "idx_standing_order_next_exec", columnList = "next_execution")
-})
+@Table(name = "standing_orders", indexes = { @Index(name = "idx_standing_order_wg", columnList = "wg_id"),
+        @Index(name = "idx_standing_order_next_exec", columnList = "next_execution") })
 public class StandingOrder {
 
     @Id
@@ -57,25 +55,15 @@ public class StandingOrder {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    /**
-     * JSON string storing debtor IDs and their percentages.
-     * Format: [{"userId": 1, "percentage": 50.0}, {"userId": 2, "percentage":
-     * 50.0}]
-     */
+    // JSON: [{"userId": 1, "percentage": 50.0}, ...]
     @Column(length = 2000)
     private String debtorData;
 
-    /**
-     * For MONTHLY frequency: the preferred day of month (1-31).
-     * If the day doesn't exist in a month, execution falls back to last day of
-     * month.
-     */
+    // For MONTHLY: preferred day (1-31), falls back to last day if doesn't exist
     @Column
     private Integer monthlyDay;
 
-    /**
-     * For MONTHLY frequency: if true, always execute on last day of month.
-     */
+    // For MONTHLY: if true, always execute on last day of month
     @Column
     private Boolean monthlyLastDay = false;
 
@@ -100,8 +88,8 @@ public class StandingOrder {
     }
 
     public StandingOrder(User creditor, User createdBy, WG wg, Double totalAmount, String description,
-            StandingOrderFrequency frequency, LocalDate nextExecution, String debtorData,
-            Integer monthlyDay, Boolean monthlyLastDay) {
+            StandingOrderFrequency frequency, LocalDate nextExecution, String debtorData, Integer monthlyDay,
+            Boolean monthlyLastDay) {
         this.creditor = creditor;
         this.createdBy = createdBy;
         this.wg = wg;
@@ -197,27 +185,21 @@ public class StandingOrder {
         this.debtorData = debtorData;
     }
 
-    /**
-     * Advance the next execution date based on frequency
-     */
     public void advanceNextExecution() {
         switch (frequency) {
-            case WEEKLY:
-                this.nextExecution = this.nextExecution.plusWeeks(1);
-                break;
-            case BI_WEEKLY:
-                this.nextExecution = this.nextExecution.plusWeeks(2);
-                break;
-            case MONTHLY:
-                this.nextExecution = calculateNextMonthlyExecution(this.nextExecution.plusMonths(1));
-                break;
+        case WEEKLY:
+            this.nextExecution = this.nextExecution.plusWeeks(1);
+            break;
+        case BI_WEEKLY:
+            this.nextExecution = this.nextExecution.plusWeeks(2);
+            break;
+        case MONTHLY:
+            this.nextExecution = calculateNextMonthlyExecution(this.nextExecution.plusMonths(1));
+            break;
         }
     }
 
-    /**
-     * Calculate the next monthly execution date based on preferences.
-     * Handles fallback when preferred day doesn't exist in the target month.
-     */
+    // Handles fallback when preferred day doesn't exist in month
     private LocalDate calculateNextMonthlyExecution(LocalDate targetMonth) {
         return MonthlyScheduleUtil.resolveMonthlyDate(targetMonth, monthlyDay, monthlyLastDay);
     }

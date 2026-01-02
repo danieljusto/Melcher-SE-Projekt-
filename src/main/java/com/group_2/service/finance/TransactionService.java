@@ -47,9 +47,6 @@ public class TransactionService {
         this.coreMapper = coreMapper;
     }
 
-    /**
-     * Get WG member summaries for finance UI by WG ID.
-     */
     public List<UserSummaryDTO> getMemberSummaries(Long wgId) {
         if (wgId == null) {
             return List.of();
@@ -57,19 +54,7 @@ public class TransactionService {
         return coreMapper.toUserSummaries(userRepository.findByWgId(wgId));
     }
 
-    /**
-     * Create a new transaction with multiple debtors
-     * 
-     * @param creatorId   ID of the user who is creating this transaction (gets edit
-     *                    rights)
-     * @param creditorId  ID of the user who paid
-     * @param debtorIds   List of user IDs who owe
-     * @param percentages List of percentages (0-100) for each debtor, null for
-     *                    equal split
-     * @param totalAmount Total amount of the transaction
-     * @param description Description of what the transaction was for
-     * @return The created transaction
-     */
+    // Create transaction with multiple debtors. Percentages null = equal split.
     @Transactional
     public Transaction createTransaction(Long creatorId, Long creditorId, List<Long> debtorIds,
             List<Double> percentages, Double totalAmount, String description) {
@@ -130,18 +115,12 @@ public class TransactionService {
         return transaction;
     }
 
-    /**
-     * Get all transactions for a WG
-     */
     public List<Transaction> getTransactionsByWG(Long wgId) {
         WG wg = wgRepository.findById(wgId).orElseThrow(() -> new RuntimeException("WG not found"));
         return transactionRepository.findByWg(wg);
     }
 
-    /**
-     * Get all transactions involving a specific user (as creditor or debtor) Sorted
-     * by creation date descending (newest first)
-     */
+    // Sorted newest first
     public List<Transaction> getTransactionsForUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -164,10 +143,7 @@ public class TransactionService {
                 .toList();
     }
 
-    /**
-     * Calculate cumulative balance between two users Positive = otherUser owes
-     * currentUser Negative = currentUser owes otherUser
-     */
+    // Positive = otherUser owes currentUser, Negative = currentUser owes otherUser
     public double calculateBalanceWithUser(Long currentUserId, Long otherUserId) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -205,11 +181,6 @@ public class TransactionService {
         return balance;
     }
 
-    /**
-     * Calculate balances between current user and all WG members
-     * 
-     * @return Map of User ID to balance amount
-     */
     public Map<Long, Double> calculateAllBalances(Long currentUserId) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -231,9 +202,6 @@ public class TransactionService {
         return balances;
     }
 
-    /**
-     * Get total net balance for a user (sum of all balances with all members)
-     */
     public double getTotalBalance(Long userId) {
         Map<Long, Double> allBalances = calculateAllBalances(userId);
         return allBalances.values().stream().mapToDouble(Double::doubleValue).sum();
@@ -325,12 +293,7 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    /**
-     * Delete a transaction Only the creditor (creator) can delete a transaction
-     * 
-     * @param transactionId ID of the transaction to delete
-     * @param currentUserId ID of the user attempting the deletion
-     */
+    // Only creator can delete
     @Transactional
     public void deleteTransaction(Long transactionId, Long currentUserId) {
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -348,9 +311,6 @@ public class TransactionService {
         transactionRepository.delete(transaction);
     }
 
-    /**
-     * Get a transaction by ID
-     */
     public Transaction getTransactionById(Long transactionId) {
         return transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Transaction not found"));
@@ -359,41 +319,26 @@ public class TransactionService {
     // ==================== DTO METHODS ====================
     // These methods return DTOs instead of entities for UI consumption
 
-    /**
-     * Get all transactions for a user as DTOs
-     */
     public List<TransactionDTO> getTransactionsForUserDTO(Long userId) {
         List<Transaction> transactions = getTransactionsForUser(userId);
         return financeMapper.toDTOList(transactions);
     }
 
-    /**
-     * Get all transactions for a WG as DTOs
-     */
     public List<TransactionDTO> getTransactionsByWGDTO(Long wgId) {
         List<Transaction> transactions = getTransactionsByWG(wgId);
         return financeMapper.toDTOList(transactions);
     }
 
-    /**
-     * Get a single transaction by ID as DTO
-     */
     public TransactionDTO getTransactionByIdDTO(Long transactionId) {
         Transaction transaction = getTransactionById(transactionId);
         return financeMapper.toDTO(transaction);
     }
 
-    /**
-     * Get all transactions for a user as view DTOs with nested user summaries.
-     */
     public List<TransactionViewDTO> getTransactionsForUserView(Long userId) {
         List<Transaction> transactions = getTransactionsForUser(userId);
         return financeMapper.toViewList(transactions);
     }
 
-    /**
-     * Calculate balances between current user and all WG members as DTOs
-     */
     public List<BalanceDTO> calculateAllBalancesDTO(Long currentUserId) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -403,17 +348,13 @@ public class TransactionService {
             return List.of();
         }
 
-        return userRepository.findByWgId(wg.getId()).stream()
-                .filter(member -> !member.getId().equals(currentUserId)).map(member -> {
-            double balance = calculateBalanceWithUser(currentUserId, member.getId());
-            return financeMapper.toBalanceDTO(member, balance);
-        }).filter(dto -> dto != null).toList();
+        return userRepository.findByWgId(wg.getId()).stream().filter(member -> !member.getId().equals(currentUserId))
+                .map(member -> {
+                    double balance = calculateBalanceWithUser(currentUserId, member.getId());
+                    return financeMapper.toBalanceDTO(member, balance);
+                }).filter(dto -> dto != null).toList();
     }
 
-    /**
-     * Calculate balances between current user and all WG members as view DTOs with
-     * nested user summaries.
-     */
     public List<BalanceViewDTO> calculateAllBalancesView(Long currentUserId) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -423,16 +364,14 @@ public class TransactionService {
             return List.of();
         }
 
-        return userRepository.findByWgId(wg.getId()).stream()
-                .filter(member -> !member.getId().equals(currentUserId)).map(member -> {
-            double balance = calculateBalanceWithUser(currentUserId, member.getId());
-            return financeMapper.toBalanceView(member, balance);
-        }).filter(dto -> dto != null).toList();
+        return userRepository.findByWgId(wg.getId()).stream().filter(member -> !member.getId().equals(currentUserId))
+                .map(member -> {
+                    double balance = calculateBalanceWithUser(currentUserId, member.getId());
+                    return financeMapper.toBalanceView(member, balance);
+                }).filter(dto -> dto != null).toList();
     }
 
-    /**
-     * Get available credits for a user (balances > 0), optionally excluding a user.
-     */
+    // Balances > 0, optionally excluding a user
     public List<BalanceViewDTO> getAvailableCredits(Long currentUserId, Long excludedUserId) {
         if (currentUserId == null) {
             return List.of();
@@ -440,13 +379,9 @@ public class TransactionService {
         return calculateAllBalancesView(currentUserId).stream()
                 .filter(dto -> dto.user() != null && dto.user().id() != null)
                 .filter(dto -> excludedUserId == null || !excludedUserId.equals(dto.user().id()))
-                .filter(dto -> dto.balance() > 0)
-                .toList();
+                .filter(dto -> dto.balance() > 0).toList();
     }
 
-    /**
-     * Create a transaction and return as DTO
-     */
     @Transactional
     public TransactionDTO createTransactionDTO(Long creatorId, Long creditorId, List<Long> debtorIds,
             List<Double> percentages, Double totalAmount, String description) {
@@ -455,9 +390,6 @@ public class TransactionService {
         return financeMapper.toDTO(transaction);
     }
 
-    /**
-     * Update a transaction and return as DTO
-     */
     @Transactional
     public TransactionDTO updateTransactionDTO(Long transactionId, Long currentUserId, Long newCreditorId,
             List<Long> debtorIds, List<Double> percentages, Double totalAmount, String description) {
@@ -466,10 +398,6 @@ public class TransactionService {
         return financeMapper.toDTO(transaction);
     }
 
-    /**
-     * Settle a balance between two users with a single transaction. Validates WG
-     * membership and positive amounts.
-     */
     @Transactional
     public void settleBalance(Long currentUserId, Long otherUserId, double amount, boolean currentUserPays,
             String paymentMethod) {
@@ -494,10 +422,7 @@ public class TransactionService {
         createTransactionDTO(currentUserId, payerId, List.of(debtorId), null, amount, description);
     }
 
-    /**
-     * Execute a credit transfer: a third roommate's positive balance with the
-     * current user is used to settle a debt to another roommate.
-     */
+    // Third roommate's credit used to settle debt to another roommate
     @Transactional
     public void transferCredit(Long currentUserId, Long creditSourceUserId, Long debtorToUserId, double amount) {
         if (amount <= 0) {

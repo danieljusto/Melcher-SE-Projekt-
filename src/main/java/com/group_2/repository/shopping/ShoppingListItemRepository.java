@@ -11,8 +11,5 @@ import java.util.List;
 @Repository
 public interface ShoppingListItemRepository extends JpaRepository<ShoppingListItem, Long> {
 
-    /**
-     * Find all items in a shopping list.
-     */
     List<ShoppingListItem> findByShoppingList(ShoppingList shoppingList);
 }
