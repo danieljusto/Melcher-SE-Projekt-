@@ -14,6 +14,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +29,8 @@ import com.group_2.dto.finance.StandingOrderViewDTO;
 
 @Component
 public class StandingOrdersDialogController extends com.group_2.ui.core.Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(StandingOrdersDialogController.class);
 
     private final StandingOrderService standingOrderService;
     private final SessionManager sessionManager;
@@ -705,6 +709,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                 Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
                 showErrorAlert("Invalid input", "Please enter valid numbers.", owner);
             } catch (Exception e) {
+                log.error("Failed to update standing order: {}", order != null ? order.id() : "new", e);
                 Window owner = dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null;
                 showErrorAlert("Failed to update standing order", e.getMessage(), owner);
             }

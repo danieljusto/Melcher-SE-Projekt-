@@ -8,6 +8,8 @@ import com.group_2.util.SessionManager;
 
 import javafx.scene.text.Text;
 import javafx.fxml.FXML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MainScreenController extends Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(MainScreenController.class);
 
     private final SessionManager sessionManager;
     private final CoreViewService coreViewService;
@@ -41,12 +45,12 @@ public class MainScreenController extends Controller {
     private Text headerAvatar;
 
     public void initView() {
-        System.out.println("MainScreenController initialized");
+        log.debug("MainScreenController initialized");
         try {
             sessionManager.refreshCurrentUser();
             updateHeader();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to initialize main screen view", e);
         }
     }
 

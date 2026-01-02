@@ -7,6 +7,8 @@ import com.group_2.util.SessionManager;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.fxml.FXML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SignUpController extends Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(SignUpController.class);
 
     private final UserService userService;
     private final SessionManager sessionManager;
@@ -62,6 +66,7 @@ public class SignUpController extends Controller {
                 noWgController.initView();
             });
         } catch (Exception e) {
+            log.error("User registration failed for email: {}", email, e);
             showErrorAlert("Signup Failed", e.getMessage());
         }
     }

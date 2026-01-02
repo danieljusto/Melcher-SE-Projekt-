@@ -15,6 +15,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ProfileController extends Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(ProfileController.class);
 
     private final SessionManager sessionManager;
     private final WGService wgService;
@@ -148,6 +152,7 @@ public class ProfileController extends Controller {
                 updateProfileInfo();
                 showSuccessAlert("Success", "Name updated successfully!");
             } catch (Exception e) {
+                log.error("Failed to update name for user: {}", currentUserId, e);
                 showErrorAlert("Error", "Failed to update name: " + e.getMessage());
             }
         });
@@ -203,6 +208,7 @@ public class ProfileController extends Controller {
                 updateProfileInfo();
                 showSuccessAlert("Success", "Email updated successfully!");
             } catch (Exception e) {
+                log.error("Failed to update email for user: {}", currentUserId, e);
                 showErrorAlert("Error", "Failed to update email: " + e.getMessage());
             }
         });
@@ -243,6 +249,7 @@ public class ProfileController extends Controller {
                 showSuccessAlert("Success", "You have left the WG.");
                 loadScene(avatarInitial.getScene(), "/core/no_wg.fxml");
             } catch (Exception e) {
+                log.error("Failed to leave WG for user: {}", currentUserId, e);
                 showErrorAlert("Error", "Failed to leave WG: " + e.getMessage());
             }
         }

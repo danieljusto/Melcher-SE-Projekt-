@@ -3,12 +3,16 @@ package com.group_2.util;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import org.springframework.context.ApplicationEvent;
 
 @Component
 public class StageInitializer implements ApplicationListener<StageInitializer.StageReadyEvent> {
+
+    private static final Logger log = LoggerFactory.getLogger(StageInitializer.class);
 
     private final SpringFXMLLoader fxmlLoader;
 
@@ -37,7 +41,7 @@ public class StageInitializer implements ApplicationListener<StageInitializer.St
 
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to initialize application stage", e);
         }
     }
 

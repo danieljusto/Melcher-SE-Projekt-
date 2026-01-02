@@ -16,6 +16,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class TransactionHistoryController extends Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactionHistoryController.class);
 
     private final TransactionService transactionService;
     private final SessionManager sessionManager;
@@ -694,6 +698,7 @@ public class TransactionHistoryController extends Controller {
             } catch (NumberFormatException e) {
                 showErrorAlert("Invalid input", "Please enter valid amounts.", historyTable.getScene().getWindow());
             } catch (Exception e) {
+                log.error("Failed to update transaction: {}", transaction.id(), e);
                 showErrorAlert("Failed to update transaction", e.getMessage(), historyTable.getScene().getWindow());
             }
         }
@@ -722,6 +727,7 @@ public class TransactionHistoryController extends Controller {
                 showSuccessAlert("Success", "Transaction deleted successfully.", historyTable.getScene().getWindow());
 
             } catch (Exception e) {
+                log.error("Failed to delete transaction: {}", transaction.id(), e);
                 showErrorAlert("Failed to delete transaction", e.getMessage(), historyTable.getScene().getWindow());
             }
         }

@@ -8,12 +8,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for RoomAssignmentQueue.
  * Plain JUnit tests with no Spring context as recommended for utility classes.
+ * Uses real User instances instead of mocks for Java 25+ compatibility.
  */
 class RoomAssignmentQueueTest {
 
@@ -24,13 +23,26 @@ class RoomAssignmentQueueTest {
     void setUp() {
         queue = new RoomAssignmentQueue();
 
-        // Mock users with IDs
-        user1 = mock(User.class);
-        user2 = mock(User.class);
-        user3 = mock(User.class);
-        when(user1.getId()).thenReturn(1L);
-        when(user2.getId()).thenReturn(2L);
-        when(user3.getId()).thenReturn(3L);
+        // Create real User instances with IDs set via reflection
+        user1 = createUserWithId(1L, "User1");
+        user2 = createUserWithId(2L, "User2");
+        user3 = createUserWithId(3L, "User3");
+    }
+
+    /**
+     * Helper method to create a User with a specific ID.
+     * Uses reflection since ID is normally set by JPA.
+     */
+    private User createUserWithId(Long id, String name) {
+        User user = new User(name);
+        try {
+            java.lang.reflect.Field idField = User.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(user, id);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set user ID via reflection", e);
+        }
+        return user;
     }
 
     @Test

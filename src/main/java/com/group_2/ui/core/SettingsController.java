@@ -20,6 +20,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,8 @@ import java.util.Optional;
  */
 @Component
 public class SettingsController extends Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(SettingsController.class);
 
     private final SessionManager sessionManager;
     private final WGService wgService;
@@ -258,6 +262,7 @@ public class SettingsController extends Controller {
                 loadWGData();
                 showSuccessAlert("Success", userName + " is now the admin!", getOwnerWindow(membersBox));
             } catch (Exception e) {
+                log.error("Failed to transfer admin rights to user: {} in WG: {}", user.id(), currentWg.id(), e);
                 showErrorAlert("Error", "Failed to transfer admin rights: " + e.getMessage(),
                         getOwnerWindow(membersBox));
             }
@@ -280,6 +285,7 @@ public class SettingsController extends Controller {
                 loadWGData();
                 showSuccessAlert("Success", userName + " has been removed from the WG.", getOwnerWindow(membersBox));
             } catch (Exception e) {
+                log.error("Failed to remove member: {} from WG: {}", user.id(), currentWg.id(), e);
                 showErrorAlert("Error", "Failed to remove member: " + e.getMessage(), getOwnerWindow(membersBox));
             }
         }
@@ -325,6 +331,7 @@ public class SettingsController extends Controller {
                     loadWGData();
                     showSuccessAlert("Success", "Room '" + roomName + "' added!", getOwnerWindow(roomsBox));
                 } catch (Exception e) {
+                    log.error("Failed to add room: {} to WG: {}", roomName, currentWg.id(), e);
                     showErrorAlert("Error", "Failed to add room: " + e.getMessage(), getOwnerWindow(roomsBox));
                 }
             }
@@ -351,6 +358,7 @@ public class SettingsController extends Controller {
                     loadWGData();
                     showSuccessAlert("Success", "Room renamed to '" + newName + "'!", getOwnerWindow(roomsBox));
                 } catch (Exception e) {
+                    log.error("Failed to rename room: {} to: {}", room.id(), newName, e);
                     showErrorAlert("Error", "Failed to rename room: " + e.getMessage(), getOwnerWindow(roomsBox));
                 }
             }
@@ -374,6 +382,7 @@ public class SettingsController extends Controller {
                 loadWGData();
                 showSuccessAlert("Success", "Room '" + room.name() + "' deleted!", getOwnerWindow(roomsBox));
             } catch (Exception e) {
+                log.error("Failed to delete room: {} from WG: {}", room.id(), currentWg.id(), e);
                 showErrorAlert("Error", "Failed to delete room: " + e.getMessage(), getOwnerWindow(roomsBox));
             }
         }
@@ -401,6 +410,7 @@ public class SettingsController extends Controller {
                     loadWGData();
                     showSuccessAlert("Success", "WG name updated!", getOwnerWindow(wgNameHeader));
                 } catch (Exception e) {
+                    log.error("Failed to update WG name to: {} for WG: {}", newName, currentWg.id(), e);
                     showErrorAlert("Error", "Failed to update WG name: " + e.getMessage(),
                             getOwnerWindow(wgNameHeader));
                 }
@@ -423,6 +433,7 @@ public class SettingsController extends Controller {
                 showSuccessAlert("Success", "WG deleted.", getOwnerWindow(wgNameHeader));
                 loadScene(wgNameHeader.getScene(), "/core/no_wg.fxml");
             } catch (Exception e) {
+                log.error("Failed to delete WG: {}", currentWg.id(), e);
                 showErrorAlert("Error", "Failed to delete WG: " + e.getMessage(), getOwnerWindow(wgNameHeader));
             }
         }

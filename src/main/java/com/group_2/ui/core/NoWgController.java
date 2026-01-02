@@ -15,6 +15,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.fxml.FXML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,8 @@ import java.util.List;
  */
 @Component
 public class NoWgController extends Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(NoWgController.class);
 
     private final WGService wgService;
     private final HouseholdSetupService householdSetupService;
@@ -171,6 +175,7 @@ public class NoWgController extends Controller {
             showSuccessAlert("Success", "WG created successfully!");
             navigateToMainScreen();
         } catch (Exception e) {
+            log.error("Failed to create WG: {} for user", wgName, e);
             showErrorAlert("Error", "Failed to create WG: " + e.getMessage());
         }
     }
@@ -195,6 +200,7 @@ public class NoWgController extends Controller {
             showSuccessAlert("Success", "Successfully joined the WG!");
             navigateToMainScreen();
         } catch (Exception e) {
+            log.error("Failed to join WG with invite code: {}", inviteCode, e);
             showErrorAlert("Error", "Failed to join WG. Invalid invite code.");
         }
     }

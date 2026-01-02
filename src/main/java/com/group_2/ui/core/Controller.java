@@ -7,6 +7,8 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.stage.Window;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.group_2.util.SpringFXMLLoader;
@@ -19,6 +21,8 @@ import java.util.Optional;
  * dialogs. Provides centralized alert/dialog creation with consistent styling.
  */
 public abstract class Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(Controller.class);
 
     @Autowired
     protected SpringFXMLLoader fxmlLoader;
@@ -58,7 +62,7 @@ public abstract class Controller {
                 dialogPane.getStylesheets().add(stylesheet);
             }
         } catch (Exception e) {
-            // Stylesheet not found, continue without custom styling
+            log.debug("Failed to load stylesheet for dialog: {}", e.getMessage());
         }
     }
 
@@ -72,7 +76,7 @@ public abstract class Controller {
             Parent root = fxmlLoader.load(fxmlPath);
             currentScene.setRoot(root);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to load FXML: {}", fxmlPath, e);
             showErrorAlert("Error loading page",
                     "Could not load the next page. Try again or close the application.\n" + e.getMessage());
         }
@@ -221,7 +225,7 @@ public abstract class Controller {
             String stylesheet = getClass().getResource("/css/styles.css").toExternalForm();
             dialogPane.getStylesheets().add(stylesheet);
         } catch (Exception e) {
-            // Stylesheet not found, continue without custom styling
+            log.debug("Failed to load stylesheet for alert: {}", e.getMessage());
         }
 
         return alert;

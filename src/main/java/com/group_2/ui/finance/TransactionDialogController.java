@@ -19,6 +19,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +29,8 @@ import java.util.*;
 
 @Component
 public class TransactionDialogController extends com.group_2.ui.core.Controller {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactionDialogController.class);
 
     private final TransactionService transactionService;
     private final StandingOrderService standingOrderService;
@@ -754,6 +758,7 @@ public class TransactionDialogController extends com.group_2.ui.core.Controller 
             }
 
         } catch (Exception e) {
+            log.error("Failed to save transaction", e);
             showErrorAlert("Error", e.getMessage(),
                     dialogOverlay.getScene() != null ? dialogOverlay.getScene().getWindow() : null);
         }
