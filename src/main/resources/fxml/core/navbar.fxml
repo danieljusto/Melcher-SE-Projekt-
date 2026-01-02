@@ -13,8 +13,8 @@
 
     <Button fx:id="backButton" onAction="#backToHome" styleClass="navbar-back-button">
         <graphic>
-            <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
-                <Image url="@/pictures/home-white.png"/>
+            <ImageView fitWidth="35" fitHeight="35" preserveRatio="true">
+                <Image url="@/pictures/SE_Hommunity.png"/>
             </ImageView>
         </graphic>
     </Button>
