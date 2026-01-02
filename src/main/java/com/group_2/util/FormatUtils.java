@@ -45,13 +45,15 @@ public final class FormatUtils {
      * @return formatted currency string with sign
      */
     public static String formatCurrencyWithSign(double amount) {
-        String formatted = formatCurrency(Math.abs(amount));
-        if (amount > 0) {
-            return "+" + formatted;
-        } else if (amount < 0) {
-            return "-" + formatted;
+        if (amount == 0) {
+            return formatCurrency(0);
         }
-        return formatted;
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
+        symbols.setGroupingSeparator('.');
+        symbols.setDecimalSeparator(',');
+        // subpattern: positive;negative
+        DecimalFormat signedFormat = new DecimalFormat("+€#,##0.00;-€#,##0.00", symbols);
+        return signedFormat.format(amount);
     }
 
     /**
