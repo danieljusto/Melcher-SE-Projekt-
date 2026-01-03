@@ -1,5 +1,6 @@
 package com.group_2.ui.core;
 
+import com.group_2.dto.core.LeaveWGStatus;
 import com.group_2.dto.core.UserProfileViewDTO;
 import com.group_2.service.core.CoreViewService;
 import com.group_2.service.core.UserService;
@@ -114,8 +115,8 @@ public class ProfileController extends Controller {
         Dialog<String[]> dialog = new Dialog<>();
         dialog.setTitle("Edit Name");
         dialog.setHeaderText("Update your name");
-        dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
+        dialog.getDialogPane().getStylesheets()
+                .add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
@@ -128,8 +129,7 @@ public class ProfileController extends Controller {
         firstNameField.setPromptText("First Name");
         firstNameField.getStyleClass().addAll("dialog-field", "dialog-field-small");
 
-        TextField lastNameField = new TextField(
-                profile.user().surname() != null ? profile.user().surname() : "");
+        TextField lastNameField = new TextField(profile.user().surname() != null ? profile.user().surname() : "");
         lastNameField.setPromptText("Last Name");
         lastNameField.getStyleClass().addAll("dialog-field", "dialog-field-small");
 
@@ -175,8 +175,8 @@ public class ProfileController extends Controller {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Edit Email");
         dialog.setHeaderText("Update your email address");
-        dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
+        dialog.getDialogPane().getStylesheets()
+                .add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
@@ -231,26 +231,35 @@ public class ProfileController extends Controller {
     public void handleLeaveWG() {
         Long currentUserId = sessionManager.getCurrentUserId();
         if (currentUserId == null) {
-            showWarningAlert("No WG", "You are not a member of any WG.");
+            showWarningAlert("Not Logged In", "You must be logged in to leave a WG.");
             return;
         }
+
+        // Service handles all business logic: WG membership, admin check, balance check
+        LeaveWGStatus status = wgService.checkUserCanLeaveWG(currentUserId);
+
+        if (!status.canLeave()) {
+            showErrorAlert("Cannot Leave WG", status.message());
+            return;
+        }
+
+        // If user has positive balance, show warning first
+        if (status.message() != null) {
+            showWarningAlert("Balance Notice", status.message());
+        }
+
         UserProfileViewDTO profile = coreViewService.getUserProfile(currentUserId);
-        if (profile == null || profile.wg() == null) {
-            showWarningAlert("No WG", "You are not a member of any WG.");
-            return;
-        }
+        String wgName = profile != null && profile.wg() != null ? profile.wg().name() : "the WG";
 
-        if (profile.admin()) {
-            showWarningAlert("Cannot Leave",
-                    "As the admin, you cannot leave the WG. Please transfer admin rights first or delete the WG.");
-            return;
-        }
-
-        boolean confirmed = showConfirmDialog("Leave WG", "Are you sure you want to leave " + profile.wg().name() + "?",
+        boolean confirmed = showConfirmDialog("Leave WG", "Are you sure you want to leave " + wgName + "?",
                 "This action cannot be undone.");
 
         if (confirmed) {
             try {
+                if (profile == null || profile.wg() == null) {
+                    showErrorAlert("Error", "Could not retrieve WG information.");
+                    return;
+                }
                 wgService.removeMitbewohner(profile.wg().id(), currentUserId);
                 sessionManager.refreshCurrentUser();
                 showSuccessAlert("Success", "You have left the WG.");

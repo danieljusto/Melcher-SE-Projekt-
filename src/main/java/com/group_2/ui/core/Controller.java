@@ -3,6 +3,7 @@ package com.group_2.ui.core;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
@@ -91,7 +92,7 @@ public abstract class Controller {
     protected void showErrorAlert(String title, String message, Window owner) {
         Alert alert = createStyledAlert(Alert.AlertType.ERROR, owner);
         alert.setTitle(title);
-        alert.setHeaderText(null);
+        alert.setHeaderText(title);
         alert.setContentText(message);
         alert.showAndWait();
     }
@@ -103,7 +104,7 @@ public abstract class Controller {
     protected void showWarningAlert(String title, String message, Window owner) {
         Alert alert = createStyledAlert(Alert.AlertType.WARNING, owner);
         alert.setTitle(title);
-        alert.setHeaderText(null);
+        alert.setHeaderText(title);
         alert.setContentText(message);
         alert.showAndWait();
     }
@@ -117,8 +118,14 @@ public abstract class Controller {
         alert.setTitle(title);
         alert.setHeaderText(header);
         alert.setContentText(message);
+
+        // Use custom English button types instead of system locale defaults
+        ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(okButton, cancelButton);
+
         Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == ButtonType.OK;
+        return result.isPresent() && result.get() == okButton;
     }
 
     protected Optional<ButtonType> showConfirmDialogWithButtons(String title, String header, String message,

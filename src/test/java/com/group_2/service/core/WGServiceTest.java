@@ -6,6 +6,7 @@ import com.group_2.model.cleaning.Room;
 import com.group_2.repository.UserRepository;
 import com.group_2.repository.WGRepository;
 import com.group_2.repository.cleaning.RoomRepository;
+import com.group_2.service.finance.TransactionService;
 import com.group_2.testsupport.TestDataFactory;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,9 @@ class WGServiceTest {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private TransactionService transactionService;
 
     private User admin;
 
@@ -106,8 +110,7 @@ class WGServiceTest {
 
         // When/Then
         assertThatThrownBy(() -> wgService.addMitbewohnerByInviteCode("INVALID", newMember))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("WG not found");
+                .isInstanceOf(RuntimeException.class).hasMessageContaining("WG not found");
     }
 
     @Test
@@ -182,5 +185,61 @@ class WGServiceTest {
 
         // Then
         assertThat(summaries).hasSize(2);
+    }
+
+    @Test
+    void checkUserCanLeaveWG_ZeroBalance_CanLeave() {
+        // Given - user with no transactions (zero balance)
+        WG wg = wgService.createWG("Test WG", admin, List.of());
+        User member = userRepository.save(TestDataFactory.user("member@example.com", null));
+        wgService.addMitbewohner(wg.getId(), member);
+
+        // When
+        var status = wgService.checkUserCanLeaveWG(member.getId());
+
+        // Then
+        assertThat(status.canLeave()).isTrue();
+        assertThat(status.balance()).isEqualTo(0.0);
+        assertThat(status.message()).isNull();
+    }
+
+    @Test
+    void checkUserCanLeaveWG_PositiveBalance_CanLeaveWithWarning() {
+        // Given - user is owed money (positive balance)
+        WG wg = wgService.createWG("Test WG", admin, List.of());
+        User creditor = userRepository.save(TestDataFactory.user("creditor@example.com", null));
+        wgService.addMitbewohner(wg.getId(), creditor);
+
+        // Admin owes creditor 50€
+        transactionService.createTransaction(creditor.getId(), creditor.getId(), List.of(admin.getId()), List.of(100.0),
+                50.0, "Shared expense");
+
+        // When
+        var status = wgService.checkUserCanLeaveWG(creditor.getId());
+
+        // Then
+        assertThat(status.canLeave()).isTrue();
+        assertThat(status.balance()).isGreaterThan(0);
+        assertThat(status.message()).contains("owed");
+    }
+
+    @Test
+    void checkUserCanLeaveWG_NegativeBalance_CannotLeave() {
+        // Given - user owes money (negative balance)
+        WG wg = wgService.createWG("Test WG", admin, List.of());
+        User debtor = userRepository.save(TestDataFactory.user("debtor@example.com", null));
+        wgService.addMitbewohner(wg.getId(), debtor);
+
+        // Debtor owes admin 50€
+        transactionService.createTransaction(admin.getId(), admin.getId(), List.of(debtor.getId()), List.of(100.0),
+                50.0, "Shared expense");
+
+        // When
+        var status = wgService.checkUserCanLeaveWG(debtor.getId());
+
+        // Then
+        assertThat(status.canLeave()).isFalse();
+        assertThat(status.balance()).isLessThan(0);
+        assertThat(status.message()).contains("owe").contains("roommate");
     }
 }

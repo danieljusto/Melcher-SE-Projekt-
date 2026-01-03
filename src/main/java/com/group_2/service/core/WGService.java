@@ -4,12 +4,14 @@ import com.group_2.model.User;
 import com.group_2.model.WG;
 import com.group_2.model.cleaning.Room;
 import com.group_2.dto.core.CoreMapper;
+import com.group_2.dto.core.LeaveWGStatus;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.repository.UserRepository;
 import com.group_2.repository.WGRepository;
 import com.group_2.repository.cleaning.RoomRepository;
 import com.group_2.service.cleaning.CleaningScheduleService;
 import com.group_2.service.finance.StandingOrderService;
+import com.group_2.service.finance.TransactionService;
 import com.group_2.service.shopping.ShoppingListService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,18 +31,21 @@ public class WGService {
     private final CleaningScheduleService cleaningScheduleService;
     private final ShoppingListService shoppingListService;
     private final StandingOrderService standingOrderService;
+    private final TransactionService transactionService;
     private final CoreMapper coreMapper;
 
     @Autowired
     public WGService(WGRepository wgRepository, UserRepository userRepository, RoomRepository roomRepository,
             @Lazy CleaningScheduleService cleaningScheduleService, @Lazy ShoppingListService shoppingListService,
-            @Lazy StandingOrderService standingOrderService, CoreMapper coreMapper) {
+            @Lazy StandingOrderService standingOrderService, @Lazy TransactionService transactionService,
+            CoreMapper coreMapper) {
         this.wgRepository = wgRepository;
         this.userRepository = userRepository;
         this.roomRepository = roomRepository;
         this.cleaningScheduleService = cleaningScheduleService;
         this.shoppingListService = shoppingListService;
         this.standingOrderService = standingOrderService;
+        this.transactionService = transactionService;
         this.coreMapper = coreMapper;
     }
 
@@ -234,6 +239,52 @@ public class WGService {
 
         // Reset cleaning schedule to remove departed member and clear all reassignments
         cleaningScheduleService.resetScheduleForMembershipChange(savedWg);
+    }
+
+    // Checks if user can leave WG (admin status + individual balance validation)
+    public LeaveWGStatus checkUserCanLeaveWG(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        WG wg = user.getWg();
+        if (wg == null) {
+            return new LeaveWGStatus(false, 0, "You are not a member of any WG.");
+        }
+
+        // Check if user is admin
+        if (wg.getAdmin() != null && wg.getAdmin().getId().equals(userId)) {
+            return new LeaveWGStatus(false, 0,
+                    "As the admin, you cannot leave the WG. Please transfer admin rights first or delete the WG.");
+        }
+
+        // Check individual balances with each roommate
+        java.util.Map<Long, Double> balances = transactionService.calculateAllBalances(userId);
+
+        // Find negative balances (user owes money to these roommates)
+        java.util.List<java.util.Map.Entry<Long, Double>> negativeBalances = balances.entrySet().stream()
+                .filter(e -> e.getValue() < 0).toList();
+
+        // Find positive balances (roommates owe user money)
+        double totalOwed = balances.values().stream().filter(v -> v > 0).mapToDouble(Double::doubleValue).sum();
+
+        // If any negative balance exists, block leaving
+        if (!negativeBalances.isEmpty()) {
+            double totalDebt = negativeBalances.stream().mapToDouble(e -> Math.abs(e.getValue())).sum();
+            String message = String.format(
+                    "You owe money to %d roommate(s) (total: %.2f€). Please settle all debts before leaving.",
+                    negativeBalances.size(), totalDebt);
+            return new LeaveWGStatus(false, -totalDebt, message);
+        }
+
+        // If any positive balance exists, warn but allow leaving
+        if (totalOwed > 0) {
+            String message = String.format(
+                    "You are owed %.2f€ by your roommates. You may still leave, but you will lose this credit.",
+                    totalOwed);
+            return new LeaveWGStatus(true, totalOwed, message);
+        }
+
+        // All balances are zero
+        return new LeaveWGStatus(true, 0, null);
     }
 
     @Transactional
