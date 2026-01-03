@@ -1,13 +1,15 @@
 package com.group_2.ui.cleaning;
 
-import com.group_2.dto.cleaning.RoomDTO;
 import com.group_2.dto.cleaning.CleaningTaskDTO;
+import com.group_2.dto.cleaning.RoomDTO;
+import com.group_2.dto.cleaning.WeekStatsDTO;
 import com.group_2.dto.core.UserSessionDTO;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.service.cleaning.CleaningScheduleService;
 import com.group_2.service.core.HouseholdSetupService;
 import com.group_2.ui.core.Controller;
 import com.group_2.ui.core.NavbarController;
+import com.group_2.util.FormatUtils;
 import com.group_2.util.SessionManager;
 
 import javafx.geometry.Insets;
@@ -19,10 +21,7 @@ import javafx.fxml.FXML;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.WeekFields;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Controller for the cleaning schedule view with calendar-style layout.
@@ -81,18 +80,8 @@ public class CleaningScheduleController extends Controller {
     }
 
     private void updateWeekDisplay() {
-        LocalDate weekEnd = displayedWeekStart.plusDays(6);
-
-        // Week number
-        WeekFields weekFields = WeekFields.of(Locale.getDefault());
-        int weekNumber = displayedWeekStart.get(weekFields.weekOfWeekBasedYear());
-        int year = displayedWeekStart.getYear();
-        weekTitle.setText("Week " + weekNumber + ", " + year);
-
-        // Date range
-        DateTimeFormatter fullFormatter = DateTimeFormatter.ofPattern("MMMM d");
-        String dateRange = displayedWeekStart.format(fullFormatter) + " - " + weekEnd.format(fullFormatter);
-        weekDateRange.setText(dateRange);
+        weekTitle.setText(FormatUtils.formatWeekTitle(displayedWeekStart));
+        weekDateRange.setText(FormatUtils.formatWeekDateRange(displayedWeekStart));
     }
 
     private void loadCalendarDays() {
@@ -176,7 +165,7 @@ public class CleaningScheduleController extends Controller {
         pill.setPadding(new Insets(4, 8, 4, 8));
         pill.setCursor(javafx.scene.Cursor.HAND);
 
-        boolean isMyTask = task.assigneeId() != null && task.assigneeId().equals(currentUserId);
+        boolean isMyTask = task.isAssignedTo(currentUserId);
 
         // Apply CSS classes based on task state
         if (task.completed()) {
@@ -190,7 +179,7 @@ public class CleaningScheduleController extends Controller {
         Text roomIcon = new Text(task.completed() ? "C" : "P");
         roomIcon.getStyleClass().add("task-pill-icon");
 
-        Text roomName = new Text(truncate(task.roomName(), 10));
+        Text roomName = new Text(FormatUtils.truncate(task.roomName(), 10));
         roomName.getStyleClass().add("task-pill-text");
         if (task.completed()) {
             roomName.getStyleClass().add("task-pill-text-done");
@@ -246,7 +235,7 @@ public class CleaningScheduleController extends Controller {
         card.setAlignment(Pos.TOP_CENTER);
 
         boolean isCompleted = task.completed();
-        boolean isMyTask = task.assigneeId() != null && task.assigneeId().equals(currentUserId);
+        boolean isMyTask = task.isAssignedTo(currentUserId);
 
         // Apply CSS classes based on task state
         card.getStyleClass().add("task-card");
@@ -286,9 +275,7 @@ public class CleaningScheduleController extends Controller {
 
         StackPane assigneeAvatar = new StackPane();
         assigneeAvatar.getStyleClass().add("task-assignee-avatar");
-        String assigneeInitial = task.assigneeName() != null && !task.assigneeName().isEmpty()
-                ? task.assigneeName().substring(0, 1).toUpperCase()
-                : "?";
+        String assigneeInitial = task.getAssigneeInitial();
         Text avatarText = new Text(assigneeInitial);
         avatarText.getStyleClass().add("task-assignee-avatar-text");
         assigneeAvatar.getChildren().add(avatarText);
@@ -303,10 +290,7 @@ public class CleaningScheduleController extends Controller {
         assigneeBox.getChildren().addAll(assigneeAvatar, assigneeText);
 
         // Due date
-        LocalDate dueDate = task.dueDate() != null ? task.dueDate() : task.weekStartDate();
-        String dayName = dueDate.getDayOfWeek().toString().substring(0, 1)
-                + dueDate.getDayOfWeek().toString().substring(1).toLowerCase();
-        Text dueDateText = new Text(dayName + ", " + dueDate.getDayOfMonth());
+        Text dueDateText = new Text(FormatUtils.formatDayNameWithNumber(task.getEffectiveDueDate()));
         dueDateText.getStyleClass().add("task-due-date");
 
         // Status badge
@@ -347,7 +331,7 @@ public class CleaningScheduleController extends Controller {
 
         // Only show reassign button for your own tasks
         if (isMyTask) {
-            Button reassignBtn = new Button("Assign");
+            Button reassignBtn = new Button("Reassign");
             reassignBtn.getStyleClass().add("task-action-button");
             reassignBtn.setPrefWidth(80);
             reassignBtn.setMinWidth(Region.USE_PREF_SIZE);
@@ -358,16 +342,20 @@ public class CleaningScheduleController extends Controller {
             actions.getChildren().add(reassignBtn);
         }
 
-        Button rescheduleBtn = new Button("Reschedule");
-        rescheduleBtn.getStyleClass().add("task-action-button");
-        rescheduleBtn.setPrefWidth(120);
-        rescheduleBtn.setMinWidth(Region.USE_PREF_SIZE);
-        rescheduleBtn.setPrefHeight(34);
-        rescheduleBtn.setMinHeight(Region.USE_PREF_SIZE);
-        rescheduleBtn.setTooltip(new Tooltip("Reschedule to another day"));
-        rescheduleBtn.setOnAction(e -> showRescheduleDialog(task));
+        // Only show reschedule button for manually created tasks (not
+        // template-generated)
+        if (task.manualOverride()) {
+            Button rescheduleBtn = new Button("Reschedule");
+            rescheduleBtn.getStyleClass().add("task-action-button");
+            rescheduleBtn.setPrefWidth(120);
+            rescheduleBtn.setMinWidth(Region.USE_PREF_SIZE);
+            rescheduleBtn.setPrefHeight(34);
+            rescheduleBtn.setMinHeight(Region.USE_PREF_SIZE);
+            rescheduleBtn.setTooltip(new Tooltip("Reschedule to another day"));
+            rescheduleBtn.setOnAction(e -> showRescheduleDialog(task));
 
-        actions.getChildren().add(rescheduleBtn);
+            actions.getChildren().add(rescheduleBtn);
+        }
 
         card.getChildren().addAll(roomName, assigneeBox, dueDateText, statusBadge, actions);
 
@@ -430,22 +418,10 @@ public class CleaningScheduleController extends Controller {
             return;
         }
 
-        List<CleaningTaskDTO> weekTasks = cleaningScheduleService.getTasksForWeekDTO(session.wgId(),
-                displayedWeekStart);
-
-        int total = weekTasks.size();
-        int completed = (int) weekTasks.stream().filter(CleaningTaskDTO::completed).count();
-        int myTasks = (int) weekTasks.stream()
-                .filter(t -> t.assigneeId() != null && t.assigneeId().equals(session.userId())).count();
-
-        completedTasksText.setText(completed + "/" + total);
-        myTasksCountText.setText(String.valueOf(myTasks));
-    }
-
-    private String truncate(String text, int maxLength) {
-        if (text.length() <= maxLength)
-            return text;
-        return text.substring(0, maxLength - 1) + "...";
+        WeekStatsDTO stats = cleaningScheduleService.getWeekStats(
+                session.wgId(), displayedWeekStart, session.userId());
+        completedTasksText.setText(stats.completedTasks() + "/" + stats.totalTasks());
+        myTasksCountText.setText(String.valueOf(stats.myTasks()));
     }
 
     // Week navigation
@@ -642,6 +618,8 @@ public class CleaningScheduleController extends Controller {
         Dialog<LocalDate> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(weekTitle));
         styleDialog(dialog);
+        dialog.getDialogPane().setMinWidth(360);
+        dialog.getDialogPane().setPrefWidth(360);
         dialog.setTitle("Reschedule Task");
         dialog.setHeaderText("Reschedule \"" + task.roomName() + "\"");
 

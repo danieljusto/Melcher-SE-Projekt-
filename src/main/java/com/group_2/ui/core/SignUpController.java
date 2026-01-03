@@ -4,6 +4,7 @@ import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.service.core.UserService;
 import com.group_2.util.SessionManager;
 
+import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.fxml.FXML;
@@ -36,6 +37,12 @@ public class SignUpController extends Controller {
     private TextField signupEmailField;
     @FXML
     private PasswordField signupPasswordField;
+    @FXML
+    private TextField signupPasswordTextField;
+    @FXML
+    private Button togglePasswordButton;
+
+    private boolean passwordVisible = false;
 
     public SignUpController(UserService userService, SessionManager sessionManager) {
         this.userService = userService;
@@ -43,11 +50,31 @@ public class SignUpController extends Controller {
     }
 
     @FXML
+    public void togglePasswordVisibility() {
+        passwordVisible = !passwordVisible;
+        if (passwordVisible) {
+            signupPasswordTextField.setText(signupPasswordField.getText());
+            signupPasswordField.setVisible(false);
+            signupPasswordField.setManaged(false);
+            signupPasswordTextField.setVisible(true);
+            signupPasswordTextField.setManaged(true);
+            togglePasswordButton.setText("◯");
+        } else {
+            signupPasswordField.setText(signupPasswordTextField.getText());
+            signupPasswordTextField.setVisible(false);
+            signupPasswordTextField.setManaged(false);
+            signupPasswordField.setVisible(true);
+            signupPasswordField.setManaged(true);
+            togglePasswordButton.setText("◉");
+        }
+    }
+
+    @FXML
     public void handleSignup() {
         String name = signupNameField.getText().trim();
         String surname = signupSurnameField.getText().trim();
         String email = signupEmailField.getText().trim();
-        String password = signupPasswordField.getText();
+        String password = passwordVisible ? signupPasswordTextField.getText() : signupPasswordField.getText();
 
         // Validate that all fields are filled
         if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()) {

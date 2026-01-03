@@ -32,7 +32,13 @@
     
     <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
         <Label text="Password" styleClass="field-label"/>
-        <PasswordField fx:id="signupPasswordField" styleClass="text-field"/>
+        <StackPane>
+            <PasswordField fx:id="signupPasswordField" styleClass="text-field, password-field-with-toggle"/>
+            <TextField fx:id="signupPasswordTextField" styleClass="text-field, password-field-with-toggle" visible="false" managed="false"/>
+            <HBox alignment="CENTER_RIGHT" pickOnBounds="false" mouseTransparent="false">
+                <Button fx:id="togglePasswordButton" text="◉" onAction="#togglePasswordVisibility" styleClass="password-toggle-button"/>
+            </HBox>
+        </StackPane>
     </VBox>
 
     <Button text="Sign Up" onAction="#handleSignup" styleClass="success-button"/>

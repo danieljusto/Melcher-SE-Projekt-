@@ -4,6 +4,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.Locale;
 
 /**
@@ -113,5 +114,38 @@ public final class FormatUtils {
             return "";
         }
         return date.format(SHORT_DATE_FORMATTER);
+    }
+
+    // Formats week title like "Week 1, 2026"
+    public static String formatWeekTitle(LocalDate weekStart) {
+        WeekFields weekFields = WeekFields.of(Locale.getDefault());
+        int weekNumber = weekStart.get(weekFields.weekOfWeekBasedYear());
+        int year = weekStart.getYear();
+        return "Week " + weekNumber + ", " + year;
+    }
+
+    // Formats week date range like "January 6 - January 12"
+    public static String formatWeekDateRange(LocalDate weekStart) {
+        LocalDate weekEnd = weekStart.plusDays(6);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d");
+        return weekStart.format(formatter) + " - " + weekEnd.format(formatter);
+    }
+
+    // Truncates a string to maxLength with ellipsis
+    public static String truncate(String text, int maxLength) {
+        if (text == null || text.length() <= maxLength) {
+            return text == null ? "" : text;
+        }
+        return text.substring(0, maxLength - 1) + "...";
+    }
+
+    // Formats day name with number like "Monday, 6"
+    public static String formatDayNameWithNumber(LocalDate date) {
+        if (date == null) {
+            return "";
+        }
+        String dayName = date.getDayOfWeek().toString().substring(0, 1)
+                + date.getDayOfWeek().toString().substring(1).toLowerCase();
+        return dayName + ", " + date.getDayOfMonth();
     }
 }

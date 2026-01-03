@@ -562,6 +562,34 @@
     -fx-text-fill: white;
 }
 
+/* ===== PASSWORD TOGGLE BUTTON ===== */
+.password-field-with-toggle {
+    -fx-padding: 12 44 12 16;
+}
+
+.password-toggle-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0 10 10 0;
+    -fx-min-width: 40;
+    -fx-min-height: 40;
+    -fx-max-width: 40;
+    -fx-max-height: 40;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-font-size: 16px;
+    -fx-text-fill: #64748b;
+    -fx-border-color: transparent;
+}
+
+.password-toggle-button:hover {
+    -fx-background-color: rgba(99, 102, 241, 0.1);
+    -fx-text-fill: #6366f1;
+}
+
+.password-toggle-button:pressed {
+    -fx-background-color: rgba(99, 102, 241, 0.2);
+}
+
 /* ===== LIST ITEMS ===== */
 .list-item {
     -fx-background-color: #f8fafc;
@@ -750,7 +778,7 @@
     -fx-background-color: #94a3b8;
 }
 
-.scroll-pane.transactions-scroll > .viewport {
+.scroll-pane.transactions-scroll>.viewport {
     -fx-background-color: transparent;
 }
 

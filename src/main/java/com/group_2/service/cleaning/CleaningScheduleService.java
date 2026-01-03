@@ -10,6 +10,7 @@ import com.group_2.model.cleaning.RoomAssignmentQueue;
 import com.group_2.dto.cleaning.CleaningMapper;
 import com.group_2.dto.cleaning.CleaningTaskDTO;
 import com.group_2.dto.cleaning.CleaningTaskTemplateDTO;
+import com.group_2.dto.cleaning.WeekStatsDTO;
 import com.group_2.dto.core.CoreMapper;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.repository.UserRepository;
@@ -111,6 +112,18 @@ public class CleaningScheduleService {
 
     public List<CleaningTask> getUserTasksForCurrentWeek(User user) {
         return cleaningTaskRepository.findByAssigneeAndWeekStartDate(user, getCurrentWeekStart());
+    }
+
+    // Calculates statistics for a week's cleaning schedule
+    @Transactional
+    public WeekStatsDTO getWeekStats(Long wgId, LocalDate weekStart, Long currentUserId) {
+        List<CleaningTaskDTO> weekTasks = getTasksForWeekDTO(wgId, weekStart);
+        int total = weekTasks.size();
+        int completed = (int) weekTasks.stream().filter(CleaningTaskDTO::completed).count();
+        int myTasks = (int) weekTasks.stream()
+                .filter(t -> t.isAssignedTo(currentUserId))
+                .count();
+        return new WeekStatsDTO(total, completed, myTasks);
     }
 
     // ========== Task Generation Methods ==========

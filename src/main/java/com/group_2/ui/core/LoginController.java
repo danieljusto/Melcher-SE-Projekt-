@@ -4,6 +4,7 @@ import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.service.core.UserService;
 import com.group_2.util.SessionManager;
 
+import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.fxml.FXML;
@@ -30,6 +31,12 @@ public class LoginController extends Controller {
     private TextField emailField;
     @FXML
     private PasswordField passwordField;
+    @FXML
+    private TextField passwordTextField;
+    @FXML
+    private Button togglePasswordButton;
+
+    private boolean passwordVisible = false;
 
     public LoginController(UserService userService, SessionManager sessionManager) {
         this.userService = userService;
@@ -37,9 +44,29 @@ public class LoginController extends Controller {
     }
 
     @FXML
+    public void togglePasswordVisibility() {
+        passwordVisible = !passwordVisible;
+        if (passwordVisible) {
+            passwordTextField.setText(passwordField.getText());
+            passwordField.setVisible(false);
+            passwordField.setManaged(false);
+            passwordTextField.setVisible(true);
+            passwordTextField.setManaged(true);
+            togglePasswordButton.setText("◯");
+        } else {
+            passwordField.setText(passwordTextField.getText());
+            passwordTextField.setVisible(false);
+            passwordTextField.setManaged(false);
+            passwordField.setVisible(true);
+            passwordField.setManaged(true);
+            togglePasswordButton.setText("◉");
+        }
+    }
+
+    @FXML
     public void handleLogin() {
         String email = emailField.getText();
-        String password = passwordField.getText();
+        String password = passwordVisible ? passwordTextField.getText() : passwordField.getText();
 
         Optional<UserSummaryDTO> user = userService.authenticateSummary(email, password);
         if (user.isPresent()) {

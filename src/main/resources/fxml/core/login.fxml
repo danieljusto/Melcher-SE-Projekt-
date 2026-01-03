@@ -7,15 +7,28 @@
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.group_2.ui.core.LoginController"
-      spacing="20"
+      spacing="15"
       alignment="CENTER"
       styleClass="root-pane"
       stylesheets="@/css/styles.css">
 
     <Text text="Welcome Back" styleClass="title-text"/>
 
-    <TextField fx:id="emailField" promptText="Email" styleClass="text-field" onAction="#handleLogin"/>
-    <PasswordField fx:id="passwordField" promptText="Password" styleClass="text-field" onAction="#handleLogin"/>
+    <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
+        <Label text="Email" styleClass="field-label"/>
+        <TextField fx:id="emailField" styleClass="text-field" onAction="#handleLogin"/>
+    </VBox>
+    
+    <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
+        <Label text="Password" styleClass="field-label"/>
+        <StackPane>
+            <PasswordField fx:id="passwordField" promptText="Password" styleClass="text-field, password-field-with-toggle" onAction="#handleLogin"/>
+            <TextField fx:id="passwordTextField" promptText="Password" styleClass="text-field, password-field-with-toggle" onAction="#handleLogin" visible="false" managed="false"/>
+            <HBox alignment="CENTER_RIGHT" pickOnBounds="false" mouseTransparent="false">
+                <Button fx:id="togglePasswordButton" text="◉" onAction="#togglePasswordVisibility" styleClass="password-toggle-button"/>
+            </HBox>
+        </StackPane>
+    </VBox>
 
     <Button text="Login" onAction="#handleLogin" styleClass="success-button"/>
     

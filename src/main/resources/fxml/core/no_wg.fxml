@@ -69,9 +69,9 @@
                                     styleClass="primary-button" style="-fx-padding: 6 12; -fx-font-size: 12px;"/>
                         </HBox>
 
-                        <ScrollPane fx:id="roomScrollPane" fitToWidth="true" prefHeight="200" maxHeight="300"
-                                    styleClass="modern-scroll-pane">
-                            <VBox fx:id="roomFieldsContainer" spacing="10">
+                        <ScrollPane fx:id="roomScrollPane" fitToWidth="true" minHeight="120" prefHeight="200" maxHeight="300"
+                                    styleClass="modern-scroll-pane" VBox.vgrow="ALWAYS">
+                            <VBox fx:id="roomFieldsContainer" spacing="10" style="-fx-padding: 5;">
                                 <!-- Room fields will be added here dynamically -->
                             </VBox>
                         </ScrollPane>

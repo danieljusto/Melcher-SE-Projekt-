@@ -592,11 +592,14 @@ public class TemplateEditorController extends Controller {
 
         hasUnsavedChanges = false;
 
+        // Capture scene reference before showing alert
+        javafx.scene.Scene currentScene = headerTitle.getScene();
+
         showSuccessAlert("Template Applied", "The template has been saved and applied to the schedule.",
                 getOwnerWindow(headerTitle));
 
         // Navigate back to cleaning schedule to show the result
-        loadScene(headerTitle.getScene(), "/cleaning/cleaning_schedule.fxml");
+        loadScene(currentScene, "/cleaning/cleaning_schedule.fxml");
     }
 
     @FXML
