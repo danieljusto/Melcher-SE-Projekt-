@@ -59,12 +59,18 @@ Zentrale Template-Verwaltung hinzugefügt:
 
 ## 🔴 Kritische Fälle (noch offen)
 
-### 1. CleaningScheduleController (753 Zeilen)
+### ~~1. CleaningScheduleController (753 → 747 Zeilen)~~ ✅ ABGESCHLOSSEN
 
-| Zeilen  | Methode            | Problem                                                             | Empfehlung                   |
-| ------- | ------------------ | ------------------------------------------------------------------- | ---------------------------- |
-| 106-160 | `createDayCell()`  | Logik zum Bestimmen welche Tasks an welchem Tag fällig (Z. 150-158) | In `CleaningScheduleService` |
-| 162-205 | `createTaskPill()` | "myTask"-Bestimmung (Z. 168)                                        | In DTO oder Service          |
+| Zeilen  | Methode            | Problem                                                             | Änderung                                                      |
+| ------- | ------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 106-160 | `createDayCell()`  | Logik zum Bestimmen welche Tasks an welchem Tag fällig (Z. 150-158) | ✅ Ausgelagert nach `CleaningScheduleService.getTasksForDay()` |
+| 162-205 | `createTaskPill()` | "myTask"-Bestimmung (Z. 168)                                        | ✅ Bereits über `CleaningTaskDTO.isAssignedTo()` gelöst        |
+
+**Neue Komponenten:**
+- `CleaningScheduleService.getTasksForDay(weekTasks, day)` - Filtert Tasks nach Tag
+- `StringUtils.getInitial(String)` - Zentralisierte Initial-Extraktion
+- `StringUtils.pluralize(count, singular, plural)` - Pluralisierung
+- `CleaningTaskDTO.getAssigneeInitial()` nutzt jetzt `StringUtils.getInitial()`
 
 ---
 
@@ -167,22 +173,25 @@ Zentrale Template-Verwaltung hinzugefügt:
 - ✅ `WeekStatsDTO` für Statistik-Daten erstellt
 - ✅ `WorkingTemplateDTO` für Template-Editor erstellt
 
-### Priorität 1 (NEU): `SplitValidationService` erstellen
+### Priorität 1: `SplitValidationService` erstellen
 - ~175 Zeilen Code-Duplikation in 3 Controllern entfernen
 - Betroffen: `TransactionDialogController`, `TransactionHistoryController`, `StandingOrdersDialogController`
 
-### Priorität 2: `StringUtils.getInitial()` hinzufügen
-- 5x verwendet in verschiedenen Controllern
-- Einfache Utility-Methode
+### ~~Priorität 2: `StringUtils.getInitial()` hinzufügen~~ ✅ ERLEDIGT
+- ✅ `StringUtils` Utility-Klasse erstellt
+- ✅ `getInitial(String)` und `getInitial(String, String fallback)` implementiert
+- ✅ `pluralize(count, singular, plural)` und `pluralizeWord()` implementiert
+- ✅ `CleaningTaskDTO.getAssigneeInitial()` nutzt jetzt `StringUtils.getInitial()`
 
-### Priorität 3: `FormatUtils.pluralize(count, singular, plural)` hinzufügen
+### Priorität 3: StringUtils.pluralize() in Controllern anwenden
 - 4x verwendet
-- Vereinheitlicht Textausgabe
+- Methode existiert, muss noch in betroffenen Controllern angewendet werden
+- Betroffen: Settings, Shopping, Cleaning, Transactions
 
-### Priorität 4: `CleaningScheduleController` weiter aufspalten
-- Separate `CleaningCalendarBuilder`-Klasse für UI-Aufbau erstellen
-- Controller auf reine Koordination reduzieren
-- *Teilweise erledigt: Stats-Berechnung und Formatierung ausgelagert*
+### ~~Priorität 4: `CleaningScheduleController` weiter aufspalten~~ ✅ ERLEDIGT
+- ✅ `getTasksForDay()` in Service ausgelagert
+- ✅ `isAssignedTo()` bereits im DTO
+- ✅ Stats-Berechnung und Formatierung ausgelagert
 
 ### Priorität 5: `TransactionDialogState` erweitern
 - Split-Validierung dorthin verlagern
@@ -197,8 +206,9 @@ Zentrale Template-Verwaltung hinzugefügt:
 - [x] `WorkingTemplateDTO` für Template-Editor ✅
 - [x] `WeekStatsDTO` und Service-Methode für Statistiken ✅
 - [x] `CleaningTemplateService` erweitern (manualOverride-Support) ✅
+- [x] `StringUtils` mit `getInitial()` und `pluralize()` ✅
+- [x] `CleaningScheduleController` vollständig refactored ✅
+- [x] `CleaningScheduleService.getTasksForDay()` für Tages-Filterung ✅
 - [ ] `SplitValidationService` implementieren
-- [ ] `StringUtils.getInitial()` erstellen
-- [ ] `FormatUtils.pluralize()` erstellen
-- [ ] `CleaningCalendarBuilder` extrahieren
+- [ ] `StringUtils.pluralize()` in Settings/Shopping/Transactions anwenden
 - [ ] `TransactionDialogState` um Validierung erweitern

@@ -1,5 +1,7 @@
 package com.group_2.dto.cleaning;
 
+import com.group_2.util.StringUtils;
+
 import java.time.LocalDate;
 
 /**
@@ -23,10 +25,7 @@ public record CleaningTaskDTO(
 
         // Gets the initial letter of the assignee's name or "?" if none
         public String getAssigneeInitial() {
-                if (assigneeName == null || assigneeName.isEmpty()) {
-                        return "?";
-                }
-                return assigneeName.substring(0, 1).toUpperCase();
+                return StringUtils.getInitial(assigneeName);
         }
 
         // Gets the effective due date, falling back to weekStartDate if dueDate is null

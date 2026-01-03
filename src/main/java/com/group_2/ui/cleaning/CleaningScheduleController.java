@@ -145,17 +145,11 @@ public class CleaningScheduleController extends Controller {
 
         cell.getChildren().add(header);
 
-        // Show tasks that are due on this specific day
-        for (CleaningTaskDTO task : weekTasks) {
-            LocalDate taskDueDate = task.dueDate();
-            // If no dueDate is set, fall back to weekStartDate
-            if (taskDueDate == null) {
-                taskDueDate = task.weekStartDate();
-            }
-            if (taskDueDate.equals(day)) {
-                HBox taskPill = createTaskPill(task, currentUserId);
-                cell.getChildren().add(taskPill);
-            }
+        // Show tasks that are due on this specific day - filtering delegated to service
+        List<CleaningTaskDTO> dayTasks = cleaningScheduleService.getTasksForDay(weekTasks, day);
+        for (CleaningTaskDTO task : dayTasks) {
+            HBox taskPill = createTaskPill(task, currentUserId);
+            cell.getChildren().add(taskPill);
         }
 
         return cell;

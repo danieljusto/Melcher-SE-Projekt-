@@ -126,6 +126,22 @@ public class CleaningScheduleService {
         return new WeekStatsDTO(total, completed, myTasks);
     }
 
+    /**
+     * Gets tasks that are due on a specific day.
+     * Uses the task's dueDate, falling back to weekStartDate if dueDate is null.
+     * This centralizes the day-filtering logic that was previously in the
+     * controller.
+     *
+     * @param weekTasks list of tasks for the week
+     * @param day       the specific day to filter for
+     * @return list of tasks due on the specified day
+     */
+    public List<CleaningTaskDTO> getTasksForDay(List<CleaningTaskDTO> weekTasks, LocalDate day) {
+        return weekTasks.stream()
+                .filter(task -> task.getEffectiveDueDate().equals(day))
+                .toList();
+    }
+
     // ========== Task Generation Methods ==========
 
     @Transactional
