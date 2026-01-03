@@ -105,7 +105,9 @@ public class CleaningScheduleController extends Controller {
 
     private VBox createDayCell(LocalDate day, List<CleaningTaskDTO> weekTasks, LocalDate today, Long currentUserId) {
         VBox cell = new VBox(8);
-        cell.setPrefWidth(130);
+        cell.setMinWidth(130);
+        cell.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(cell, Priority.ALWAYS);
         cell.setMinHeight(150);
         cell.setPadding(new Insets(10));
 

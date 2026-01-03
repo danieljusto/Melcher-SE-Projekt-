@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 /**
  * Controller for the profile view. Shows user information and provides
  * logout/leave WG functionality.
@@ -113,6 +115,10 @@ public class ProfileController extends Controller {
         Dialog<String[]> dialog = new Dialog<>();
         dialog.setTitle("Edit Name");
         dialog.setHeaderText("Update your name");
+        dialog.getDialogPane().getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
@@ -171,6 +177,10 @@ public class ProfileController extends Controller {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Edit Email");
         dialog.setHeaderText("Update your email address");
+        dialog.getDialogPane().getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);

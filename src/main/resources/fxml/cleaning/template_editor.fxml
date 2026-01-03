@@ -25,7 +25,7 @@
                     </ImageView>
                 </graphic>
             </Button>
-            <Text text="Transaction History" styleClass="navbar-title"/>
+            <Text text="Cleaning Schedule Template" styleClass="navbar-title"/>
             <Region HBox.hgrow="ALWAYS"/>
         </HBox>
     </top>
@@ -89,37 +89,37 @@
                 <HBox spacing="10" alignment="TOP_LEFT">
 
                     <!-- Monday -->
-                    <VBox fx:id="mondayColumn" spacing="10" styleClass="template-day-card" prefWidth="160" minWidth="160">
+                    <VBox fx:id="mondayColumn" spacing="10" styleClass="template-day-card" minWidth="160" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                         <Text text="Monday" styleClass="template-day-title"/>
                     </VBox>
 
                     <!-- Tuesday -->
-                    <VBox fx:id="tuesdayColumn" spacing="10" styleClass="template-day-card" prefWidth="160" minWidth="160">
+                    <VBox fx:id="tuesdayColumn" spacing="10" styleClass="template-day-card" minWidth="160" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                         <Text text="Tuesday" styleClass="template-day-title"/>
                     </VBox>
 
                     <!-- Wednesday -->
-                    <VBox fx:id="wednesdayColumn" spacing="10" styleClass="template-day-card" prefWidth="160" minWidth="160">
+                    <VBox fx:id="wednesdayColumn" spacing="10" styleClass="template-day-card" minWidth="160" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                         <Text text="Wednesday" styleClass="template-day-title"/>
                     </VBox>
 
                     <!-- Thursday -->
-                    <VBox fx:id="thursdayColumn" spacing="10" styleClass="template-day-card" prefWidth="160" minWidth="160">
+                    <VBox fx:id="thursdayColumn" spacing="10" styleClass="template-day-card" minWidth="160" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                         <Text text="Thursday" styleClass="template-day-title"/>
                     </VBox>
 
                     <!-- Friday -->
-                    <VBox fx:id="fridayColumn" spacing="10" styleClass="template-day-card" prefWidth="160" minWidth="160">
+                    <VBox fx:id="fridayColumn" spacing="10" styleClass="template-day-card" minWidth="160" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                         <Text text="Friday" styleClass="template-day-title"/>
                     </VBox>
 
                     <!-- Saturday -->
-                    <VBox fx:id="saturdayColumn" spacing="10" styleClass="template-day-card-muted" prefWidth="160" minWidth="160">
+                    <VBox fx:id="saturdayColumn" spacing="10" styleClass="template-day-card-muted" minWidth="160" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                         <Text text="Saturday" styleClass="template-day-title-muted"/>
                     </VBox>
 
                     <!-- Sunday -->
-                    <VBox fx:id="sundayColumn" spacing="10" styleClass="template-day-card-muted" prefWidth="160" minWidth="160">
+                    <VBox fx:id="sundayColumn" spacing="10" styleClass="template-day-card-muted" minWidth="160" maxWidth="Infinity" HBox.hgrow="ALWAYS">
                         <Text text="Sunday" styleClass="template-day-title-muted"/>
                     </VBox>
 
