@@ -15,11 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Core boundary service for household setup operations. Provides a facade over
- * domain-specific services (e.g., cleaning) so that core UI controllers don't
- * depend on feature domain services directly.
- */
+// Boundary service for household setup (facade over cleaning domain)
 @Service
 public class HouseholdSetupService {
 

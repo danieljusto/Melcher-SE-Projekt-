@@ -7,11 +7,7 @@ import java.time.temporal.TemporalAdjusters;
 
 import com.group_2.model.cleaning.RecurrenceInterval;
 
-/**
- * Utility class for monthly schedule calculations.
- * Provides methods for date resolution and base week calculations
- * used by template editors and schedule generation.
- */
+// Utility for monthly schedule calculations and base week computations
 public final class MonthlyScheduleUtil {
     private MonthlyScheduleUtil() {
     }
@@ -40,13 +36,7 @@ public final class MonthlyScheduleUtil {
         return targetMonth.lengthOfMonth();
     }
 
-    /**
-     * Calculates the Monday of the week containing the given date.
-     * This is used as the base week start for templates.
-     *
-     * @param date the date to find the week start for
-     * @return the Monday of the same week as the given date
-     */
+    // Calculates the Monday of the week containing the given date
     public static LocalDate calculateBaseWeekStart(LocalDate date) {
         if (date == null) {
             return null;
@@ -54,18 +44,7 @@ public final class MonthlyScheduleUtil {
         return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     }
 
-    /**
-     * Resolves the base date for a template based on interval and selection.
-     * For monthly intervals with "last day" selected, finds a month with 31 days.
-     * Otherwise, uses the selected date or falls back to the provided default.
-     *
-     * @param selectedDate    the user-selected date (may be null for last-day
-     *                        monthly)
-     * @param interval        the recurrence interval
-     * @param lastDaySelected whether "last day of month" is selected
-     * @param fallbackDate    fallback date if selectedDate is null
-     * @return the resolved base date, or null if resolution fails
-     */
+    // For monthly with "last day" selected, finds a month with 31 days
     public static LocalDate resolveBaseDate(LocalDate selectedDate, RecurrenceInterval interval,
             boolean lastDaySelected, LocalDate fallbackDate) {
         if (interval == RecurrenceInterval.MONTHLY && lastDaySelected) {
@@ -75,19 +54,7 @@ public final class MonthlyScheduleUtil {
         return selectedDate != null ? selectedDate : fallbackDate;
     }
 
-    /**
-     * Finds a base date representing the 31st day of a month.
-     * Searches up to 12 months ahead from the reference date to find a month
-     * with 31 days (e.g., January, March, May, July, August, October, December).
-     * 
-     * This is used for templates scheduled for "last day of month" to ensure
-     * the template's base date is on day 31, which will then be adjusted
-     * during task generation based on the actual month length.
-     *
-     * @param reference the reference date to start searching from
-     * @return a date on the 31st of a month, or the last day of the reference month
-     *         if none found
-     */
+    // Sucht ab reference bis zu 12 Monate voraus nach einem Monat mit 31 Tagen
     public static LocalDate resolveLastDayBaseDate(LocalDate reference) {
         LocalDate base = reference.withDayOfMonth(1);
         for (int i = 0; i < 12; i++) {
@@ -100,15 +67,7 @@ public final class MonthlyScheduleUtil {
         return reference.withDayOfMonth(Math.min(31, reference.lengthOfMonth()));
     }
 
-    /**
-     * Checks if a date picker is required for the given interval and last-day
-     * selection.
-     * Returns true unless it's a monthly interval with "last day" selected.
-     *
-     * @param interval        the recurrence interval
-     * @param lastDaySelected whether "last day of month" is selected
-     * @return true if a date needs to be selected, false if not required
-     */
+    // True if date selection is required (except for monthly + last day)
     public static boolean isDateRequired(RecurrenceInterval interval, boolean lastDaySelected) {
         return interval != RecurrenceInterval.MONTHLY || !lastDaySelected;
     }

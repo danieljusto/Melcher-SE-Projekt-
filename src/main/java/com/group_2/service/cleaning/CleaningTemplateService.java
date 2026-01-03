@@ -26,10 +26,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Service for managing cleaning task templates. Handles template CRUD, sync
- * operations, and recurrence calculations.
- */
+// Service for cleaning task templates (CRUD, sync, recurrence calculations)
 @Service
 public class CleaningTemplateService {
 

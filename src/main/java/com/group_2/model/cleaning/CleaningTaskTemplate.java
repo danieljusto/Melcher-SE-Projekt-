@@ -6,12 +6,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
-/**
- * Entity representing a template for cleaning tasks. Templates define a default
- * weekly schedule that can be applied to new weeks. Each template specifies a
- * room and day of week. Assignees are determined by the RoomAssignmentQueue for
- * round-robin distribution.
- */
+// Template for cleaning tasks - defines room, weekday and recurrence interval
+// Assignments are distributed via RoomAssignmentQueue round-robin
 @Entity
 @Table(name = "task_template")
 public class CleaningTaskTemplate {

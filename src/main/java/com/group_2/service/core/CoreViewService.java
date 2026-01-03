@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * View-facing facade for core domain data. Provides DTOs for UI controllers.
- */
+// Facade for core domain data, provides DTOs for UI controllers
 @Service
 public class CoreViewService {
 
@@ -65,7 +63,8 @@ public class CoreViewService {
         }
         List<UserSummaryDTO> members = coreMapper.toUserSummaries(userRepository.findByWgId(wg.getId()));
         List<RoomDTO> rooms = cleaningMapper.toRoomDTOList(roomRepository.findByWgId(wg.getId()));
-        return new WgDetailsViewDTO(wg.getId(), wg.getName(), wg.getInviteCode(), coreMapper.toUserSummary(wg.getAdmin()),
+        return new WgDetailsViewDTO(wg.getId(), wg.getName(), wg.getInviteCode(),
+                coreMapper.toUserSummary(wg.getAdmin()),
                 members, rooms);
     }
 

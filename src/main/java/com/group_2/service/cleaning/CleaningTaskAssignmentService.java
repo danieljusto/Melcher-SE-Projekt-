@@ -21,10 +21,7 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
-/**
- * Service for task assignment and reassignment operations. Handles assigning
- * tasks to users and managing membership changes.
- */
+// Service for task assignment and reassignment on membership changes
 @Service
 public class CleaningTaskAssignmentService {
 

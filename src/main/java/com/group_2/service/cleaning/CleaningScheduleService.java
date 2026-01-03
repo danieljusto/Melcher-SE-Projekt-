@@ -31,14 +31,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Coordinating service for cleaning schedules and tasks.
- * Delegates specialized operations to focused services:
- * - QueueManagementService: Queue operations
- * - CleaningTemplateService: Template CRUD and sync
- * - CleaningTaskAssignmentService: Task assignment
- * - CleaningTaskLifecycleService: Task status and CRUD
- */
+// Coordinating service for cleaning schedules and tasks
+// Delegates to: QueueManagementService, CleaningTemplateService, CleaningTaskAssignmentService, CleaningTaskLifecycleService
 @Service
 public class CleaningScheduleService {
 
@@ -126,16 +120,8 @@ public class CleaningScheduleService {
         return new WeekStatsDTO(total, completed, myTasks);
     }
 
-    /**
-     * Gets tasks that are due on a specific day.
-     * Uses the task's dueDate, falling back to weekStartDate if dueDate is null.
-     * This centralizes the day-filtering logic that was previously in the
-     * controller.
-     *
-     * @param weekTasks list of tasks for the week
-     * @param day       the specific day to filter for
-     * @return list of tasks due on the specified day
-     */
+    // Returns tasks due on a specific day
+    // Uses dueDate, falls back to weekStartDate if dueDate is null
     public List<CleaningTaskDTO> getTasksForDay(List<CleaningTaskDTO> weekTasks, LocalDate day) {
         return weekTasks.stream()
                 .filter(task -> task.getEffectiveDueDate().equals(day))

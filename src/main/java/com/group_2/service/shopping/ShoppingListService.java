@@ -18,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Service for managing shopping lists and their items.
- */
+// Service for shopping lists and their items
 @Service
 @Transactional
 public class ShoppingListService {

@@ -8,10 +8,7 @@ import java.time.LocalDateTime;
 
 import com.group_2.util.MonthlyScheduleUtil;
 
-/**
- * Entity representing a standing order (recurring transaction). Stores the
- * template for transactions that will be created automatically.
- */
+// Standing order - stores template for recurring transactions
 @Entity
 @Table(name = "standing_orders", indexes = { @Index(name = "idx_standing_order_wg", columnList = "wg_id"),
         @Index(name = "idx_standing_order_next_exec", columnList = "next_execution") })
@@ -187,15 +184,15 @@ public class StandingOrder {
 
     public void advanceNextExecution() {
         switch (frequency) {
-        case WEEKLY:
-            this.nextExecution = this.nextExecution.plusWeeks(1);
-            break;
-        case BI_WEEKLY:
-            this.nextExecution = this.nextExecution.plusWeeks(2);
-            break;
-        case MONTHLY:
-            this.nextExecution = calculateNextMonthlyExecution(this.nextExecution.plusMonths(1));
-            break;
+            case WEEKLY:
+                this.nextExecution = this.nextExecution.plusWeeks(1);
+                break;
+            case BI_WEEKLY:
+                this.nextExecution = this.nextExecution.plusWeeks(2);
+                break;
+            case MONTHLY:
+                this.nextExecution = calculateNextMonthlyExecution(this.nextExecution.plusMonths(1));
+                break;
         }
     }
 

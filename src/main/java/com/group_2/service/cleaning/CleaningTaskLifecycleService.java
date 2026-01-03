@@ -18,10 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Service for cleaning task lifecycle operations (status changes and CRUD).
- * Handles task completion, rescheduling, and deletion.
- */
+// Service for task lifecycle operations (status changes, rescheduling, deletion)
 @Service
 public class CleaningTaskLifecycleService {
 

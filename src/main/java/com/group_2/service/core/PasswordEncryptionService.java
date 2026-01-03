@@ -3,10 +3,7 @@ package com.group_2.service.core;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for secure password hashing and verification using BCrypt. BCrypt
- * automatically handles salting and is resistant to rainbow table attacks.
- */
+// BCrypt-based password encryption (automatic salting)
 @Service
 public class PasswordEncryptionService {
 

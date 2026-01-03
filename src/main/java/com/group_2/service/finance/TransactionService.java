@@ -207,20 +207,7 @@ public class TransactionService {
         return allBalances.values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
-    /**
-     * Update an existing transaction Only the creditor (creator) can update a
-     * transaction
-     * 
-     * @param transactionId ID of the transaction to update
-     * @param currentUserId ID of the user attempting the update (must be the
-     *                      creditor)
-     * @param newCreditorId New creditor ID (can be different from current)
-     * @param debtorIds     Updated list of debtor IDs
-     * @param percentages   Updated percentages (null for equal split)
-     * @param totalAmount   Updated total amount
-     * @param description   Updated description
-     * @return The updated transaction
-     */
+    // Nur der Creator kann bearbeiten
     @Transactional
     public Transaction updateTransaction(Long transactionId, Long currentUserId, Long newCreditorId,
             List<Long> debtorIds, List<Double> percentages, Double totalAmount, String description) {

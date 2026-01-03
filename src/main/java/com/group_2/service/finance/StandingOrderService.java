@@ -436,9 +436,7 @@ public class StandingOrderService {
         }
     }
 
-    /**
-     * Check if a user is a debtor in a standing order
-     */
+    // Checks if a user is a debtor in a standing order
     private boolean isUserDebtor(StandingOrder order, Long userId) {
         String debtorData = order.getDebtorData();
         if (debtorData == null || debtorData.isEmpty()) {

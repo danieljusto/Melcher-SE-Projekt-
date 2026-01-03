@@ -11,9 +11,7 @@ import com.group_2.model.cleaning.Room;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Repository for CleaningTask entities.
- */
+// Repository for CleaningTask entities
 @Repository
 public interface CleaningTaskRepository extends JpaRepository<CleaningTask, Long> {
 

@@ -15,10 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Service for managing round-robin room assignment queues. Handles queue
- * creation, synchronization with WG members, and next assignee selection.
- */
+// Service for round-robin room assignment queues
 @Service
 public class QueueManagementService {
 
