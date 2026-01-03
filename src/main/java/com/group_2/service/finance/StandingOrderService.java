@@ -410,16 +410,58 @@ public class StandingOrderService {
 
     // Called when WG member leaves
     @Transactional
-    public void deactivateStandingOrdersForUser(Long userId) {
+    public void deactivateStandingOrdersForUser(Long userId, Long wgId) {
         if (userId == null) {
             return;
         }
-        List<StandingOrder> orders = standingOrderRepository.findActiveByCreditorOrCreator(userId);
-        for (StandingOrder order : orders) {
+
+        // Deactivate orders where user is creditor or creator
+        List<StandingOrder> creditorOrCreatorOrders = standingOrderRepository.findActiveByCreditorOrCreator(userId);
+        for (StandingOrder order : creditorOrCreatorOrders) {
             order.setIsActive(false);
             standingOrderRepository.save(order);
-            log.info("Deactivated standing order {} for departing user {}", order.getId(), userId);
+            log.info("Deactivated standing order {} (user {} was creditor/creator)", order.getId(), userId);
         }
+
+        // Also deactivate orders where user is a debtor
+        if (wgId != null) {
+            List<StandingOrder> wgOrders = standingOrderRepository.findActiveByWgId(wgId);
+            for (StandingOrder order : wgOrders) {
+                if (isUserDebtor(order, userId)) {
+                    order.setIsActive(false);
+                    standingOrderRepository.save(order);
+                    log.info("Deactivated standing order {} (user {} was debtor)", order.getId(), userId);
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if a user is a debtor in a standing order
+     */
+    private boolean isUserDebtor(StandingOrder order, Long userId) {
+        String debtorData = order.getDebtorData();
+        if (debtorData == null || debtorData.isEmpty()) {
+            return false;
+        }
+
+        try {
+            List<Map<String, Object>> debtorList = objectMapper.readValue(debtorData,
+                    new TypeReference<List<Map<String, Object>>>() {
+                    });
+
+            for (Map<String, Object> entry : debtorList) {
+                Object userIdObj = entry.get("userId");
+                Long debtorId = userIdObj instanceof Number ? ((Number) userIdObj).longValue()
+                        : Long.parseLong(userIdObj.toString());
+                if (debtorId.equals(userId)) {
+                    return true;
+                }
+            }
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse debtor data for order {}: {}", order.getId(), e.getMessage());
+        }
+        return false;
     }
 
     // Called when entire WG is deleted - deletes all standing orders and

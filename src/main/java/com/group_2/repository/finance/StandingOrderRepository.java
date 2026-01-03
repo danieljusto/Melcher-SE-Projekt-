@@ -30,5 +30,8 @@ public interface StandingOrderRepository extends JpaRepository<StandingOrder, Lo
     @Query("SELECT s FROM StandingOrder s WHERE s.isActive = true AND (s.creditor.id = :userId OR s.createdBy.id = :userId)")
     List<StandingOrder> findActiveByCreditorOrCreator(@Param("userId") Long userId);
 
+    @Query("SELECT s FROM StandingOrder s WHERE s.isActive = true AND s.wg.id = :wgId")
+    List<StandingOrder> findActiveByWgId(@Param("wgId") Long wgId);
+
     void deleteByWg(WG wg);
 }

@@ -212,8 +212,9 @@ public class WGService {
         // remove from shared)
         shoppingListService.cleanupListsForDepartingUser(userId);
 
-        // Deactivate all standing orders where the user is creditor or creator
-        standingOrderService.deactivateStandingOrdersForUser(userId);
+        // Deactivate all standing orders where the user is involved (creditor, creator,
+        // or debtor)
+        standingOrderService.deactivateStandingOrdersForUser(userId, wgId);
 
         wg.removeMitbewohner(userToRemove);
 
