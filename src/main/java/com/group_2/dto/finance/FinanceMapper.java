@@ -2,6 +2,10 @@ package com.group_2.dto.finance;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.group_2.dto.finance.TransactionSplitViewDTO;
+import com.group_2.dto.finance.TransactionViewDTO;
+import com.group_2.dto.finance.BalanceViewDTO;
+import com.group_2.dto.finance.StandingOrderViewDTO;
 import com.group_2.dto.core.CoreMapper;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.model.User;
