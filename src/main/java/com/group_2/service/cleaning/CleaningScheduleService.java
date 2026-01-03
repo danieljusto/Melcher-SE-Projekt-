@@ -145,14 +145,19 @@ public class CleaningScheduleService {
             return new ArrayList<>();
         }
 
-        Set<Long> existingRoomIds = new HashSet<>();
+        // Only consider non-manual (template-generated) tasks when checking for
+        // existing rooms
+        // Manual tasks should not block template task generation
+        Set<Long> existingTemplateRoomIds = new HashSet<>();
         for (CleaningTask task : existingTasks) {
-            existingRoomIds.add(task.getRoom().getId());
+            if (!task.isManualOverride()) {
+                existingTemplateRoomIds.add(task.getRoom().getId());
+            }
         }
 
         List<CleaningTask> newTasks = new ArrayList<>();
         for (CleaningTaskTemplate template : templates) {
-            if (existingRoomIds.contains(template.getRoom().getId())) {
+            if (existingTemplateRoomIds.contains(template.getRoom().getId())) {
                 continue;
             }
             if (!templateService.shouldGenerateTaskThisWeek(template, weekStart)) {

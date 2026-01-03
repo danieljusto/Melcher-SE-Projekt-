@@ -1,30 +1,70 @@
 # Controller Audit: Auslagerbare Logik
 
 **Datum:** 2026-01-02  
+**Letzte Aktualisierung:** 2026-01-03  
 **Analysierte Controller:** 15
 
 ---
 
-## 🔴 Kritische Fälle (sofort auslagern empfohlen)
+## ✅ Abgeschlossene Refactorings
 
-### 1. CleaningScheduleController (776 Zeilen)
+### CleaningScheduleController (776 → 753 Zeilen)
 
-| Zeilen  | Methode               | Problem                                                             | Empfehlung                          |
-| ------- | --------------------- | ------------------------------------------------------------------- | ----------------------------------- |
-| 83-96   | `updateWeekDisplay()` | Wochennummer-Berechnung, Datumsformatierung                         | `DateFormatterService` oder Utility |
-| 117-171 | `createDayCell()`     | Logik zum Bestimmen welche Tasks an welchem Tag fällig (Z. 159-168) | In `CleaningScheduleService`        |
-| 173-216 | `createTaskPill()`    | "myTask"-Bestimmung (Z. 179)                                        | In DTO oder Service                 |
-| 436-443 | `updateStats()`       | Stream-Berechnung für Statistiken                                   | In Service                          |
+| Ursprüngliche Zeilen | Methode               | Änderung                                                                                                     |
+| -------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 83-96                | `updateWeekDisplay()` | ✅ Ausgelagert nach `FormatUtils.formatWeekTitle()` und `FormatUtils.formatWeekDateRange()`                   |
+| 436-443              | `updateStats()`       | ✅ Statistik-Berechnung ausgelagert nach `CleaningScheduleService.calculateWeekStats()`, nutzt `WeekStatsDTO` |
+
+**Neue Komponenten:**
+- `FormatUtils.formatWeekTitle(LocalDate)` - Formatiert Wochennummer und Jahr
+- `FormatUtils.formatWeekDateRange(LocalDate)` - Formatiert Datumsbereich
+- `FormatUtils.truncate(String, int)` - Kürzt Strings mit Ellipsen
+- `FormatUtils.formatDayNameWithNumber(LocalDate)` - Formatiert Tag mit Nummer
+- `WeekStatsDTO` - Record für Wochen-Statistiken (totalTasks, completedTasks, myTasks)
+- `CleaningScheduleService.calculateWeekStats()` - Berechnet Statistiken im Service
 
 ---
 
-### 2. TemplateEditorController (661 Zeilen)
+### TemplateEditorController (661 → 602 Zeilen)
 
-| Zeilen  | Methode                                         | Problem                                     | Empfehlung                         |
-| ------- | ----------------------------------------------- | ------------------------------------------- | ---------------------------------- |
-| 82-105  | `WorkingTemplate` (innere Klasse)               | Datums-Berechnungen mit `TemporalAdjusters` | In Service                         |
-| 426-444 | `resolveBaseDate()`, `resolveLastDayBaseDate()` | Komplexe "letzter Tag des Monats"-Logik     | `MonthlyScheduleUtil` oder Service |
-| 446-449 | `getBaseDateForTemplate()`                      | Basiswoche-Berechnung                       | In Service                         |
+| Ursprüngliche Zeilen | Methode                                         | Änderung                                                                    |
+| -------------------- | ----------------------------------------------- | --------------------------------------------------------------------------- |
+| 82-105               | `WorkingTemplate` (innere Klasse)               | ✅ Ersetzt durch `WorkingTemplateDTO` mit Datums-Berechnungslogik            |
+| 426-444              | `resolveBaseDate()`, `resolveLastDayBaseDate()` | ✅ Ausgelagert nach `MonthlyScheduleUtil`                                    |
+| 446-449              | `getBaseDateForTemplate()`                      | ✅ Ausgelagert nach `WorkingTemplateDTO.calculateBaseDate()` und Util-Klasse |
+
+**Neue Komponenten:**
+- `WorkingTemplateDTO` - Mutable DTO für Template-Editor mit:
+  - `calculateBaseDate(LocalDate)` - Berechnet Basisdatum aus Wochenstart
+  - `updateFromBaseDate(LocalDate)` - Aktualisiert dayOfWeek und baseWeekStart
+- `MonthlyScheduleUtil` - Utility-Klasse mit:
+  - `resolveMonthlyDate()` - Löst monatliche Termine auf
+  - `getEffectiveDay()` - Behandelt Februar und kurze Monate
+  - `calculateBaseWeekStart()` - Berechnet Montag der Woche
+  - `resolveBaseDate()` - Löst Basisdatum basierend auf Interval
+  - `resolveLastDayBaseDate()` - Findet Tag 31 eines Monats
+  - `isDateRequired()` - Prüft ob DatePicker benötigt wird
+
+---
+
+### CleaningTemplateService (erweitert auf 304 Zeilen)
+
+Zentrale Template-Verwaltung hinzugefügt:
+- `shouldGenerateTaskThisWeek()` - Recurrence-Berechnung für alle Intervalle
+- `resolveDueDateForWeek()` - Datums-Auflösung inkl. monatlicher Logik
+- `syncCurrentWeekWithTemplate()` - Template-Synchronisation mit Aufgaben
+- Unterstützung für `manualOverride`-Flag zur Erhaltung manueller Tasks
+
+---
+
+## 🔴 Kritische Fälle (noch offen)
+
+### 1. CleaningScheduleController (753 Zeilen)
+
+| Zeilen  | Methode            | Problem                                                             | Empfehlung                   |
+| ------- | ------------------ | ------------------------------------------------------------------- | ---------------------------- |
+| 106-160 | `createDayCell()`  | Logik zum Bestimmen welche Tasks an welchem Tag fällig (Z. 150-158) | In `CleaningScheduleService` |
+| 162-205 | `createTaskPill()` | "myTask"-Bestimmung (Z. 168)                                        | In DTO oder Service          |
 
 ---
 
@@ -109,19 +149,25 @@
 
 ## 📊 Wiederkehrende Muster
 
-| Muster                                               | Häufigkeit | Betroffene Controller                                                   |
-| ---------------------------------------------------- | ---------- | ----------------------------------------------------------------------- |
-| Initiale-Berechnung (`substring(0,1).toUpperCase()`) | 5x         | MainScreen, Profile, Settings, Cleaning, Template                       |
-| Pluralisierung ("1 item" vs "2 items")               | 4x         | Settings, Shopping, Cleaning, Transactions                              |
-| Split-Validierung (Percentage/Amount Summe prüfen)   | 3x         | TransactionDialog, TransactionHistory, StandingOrders                   |
-| Datumsformatierung/Berechnung                        | 4x         | CleaningSchedule, TemplateEditor, TransactionHistory, TransactionDialog |
-| Permission-Prüfung im Controller                     | 3x         | Settings, Profile, ShoppingList                                         |
+| Muster                                               | Häufigkeit | Status                                             | Betroffene Controller                                                       |
+| ---------------------------------------------------- | ---------- | -------------------------------------------------- | --------------------------------------------------------------------------- |
+| Initiale-Berechnung (`substring(0,1).toUpperCase()`) | 5x         | 🟡 Offen                                            | MainScreen, Profile, Settings, Cleaning, Template                           |
+| Pluralisierung ("1 item" vs "2 items")               | 4x         | 🟡 Offen                                            | Settings, Shopping, Cleaning, Transactions                                  |
+| Split-Validierung (Percentage/Amount Summe prüfen)   | 3x         | 🟡 Offen                                            | TransactionDialog, TransactionHistory, StandingOrders                       |
+| Datumsformatierung/Berechnung                        | ~~4x~~ 2x  | ✅ Teilweise (`FormatUtils`, `MonthlyScheduleUtil`) | ~~CleaningSchedule, TemplateEditor~~, TransactionHistory, TransactionDialog |
+| Permission-Prüfung im Controller                     | 3x         | 🟡 Offen                                            | Settings, Profile, ShoppingList                                             |
 
 ---
 
 ## 🎯 Empfohlene Refactoring-Priorität
 
-### Priorität 1: `SplitValidationService` erstellen
+### ~~Priorität 1: `DateFormatterService`/`MonthlyScheduleUtil` erstellen~~ ✅ ERLEDIGT
+- ✅ `FormatUtils` mit Datums- und Währungsformatierung erstellt
+- ✅ `MonthlyScheduleUtil` mit monatlicher Terminauflösung erstellt
+- ✅ `WeekStatsDTO` für Statistik-Daten erstellt
+- ✅ `WorkingTemplateDTO` für Template-Editor erstellt
+
+### Priorität 1 (NEU): `SplitValidationService` erstellen
 - ~175 Zeilen Code-Duplikation in 3 Controllern entfernen
 - Betroffen: `TransactionDialogController`, `TransactionHistoryController`, `StandingOrdersDialogController`
 
@@ -133,9 +179,10 @@
 - 4x verwendet
 - Vereinheitlicht Textausgabe
 
-### Priorität 4: `CleaningScheduleController` aufspalten
+### Priorität 4: `CleaningScheduleController` weiter aufspalten
 - Separate `CleaningCalendarBuilder`-Klasse für UI-Aufbau erstellen
 - Controller auf reine Koordination reduzieren
+- *Teilweise erledigt: Stats-Berechnung und Formatierung ausgelagert*
 
 ### Priorität 5: `TransactionDialogState` erweitern
 - Split-Validierung dorthin verlagern
@@ -145,6 +192,11 @@
 
 ## Nächste Schritte
 
+- [x] `FormatUtils` mit Datums- und Währungsformatierung ✅
+- [x] `MonthlyScheduleUtil` für monatliche Terminberechnung ✅
+- [x] `WorkingTemplateDTO` für Template-Editor ✅
+- [x] `WeekStatsDTO` und Service-Methode für Statistiken ✅
+- [x] `CleaningTemplateService` erweitern (manualOverride-Support) ✅
 - [ ] `SplitValidationService` implementieren
 - [ ] `StringUtils.getInitial()` erstellen
 - [ ] `FormatUtils.pluralize()` erstellen

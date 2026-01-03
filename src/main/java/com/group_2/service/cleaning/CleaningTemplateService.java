@@ -142,10 +142,10 @@ public class CleaningTemplateService {
         template.setRecurrenceInterval(newInterval);
         template.setBaseWeekStart(currentWeekStart);
 
-        // Update due dates for current and future tasks
+        // Update due dates for current and future tasks (preserve manual task dates)
         List<CleaningTask> tasks = cleaningTaskRepository.findByWgAndRoom(template.getWg(), template.getRoom());
         for (CleaningTask task : tasks) {
-            if (!task.getWeekStartDate().isBefore(currentWeekStart)) {
+            if (!task.getWeekStartDate().isBefore(currentWeekStart) && !task.isManualOverride()) {
                 LocalDate newDueDate = resolveDueDateForWeek(template, task.getWeekStartDate());
                 if (newDueDate != null) {
                     task.setDueDate(newDueDate);
@@ -160,10 +160,10 @@ public class CleaningTemplateService {
     public void deleteTemplate(CleaningTaskTemplate template) {
         LocalDate currentWeekStart = getCurrentWeekStart();
 
-        // Delete only current and future tasks for this room
+        // Delete only current and future tasks for this room (preserve manual tasks)
         List<CleaningTask> allTasks = cleaningTaskRepository.findByWgAndRoom(template.getWg(), template.getRoom());
         for (CleaningTask task : allTasks) {
-            if (!task.getWeekStartDate().isBefore(currentWeekStart)) {
+            if (!task.getWeekStartDate().isBefore(currentWeekStart) && !task.isManualOverride()) {
                 cleaningTaskRepository.delete(task);
             }
         }

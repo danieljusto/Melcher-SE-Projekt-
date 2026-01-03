@@ -224,7 +224,7 @@ public class CleaningScheduleController extends Controller {
         // Create a card for each task
         for (CleaningTaskDTO task : weekTasks) {
             VBox card = createRoomCard(task, session.userId());
-            card.setPrefWidth(300);
+            card.setPrefWidth(340);
             roomCardsContainer.getChildren().add(card);
         }
     }
@@ -333,7 +333,7 @@ public class CleaningScheduleController extends Controller {
         if (isMyTask) {
             Button reassignBtn = new Button("Reassign");
             reassignBtn.getStyleClass().add("task-action-button");
-            reassignBtn.setPrefWidth(80);
+            reassignBtn.setPrefWidth(90);
             reassignBtn.setMinWidth(Region.USE_PREF_SIZE);
             reassignBtn.setPrefHeight(34);
             reassignBtn.setMinHeight(Region.USE_PREF_SIZE);
@@ -361,10 +361,10 @@ public class CleaningScheduleController extends Controller {
 
         // Return the wrapper as a VBox containing the StackPane
         VBox wrapper = new VBox(cardWrapper);
-        wrapper.setPrefWidth(300);
+        wrapper.setPrefWidth(340);
         wrapper.setMinWidth(Region.USE_PREF_SIZE);
 
-        cardWrapper.setPrefWidth(300);
+        cardWrapper.setPrefWidth(340);
         cardWrapper.setMinWidth(Region.USE_PREF_SIZE);
 
         card.setMaxWidth(Double.MAX_VALUE);

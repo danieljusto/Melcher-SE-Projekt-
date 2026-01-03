@@ -2,6 +2,7 @@ package com.group_2.ui.cleaning;
 
 import com.group_2.dto.cleaning.CleaningTaskTemplateDTO;
 import com.group_2.dto.cleaning.RoomDTO;
+import com.group_2.dto.cleaning.WorkingTemplateDTO;
 import com.group_2.dto.core.UserSessionDTO;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.model.cleaning.RecurrenceInterval;
@@ -10,7 +11,7 @@ import com.group_2.service.core.HouseholdSetupService;
 import com.group_2.ui.core.Controller;
 import com.group_2.ui.core.MainScreenController;
 import com.group_2.ui.core.NavbarController;
-import com.group_2.ui.finance.TransactionsController;
+import com.group_2.util.MonthlyScheduleUtil;
 import com.group_2.util.SessionManager;
 
 import javafx.event.ActionEvent;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,38 +71,8 @@ public class TemplateEditorController extends Controller {
     private VBox sundayColumn;
 
     // Working copy of templates (not saved until Save & Apply)
-    private List<WorkingTemplate> workingTemplates = new ArrayList<>();
+    private List<WorkingTemplateDTO> workingTemplates = new ArrayList<>();
     private boolean hasUnsavedChanges = false;
-
-    /**
-     * A working copy of a template that may or may not exist in the database yet.
-     * Uses IDs and names instead of entity references to avoid JPA entity leaking
-     * into UI.
-     */
-    private static class WorkingTemplate {
-        Long roomId;
-        String roomName;
-        int dayOfWeek;
-        RecurrenceInterval recurrenceInterval;
-        LocalDate baseWeekStart;
-        boolean isDeleted = false; // marks for deletion on save
-
-        WorkingTemplate(CleaningTaskTemplateDTO dto) {
-            this.roomId = dto.roomId();
-            this.roomName = dto.roomName();
-            this.dayOfWeek = dto.dayOfWeek();
-            this.recurrenceInterval = dto.recurrenceInterval();
-            this.baseWeekStart = dto.baseWeekStart();
-        }
-
-        WorkingTemplate(Long roomId, String roomName, LocalDate baseDate, RecurrenceInterval interval) {
-            this.roomId = roomId;
-            this.roomName = roomName;
-            this.dayOfWeek = baseDate.getDayOfWeek().getValue();
-            this.recurrenceInterval = interval;
-            this.baseWeekStart = baseDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        }
-    }
 
     public TemplateEditorController(CleaningScheduleService cleaningScheduleService,
             HouseholdSetupService householdSetupService, SessionManager sessionManager) {
@@ -136,7 +106,7 @@ public class TemplateEditorController extends Controller {
         List<CleaningTaskTemplateDTO> templates = cleaningScheduleService.getTemplatesDTO(session.wgId());
 
         for (CleaningTaskTemplateDTO dto : templates) {
-            workingTemplates.add(new WorkingTemplate(dto));
+            workingTemplates.add(new WorkingTemplateDTO(dto));
         }
     }
 
@@ -151,14 +121,14 @@ public class TemplateEditorController extends Controller {
             return;
 
         // Count non-deleted templates
-        long count = workingTemplates.stream().filter(t -> !t.isDeleted).count();
+        long count = workingTemplates.stream().filter(t -> !t.isDeleted()).count();
         templateCountText.setText(String.valueOf(count));
 
-        for (WorkingTemplate template : workingTemplates) {
-            if (template.isDeleted)
+        for (WorkingTemplateDTO template : workingTemplates) {
+            if (template.isDeleted())
                 continue;
 
-            VBox column = getColumnForDay(template.dayOfWeek);
+            VBox column = getColumnForDay(template.getDayOfWeek());
             if (column != null) {
                 column.getChildren().add(createTemplateCard(template));
             }
@@ -196,13 +166,13 @@ public class TemplateEditorController extends Controller {
         }
     }
 
-    private VBox createTemplateCard(WorkingTemplate template) {
+    private VBox createTemplateCard(WorkingTemplateDTO template) {
         VBox card = new VBox(8);
         card.setPadding(new Insets(12));
         card.getStyleClass().add("template-card");
 
         // Room name header
-        Text roomName = new Text(template.roomName);
+        Text roomName = new Text(template.getRoomName());
         roomName.getStyleClass().add("template-room-name");
         roomName.setWrappingWidth(130);
 
@@ -218,7 +188,7 @@ public class TemplateEditorController extends Controller {
         frequencyRow.setAlignment(Pos.CENTER_LEFT);
         Text freqIcon = new Text("");
         freqIcon.getStyleClass().add("template-icon");
-        Text freqText = new Text(template.recurrenceInterval.getDisplayName());
+        Text freqText = new Text(template.getRecurrenceInterval().getDisplayName());
         freqText.getStyleClass().add("template-info-text");
         frequencyRow.getChildren().addAll(freqIcon, freqText);
 
@@ -270,7 +240,7 @@ public class TemplateEditorController extends Controller {
             return;
         }
 
-        Dialog<WorkingTemplate> dialog = new Dialog<>();
+        Dialog<WorkingTemplateDTO> dialog = new Dialog<>();
         configureDialogOwner(dialog, getOwnerWindow(headerTitle));
         styleDialog(dialog);
         dialog.setTitle("Add Template Task");
@@ -315,7 +285,7 @@ public class TemplateEditorController extends Controller {
         DatePicker datePicker = new DatePicker();
         datePicker.setPromptText("Select...");
         datePicker.getStyleClass().add("dialog-field");
-        datePicker.setPrefWidth(130);
+        datePicker.setPrefWidth(160);
 
         Text dateLabel = new Text("Day");
         dateLabel.getStyleClass().add("dialog-label-secondary");
@@ -369,12 +339,12 @@ public class TemplateEditorController extends Controller {
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == addButtonType) {
                 RoomDTO selectedRoom = roomCombo.getValue();
-                LocalDate baseDate = resolveBaseDate(datePicker.getValue(), freqCombo.getValue(),
+                LocalDate baseDate = MonthlyScheduleUtil.resolveBaseDate(datePicker.getValue(), freqCombo.getValue(),
                         lastDayCheckbox.isSelected(), null);
                 if (baseDate == null) {
                     return null;
                 }
-                return new WorkingTemplate(selectedRoom.id(), selectedRoom.name(), baseDate, freqCombo.getValue());
+                return new WorkingTemplateDTO(selectedRoom.id(), selectedRoom.name(), baseDate, freqCombo.getValue());
             }
             return null;
         });
@@ -388,7 +358,7 @@ public class TemplateEditorController extends Controller {
 
     private void updateAddButton(Dialog<?> dialog, ButtonType btnType, ComboBox<RoomDTO> room,
             ComboBox<RecurrenceInterval> freq, DatePicker datePicker, CheckBox lastDayCheckbox) {
-        boolean needsDate = isDateRequired(freq.getValue(), lastDayCheckbox.isSelected());
+        boolean needsDate = MonthlyScheduleUtil.isDateRequired(freq.getValue(), lastDayCheckbox.isSelected());
         boolean hasDate = datePicker.getValue() != null;
         dialog.getDialogPane().lookupButton(btnType)
                 .setDisable(room.getValue() == null || (needsDate && !hasDate));
@@ -396,13 +366,9 @@ public class TemplateEditorController extends Controller {
 
     private void updateSaveButton(Dialog<?> dialog, ButtonType btnType, ComboBox<RecurrenceInterval> freq,
             DatePicker datePicker, CheckBox lastDayCheckbox) {
-        boolean needsDate = isDateRequired(freq.getValue(), lastDayCheckbox.isSelected());
+        boolean needsDate = MonthlyScheduleUtil.isDateRequired(freq.getValue(), lastDayCheckbox.isSelected());
         boolean hasDate = datePicker.getValue() != null;
         dialog.getDialogPane().lookupButton(btnType).setDisable(needsDate && !hasDate);
-    }
-
-    private boolean isDateRequired(RecurrenceInterval interval, boolean lastDaySelected) {
-        return interval != RecurrenceInterval.MONTHLY || !lastDaySelected;
     }
 
     private void updateScheduleControls(RecurrenceInterval interval, Text dateLabel, VBox dateBox,
@@ -423,33 +389,7 @@ public class TemplateEditorController extends Controller {
         dateBox.setManaged(showDate);
     }
 
-    private LocalDate resolveBaseDate(LocalDate selectedDate, RecurrenceInterval interval, boolean lastDaySelected,
-            LocalDate fallbackDate) {
-        if (interval == RecurrenceInterval.MONTHLY && lastDaySelected) {
-            LocalDate reference = fallbackDate != null ? fallbackDate : LocalDate.now();
-            return resolveLastDayBaseDate(reference);
-        }
-        return selectedDate != null ? selectedDate : fallbackDate;
-    }
-
-    private LocalDate resolveLastDayBaseDate(LocalDate reference) {
-        LocalDate base = reference.withDayOfMonth(1);
-        for (int i = 0; i < 12; i++) {
-            LocalDate month = base.plusMonths(i);
-            if (month.lengthOfMonth() >= 31) {
-                return month.withDayOfMonth(31);
-            }
-        }
-        return reference.withDayOfMonth(Math.min(31, reference.lengthOfMonth()));
-    }
-
-    private LocalDate getBaseDateForTemplate(WorkingTemplate template) {
-        LocalDate baseWeek = template.baseWeekStart != null ? template.baseWeekStart
-                : cleaningScheduleService.getCurrentWeekStart();
-        return baseWeek.plusDays(template.dayOfWeek - 1);
-    }
-
-    private void showEditTemplateDialog(WorkingTemplate template) {
+    private void showEditTemplateDialog(WorkingTemplateDTO template) {
         UserSessionDTO session = sessionManager.getCurrentUserSession().orElse(null);
         if (session == null || session.wgId() == null)
             return;
@@ -458,7 +398,7 @@ public class TemplateEditorController extends Controller {
         configureDialogOwner(dialog, getOwnerWindow(headerTitle));
         styleDialog(dialog);
         dialog.setTitle("Edit Template");
-        dialog.setHeaderText("Edit \"" + template.roomName + "\"");
+        dialog.setHeaderText("Edit \"" + template.getRoomName() + "\"");
         dialog.getDialogPane().setPrefWidth(520);
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
@@ -467,12 +407,12 @@ public class TemplateEditorController extends Controller {
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
 
-        LocalDate initialBaseDate = getBaseDateForTemplate(template);
+        LocalDate initialBaseDate = template.calculateBaseDate(cleaningScheduleService.getCurrentWeekStart());
 
         // Frequency selection
         ComboBox<RecurrenceInterval> freqCombo = new ComboBox<>();
         freqCombo.getItems().addAll(RecurrenceInterval.values());
-        freqCombo.setValue(template.recurrenceInterval);
+        freqCombo.setValue(template.getRecurrenceInterval());
         freqCombo.getStyleClass().add("dialog-field");
         freqCombo.setPrefWidth(150);
 
@@ -485,7 +425,7 @@ public class TemplateEditorController extends Controller {
         datePicker.setPromptText("Select...");
         datePicker.getStyleClass().add("dialog-field");
         datePicker.setValue(initialBaseDate);
-        datePicker.setPrefWidth(130);
+        datePicker.setPrefWidth(160);
 
         Text dateLabel = new Text("Day");
         dateLabel.getStyleClass().add("dialog-label-secondary");
@@ -501,7 +441,7 @@ public class TemplateEditorController extends Controller {
         lastDayBox.setVisible(false);
         lastDayBox.setManaged(false);
 
-        boolean isMonthly = template.recurrenceInterval == RecurrenceInterval.MONTHLY;
+        boolean isMonthly = template.getRecurrenceInterval() == RecurrenceInterval.MONTHLY;
         boolean isLastDay = isMonthly && initialBaseDate.getDayOfMonth() == 31;
         lastDayCheckbox.setSelected(isLastDay);
 
@@ -526,14 +466,13 @@ public class TemplateEditorController extends Controller {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
-                LocalDate baseDate = resolveBaseDate(datePicker.getValue(), freqCombo.getValue(),
+                LocalDate baseDate = MonthlyScheduleUtil.resolveBaseDate(datePicker.getValue(), freqCombo.getValue(),
                         lastDayCheckbox.isSelected(), initialBaseDate);
                 if (baseDate == null) {
                     return null;
                 }
-                template.dayOfWeek = baseDate.getDayOfWeek().getValue();
-                template.baseWeekStart = baseDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-                template.recurrenceInterval = freqCombo.getValue();
+                template.updateFromBaseDate(baseDate);
+                template.setRecurrenceInterval(freqCombo.getValue());
                 hasUnsavedChanges = true;
             }
             return null;
@@ -560,12 +499,12 @@ public class TemplateEditorController extends Controller {
         loadScene(headerTitle.getScene(), "/cleaning/cleaning_schedule.fxml");
     }
 
-    private void deleteTemplate(WorkingTemplate template) {
-        boolean confirmed = showConfirmDialog("Delete Template", "Delete \"" + template.roomName + "\"?",
+    private void deleteTemplate(WorkingTemplateDTO template) {
+        boolean confirmed = showConfirmDialog("Delete Template", "Delete \"" + template.getRoomName() + "\"?",
                 "This change will be applied when you click 'Save & Apply'.", getOwnerWindow(headerTitle));
 
         if (confirmed) {
-            template.isDeleted = true;
+            template.setDeleted(true);
             hasUnsavedChanges = true;
             refreshView();
         }
@@ -583,11 +522,11 @@ public class TemplateEditorController extends Controller {
         cleaningScheduleService.clearTemplates(session.wgId());
 
         // Then, add all non-deleted templates from working copy
-        for (WorkingTemplate wt : workingTemplates) {
-            if (wt.isDeleted)
+        for (WorkingTemplateDTO wt : workingTemplates) {
+            if (wt.isDeleted())
                 continue;
-            cleaningScheduleService.addTemplateByRoomId(session.wgId(), wt.roomId, DayOfWeek.of(wt.dayOfWeek),
-                    wt.recurrenceInterval, wt.baseWeekStart);
+            cleaningScheduleService.addTemplateByRoomId(session.wgId(), wt.getRoomId(), DayOfWeek.of(wt.getDayOfWeek()),
+                    wt.getRecurrenceInterval(), wt.getBaseWeekStart());
         }
 
         hasUnsavedChanges = false;
@@ -613,8 +552,8 @@ public class TemplateEditorController extends Controller {
 
         if (confirmed) {
             // Mark all as deleted
-            for (WorkingTemplate wt : workingTemplates) {
-                wt.isDeleted = true;
+            for (WorkingTemplateDTO wt : workingTemplates) {
+                wt.setDeleted(true);
             }
             hasUnsavedChanges = true;
             refreshView();
