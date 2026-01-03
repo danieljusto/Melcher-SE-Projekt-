@@ -175,7 +175,27 @@ public class WGService {
 
     @Transactional
     public void deleteWG(Long id) {
-        wgRepository.deleteById(id);
+        WG wg = wgRepository.findById(id).orElseThrow(() -> new RuntimeException("WG not found"));
+
+        // Remove WG reference from all members first (to avoid FK constraint on
+        // User.wg)
+        for (User member : wg.getMitbewohner()) {
+            member.setWg(null);
+            userRepository.save(member);
+        }
+
+        // Delete all cleaning-related data (tasks, templates, queues)
+        cleaningScheduleService.deleteAllDataForWg(wg);
+
+        // Delete all finance-related data
+        standingOrderService.deleteAllForWg(wg);
+        // Note: TransactionSplits are deleted via cascade when Transactions are deleted
+
+        // Delete all rooms (WG.rooms has only CascadeType.MERGE, not REMOVE)
+        roomRepository.deleteByWgId(wg.getId());
+
+        // Now delete the WG itself
+        wgRepository.delete(wg);
     }
 
     @Transactional

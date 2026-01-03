@@ -14,4 +14,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByWg(WG wg);
 
     List<Transaction> findByCreditor(User creditor);
+
+    void deleteByWg(WG wg);
 }

@@ -406,6 +406,18 @@ public class CleaningScheduleService {
 
     // ========== Helper Methods ==========
 
+    // Called when entire WG is deleted - deletes all cleaning data for the WG
+    @Transactional
+    public void deleteAllDataForWg(WG wg) {
+        if (wg == null) {
+            return;
+        }
+        // Delete all tasks, templates, and queues
+        cleaningTaskRepository.deleteByWg(wg);
+        templateService.clearTemplates(wg);
+        queueManagementService.deleteQueuesForWg(wg);
+    }
+
     private WG requireWg(Long wgId) {
         if (wgId == null) {
             throw new IllegalArgumentException("WG ID is required");

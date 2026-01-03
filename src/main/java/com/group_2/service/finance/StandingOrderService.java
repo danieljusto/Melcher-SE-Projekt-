@@ -421,4 +421,16 @@ public class StandingOrderService {
             log.info("Deactivated standing order {} for departing user {}", order.getId(), userId);
         }
     }
+
+    // Called when entire WG is deleted - deletes all standing orders and
+    // transactions
+    @Transactional
+    public void deleteAllForWg(WG wg) {
+        if (wg == null) {
+            return;
+        }
+        log.info("Deleting all finance data for WG: {}", wg.getId());
+        standingOrderRepository.deleteByWg(wg);
+        transactionService.deleteAllForWg(wg);
+    }
 }

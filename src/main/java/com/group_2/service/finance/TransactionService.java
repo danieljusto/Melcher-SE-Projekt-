@@ -456,4 +456,15 @@ public class TransactionService {
             throw new RuntimeException(role + " must belong to the same WG");
         }
     }
+
+    // Called when entire WG is deleted - deletes all transactions for the WG
+    // TransactionSplits are deleted via cascade (CascadeType.ALL on
+    // Transaction.splits)
+    @Transactional
+    public void deleteAllForWg(WG wg) {
+        if (wg == null) {
+            return;
+        }
+        transactionRepository.deleteByWg(wg);
+    }
 }
