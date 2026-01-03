@@ -5,6 +5,7 @@ import com.group_2.service.core.UserService;
 import com.group_2.service.finance.StandingOrderService;
 import com.group_2.util.FormatUtils;
 import com.group_2.util.SessionManager;
+import com.group_2.util.SplitValidationHelper;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -428,8 +429,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                         row.getChildren().add(nameText);
                         splitsContainer.getChildren().add(row);
                     }
-                    validationLabel.setText("Equal split");
-                    validationLabel.getStyleClass().add("validation-label-success");
+                    SplitValidationHelper.applySuccessStyling(validationLabel, "Equal split");
                 } else if (currentMode[0].equals("PERCENT")) {
                     for (int i = 0; i < originalDebtorIds.size(); i++) {
                         Long userId = originalDebtorIds.get(i);
@@ -451,30 +451,15 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                         // Live validation listener
                         field.textProperty().addListener((obs, oldVal, newVal) -> {
                             try {
-                                double sum = 0;
+                                java.util.List<Double> values = new java.util.ArrayList<>();
                                 for (TextField f : splitFields.values()) {
-                                    sum += Double.parseDouble(f.getText().replace(",", "."));
+                                    values.add(SplitValidationHelper.parseAmount(f.getText()));
                                 }
-                                double remaining = 100.0 - sum;
-                                validationLabel.getStyleClass().removeAll("validation-label-success",
-                                        "validation-label-error", "validation-label-muted");
-                                if (Math.abs(remaining) < 0.01) {
-                                    validationLabel.getStyleClass().add("validation-label-success");
-                                } else if (remaining < 0) {
-                                    validationLabel.getStyleClass().add("validation-label-error");
-                                } else {
-                                    validationLabel.getStyleClass().add("validation-label-muted");
-                                }
-                                validationLabel
-                                        .setText(String.format("Total: %.1f%% of 100%%\n%.1f%% left", sum, remaining));
-                                if (!validationLabel.getStyleClass().contains("validation-label")) {
-                                    validationLabel.getStyleClass().add("validation-label");
-                                }
+                                SplitValidationHelper.ValidationResult result = SplitValidationHelper
+                                        .validatePercentageSplit(values);
+                                SplitValidationHelper.applyValidationStyling(validationLabel, result);
                             } catch (NumberFormatException ex) {
-                                validationLabel.setText("Invalid number");
-                                validationLabel.getStyleClass().removeAll("validation-label-success",
-                                        "validation-label-muted");
-                                validationLabel.getStyleClass().addAll("validation-label", "validation-label-error");
+                                SplitValidationHelper.applyErrorStyling(validationLabel, "Invalid number");
                             }
                         });
 
@@ -484,18 +469,10 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                         row.getChildren().addAll(nameText, field, percentSign);
                         splitsContainer.getChildren().add(row);
                     }
-                    double sum = originalPercentages.stream().mapToDouble(Double::doubleValue).sum();
-                    double remaining = 100.0 - sum;
-                    validationLabel.getStyleClass().removeAll("validation-label-success", "validation-label-error",
-                            "validation-label-muted");
-                    validationLabel.setText(String.format("Total: %.1f%% of 100%%\n%.1f%% left", sum, remaining));
-                    if (Math.abs(remaining) < 0.01) {
-                        validationLabel.getStyleClass().add("validation-label-success");
-                    } else if (remaining < 0) {
-                        validationLabel.getStyleClass().add("validation-label-error");
-                    } else {
-                        validationLabel.getStyleClass().add("validation-label-muted");
-                    }
+                    // Initial percentage validation
+                    SplitValidationHelper.ValidationResult pctResult = SplitValidationHelper
+                            .validatePercentageSplit(originalPercentages);
+                    SplitValidationHelper.applyValidationStyling(validationLabel, pctResult);
                 } else { // AMOUNT
                     for (int i = 0; i < originalDebtorIds.size(); i++) {
                         Long userId = originalDebtorIds.get(i);
@@ -517,31 +494,16 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
 
                         field.textProperty().addListener((obs, oldVal, newVal) -> {
                             try {
-                                double totalAmt = Double.parseDouble(amountField.getText().replace(",", "."));
-                                double sum = 0;
+                                double totalAmt = SplitValidationHelper.parseAmount(amountField.getText());
+                                java.util.List<Double> values = new java.util.ArrayList<>();
                                 for (TextField f : splitFields.values()) {
-                                    sum += Double.parseDouble(f.getText().replace(",", "."));
+                                    values.add(SplitValidationHelper.parseAmount(f.getText()));
                                 }
-                                double remaining = totalAmt - sum;
-                                validationLabel.getStyleClass().removeAll("validation-label-success",
-                                        "validation-label-error", "validation-label-muted");
-                                if (Math.abs(remaining) < 0.01) {
-                                    validationLabel.getStyleClass().add("validation-label-success");
-                                } else if (remaining < 0) {
-                                    validationLabel.getStyleClass().add("validation-label-error");
-                                } else {
-                                    validationLabel.getStyleClass().add("validation-label-muted");
-                                }
-                                validationLabel.setText(String.format("Total: %.2f € of %.2f €\n%.2f € left", sum,
-                                        totalAmt, remaining));
-                                if (!validationLabel.getStyleClass().contains("validation-label")) {
-                                    validationLabel.getStyleClass().add("validation-label");
-                                }
+                                SplitValidationHelper.ValidationResult result = SplitValidationHelper
+                                        .validateAmountSplit(values, totalAmt);
+                                SplitValidationHelper.applyValidationStyling(validationLabel, result);
                             } catch (NumberFormatException ex) {
-                                validationLabel.setText("Invalid number");
-                                validationLabel.getStyleClass().removeAll("validation-label-success",
-                                        "validation-label-muted");
-                                validationLabel.getStyleClass().addAll("validation-label", "validation-label-error");
+                                SplitValidationHelper.applyErrorStyling(validationLabel, "Invalid number");
                             }
                         });
 
@@ -551,24 +513,16 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
                         row.getChildren().addAll(nameText, field, euroSign);
                         splitsContainer.getChildren().add(row);
                     }
-                    double sum = 0;
+                    // Initial amount validation
+                    java.util.List<Double> initialAmtValues = new java.util.ArrayList<>();
                     for (int i = 0; i < originalDebtorIds.size(); i++) {
                         Double pct = i < originalPercentages.size() ? originalPercentages.get(i)
                                 : 100.0 / originalDebtorIds.size();
-                        sum += (pct / 100.0) * total;
+                        initialAmtValues.add((pct / 100.0) * total);
                     }
-                    double remaining = total - sum;
-                    validationLabel.getStyleClass().removeAll("validation-label-success", "validation-label-error",
-                            "validation-label-muted");
-                    validationLabel
-                            .setText(String.format("Total: %.2f € of %.2f €\n%.2f € left", sum, total, remaining));
-                    if (Math.abs(remaining) < 0.01) {
-                        validationLabel.getStyleClass().add("validation-label-success");
-                    } else if (remaining < 0) {
-                        validationLabel.getStyleClass().add("validation-label-error");
-                    } else {
-                        validationLabel.getStyleClass().add("validation-label-muted");
-                    }
+                    SplitValidationHelper.ValidationResult amtResult = SplitValidationHelper
+                            .validateAmountSplit(initialAmtValues, total);
+                    SplitValidationHelper.applyValidationStyling(validationLabel, amtResult);
                 }
             };
 

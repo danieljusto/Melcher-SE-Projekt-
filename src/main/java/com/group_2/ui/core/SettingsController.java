@@ -8,6 +8,7 @@ import com.group_2.service.core.CoreViewService;
 import com.group_2.service.core.HouseholdSetupService;
 import com.group_2.service.core.WGService;
 import com.group_2.util.SessionManager;
+import com.group_2.util.StringUtils;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -126,7 +127,7 @@ public class SettingsController extends Controller {
     private void loadRooms(java.util.List<RoomDTO> rooms, boolean isAdmin) {
         roomsBox.getChildren().clear();
         if (!rooms.isEmpty()) {
-            roomCountText.setText(rooms.size() + " room" + (rooms.size() > 1 ? "s" : "") + " in your WG");
+            roomCountText.setText(StringUtils.pluralize(rooms.size(), "room", "rooms") + " in your WG");
             for (RoomDTO room : rooms) {
                 roomsBox.getChildren().add(createRoomListItem(room, isAdmin));
             }
@@ -142,7 +143,7 @@ public class SettingsController extends Controller {
         membersBox.getChildren().clear();
         if (members != null && !members.isEmpty()) {
             memberCountText.setText(
-                    members.size() + " member" + (members.size() > 1 ? "s" : "") + " in your WG");
+                    StringUtils.pluralize(members.size(), "member", "members") + " in your WG");
             for (UserSummaryDTO user : members) {
                 membersBox.getChildren().add(createMemberListItem(user));
             }
@@ -201,9 +202,7 @@ public class SettingsController extends Controller {
 
         StackPane avatar = new StackPane();
         avatar.getStyleClass().add("avatar");
-        String initial = user.name() != null && !user.name().isEmpty()
-                ? user.name().substring(0, 1).toUpperCase()
-                : "?";
+        String initial = StringUtils.getInitial(user.name());
         Text avatarText = new Text(initial);
         avatarText.getStyleClass().add("avatar-text");
         avatar.getChildren().add(avatarText);

@@ -114,22 +114,23 @@ Zentrale Template-Verwaltung hinzugefügt:
 
 ## 🟡 Mittlere Fälle (sollten ausgelagert werden)
 
-### 7. SettingsController (456 Zeilen)
+### ~~7. SettingsController (456 → 452 Zeilen)~~ ✅ TEILWEISE
 
-| Zeilen  | Methode                | Problem                                | Empfehlung                   |
-| ------- | ---------------------- | -------------------------------------- | ---------------------------- |
-| 451-454 | `isCurrentUserAdmin()` | Permission-Check Logik                 | `PermissionService` oder DTO |
-| 126-139 | `loadRooms()`          | Pluralisierung ("1 room" vs "2 rooms") | `FormatUtils.pluralize()`    |
-| 141-152 | `loadMembers()`        | Dieselbe Pluralisierung                | `FormatUtils.pluralize()`    |
+| Zeilen  | Methode                | Problem                                | Änderung                                 |
+| ------- | ---------------------- | -------------------------------------- | ---------------------------------------- |
+| 451-454 | `isCurrentUserAdmin()` | Permission-Check Logik                 | 🟡 Offen - `PermissionService` oder DTO   |
+| 126-139 | `loadRooms()`          | Pluralisierung ("1 room" vs "2 rooms") | ✅ Nutzt jetzt `StringUtils.pluralize()`  |
+| 141-152 | `loadMembers()`        | Dieselbe Pluralisierung                | ✅ Nutzt jetzt `StringUtils.pluralize()`  |
+| 204-206 | Avatar-Initial         | `substring(0,1).toUpperCase()`         | ✅ Nutzt jetzt `StringUtils.getInitial()` |
 
 ---
 
-### 8. ProfileController (267 Zeilen)
+### ~~8. ProfileController (277 → 275 Zeilen)~~ ✅ TEILWEISE
 
-| Zeilen  | Methode             | Problem                                                               | Empfehlung                 |
-| ------- | ------------------- | --------------------------------------------------------------------- | -------------------------- |
-| 89-91   | Initial-Berechnung  | `name.substring(0,1).toUpperCase()` - kommt in **5 Controllern** vor! | `StringUtils.getInitial()` |
-| 201-203 | `handleEditEmail()` | Email-Validierung (`email.contains("@")`)                             | `ValidationService`        |
+| Zeilen  | Methode             | Problem                                                               | Änderung                                 |
+| ------- | ------------------- | --------------------------------------------------------------------- | ---------------------------------------- |
+| 89-91   | Initial-Berechnung  | `name.substring(0,1).toUpperCase()` - kommt in **5 Controllern** vor! | ✅ Nutzt jetzt `StringUtils.getInitial()` |
+| 201-203 | `handleEditEmail()` | Email-Validierung (`email.contains("@")`)                             | 🟡 Offen - `ValidationService`            |
 
 ---
 
@@ -157,9 +158,9 @@ Zentrale Template-Verwaltung hinzugefügt:
 
 | Muster                                               | Häufigkeit | Status                                             | Betroffene Controller                                                       |
 | ---------------------------------------------------- | ---------- | -------------------------------------------------- | --------------------------------------------------------------------------- |
-| Initiale-Berechnung (`substring(0,1).toUpperCase()`) | 5x         | 🟡 Offen                                            | MainScreen, Profile, Settings, Cleaning, Template                           |
-| Pluralisierung ("1 item" vs "2 items")               | 4x         | 🟡 Offen                                            | Settings, Shopping, Cleaning, Transactions                                  |
-| Split-Validierung (Percentage/Amount Summe prüfen)   | 3x         | 🟡 Offen                                            | TransactionDialog, TransactionHistory, StandingOrders                       |
+| Initiale-Berechnung (`substring(0,1).toUpperCase()`) | ~~5x~~ 0x  | ✅ Erledigt (`StringUtils.getInitial()`)            | ~~MainScreen, Profile, Settings, Cleaning, Shopping~~                       |
+| Pluralisierung ("1 item" vs "2 items")               | ~~4x~~ 2x  | ✅ Teilweise (`StringUtils.pluralize()`)            | ~~Settings, Transactions~~, Shopping (?), Cleaning (?)                      |
+| Split-Validierung (Percentage/Amount Summe prüfen)   | ~~3x~~ 0x  | ✅ Erledigt (`SplitValidationHelper`)               | ~~TransactionDialog, TransactionHistory, StandingOrders~~                   |
 | Datumsformatierung/Berechnung                        | ~~4x~~ 2x  | ✅ Teilweise (`FormatUtils`, `MonthlyScheduleUtil`) | ~~CleaningSchedule, TemplateEditor~~, TransactionHistory, TransactionDialog |
 | Permission-Prüfung im Controller                     | 3x         | 🟡 Offen                                            | Settings, Profile, ShoppingList                                             |
 
@@ -173,9 +174,16 @@ Zentrale Template-Verwaltung hinzugefügt:
 - ✅ `WeekStatsDTO` für Statistik-Daten erstellt
 - ✅ `WorkingTemplateDTO` für Template-Editor erstellt
 
-### Priorität 1: `SplitValidationService` erstellen
-- ~175 Zeilen Code-Duplikation in 3 Controllern entfernen
-- Betroffen: `TransactionDialogController`, `TransactionHistoryController`, `StandingOrdersDialogController`
+### ~~Priorität 1: `SplitValidationHelper` erstellen~~ ✅ ERLEDIGT
+- ✅ `SplitValidationHelper` Utility-Klasse erstellt mit:
+  - `validatePercentageSplit()` - Validiert ob Prozentsumme = 100%
+  - `validateAmountSplit()` - Validiert ob Betragssumme = Gesamtbetrag
+  - `applyValidationStyling()` - Wendet CSS-Klassen basierend auf Status an
+  - `applySuccessStyling()`, `applyErrorStyling()`, `applyMutedStyling()` - Direkte Styling-Methoden
+  - `parseAmount()` - Einheitliches Parsing mit Komma-Unterstützung
+  - `calculateEqualSplit()`, `formatEqualSplitMessage()` - Helper für Gleichverteilung
+- ✅ Refactored: `TransactionDialogController`, `TransactionHistoryController`, `StandingOrdersDialogController`
+- **~120 Zeilen duplizierten Code entfernt**
 
 ### ~~Priorität 2: `StringUtils.getInitial()` hinzufügen~~ ✅ ERLEDIGT
 - ✅ `StringUtils` Utility-Klasse erstellt
@@ -183,19 +191,19 @@ Zentrale Template-Verwaltung hinzugefügt:
 - ✅ `pluralize(count, singular, plural)` und `pluralizeWord()` implementiert
 - ✅ `CleaningTaskDTO.getAssigneeInitial()` nutzt jetzt `StringUtils.getInitial()`
 
-### Priorität 3: StringUtils.pluralize() in Controllern anwenden
-- 4x verwendet
-- Methode existiert, muss noch in betroffenen Controllern angewendet werden
-- Betroffen: Settings, Shopping, Cleaning, Transactions
+### ~~Priorität 3: StringUtils.pluralize() in Controllern anwenden~~ ✅ TEILWEISE ERLEDIGT
+- ✅ `SettingsController` - `loadRooms()` und `loadMembers()` nutzen `StringUtils.pluralize()`
+- ✅ `TransactionDialogController` - `updateStep2Summary()` nutzt `StringUtils.pluralize()`
+- 2x verbleibend: Shopping, Cleaning (falls noch vorhanden)
 
 ### ~~Priorität 4: `CleaningScheduleController` weiter aufspalten~~ ✅ ERLEDIGT
 - ✅ `getTasksForDay()` in Service ausgelagert
 - ✅ `isAssignedTo()` bereits im DTO
 - ✅ Stats-Berechnung und Formatierung ausgelagert
 
-### Priorität 5: `TransactionDialogState` erweitern
-- Split-Validierung dorthin verlagern
-- State-Klasse bereits vorhanden, nur erweitern
+### ~~Priorität 5: `TransactionDialogState` erweitern~~ 🟡 OPTIONAL
+- Split-Validierung jetzt in `SplitValidationHelper` (UI-fokussiert)
+- State-Klasse könnte für Business-Validierung erweitert werden
 
 ---
 
@@ -209,6 +217,10 @@ Zentrale Template-Verwaltung hinzugefügt:
 - [x] `StringUtils` mit `getInitial()` und `pluralize()` ✅
 - [x] `CleaningScheduleController` vollständig refactored ✅
 - [x] `CleaningScheduleService.getTasksForDay()` für Tages-Filterung ✅
-- [ ] `SplitValidationService` implementieren
-- [ ] `StringUtils.pluralize()` in Settings/Shopping/Transactions anwenden
-- [ ] `TransactionDialogState` um Validierung erweitern
+- [x] `StringUtils.getInitial()` in allen Controllern angewendet ✅
+  - MainScreenController, ProfileController, SettingsController, ShoppingListController, CleaningTaskDTO
+- [x] `StringUtils.pluralize()` in SettingsController und TransactionDialogController angewendet ✅
+- [x] `SplitValidationHelper` implementiert ✅
+  - TransactionDialogController, TransactionHistoryController, StandingOrdersDialogController
+- [ ] (Optional) `TransactionDialogState` um Business-Validierung erweitern
+- [ ] (Optional) `PermissionService` für einheitliche Berechtigungsprüfungen

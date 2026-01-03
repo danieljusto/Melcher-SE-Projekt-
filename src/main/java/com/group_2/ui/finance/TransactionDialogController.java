@@ -7,6 +7,8 @@ import com.group_2.service.finance.StandingOrderService;
 import com.group_2.service.finance.TransactionService;
 import com.group_2.util.SessionManager;
 import com.group_2.util.MonthlyScheduleUtil;
+import com.group_2.util.SplitValidationHelper;
+import com.group_2.util.StringUtils;
 
 import com.group_2.util.FormatUtils;
 
@@ -598,7 +600,8 @@ public class TransactionDialogController extends com.group_2.ui.core.Controller 
     private void updateStep2Summary() {
         String payerName = state.getPayer().displayName();
         int debtorCount = state.getParticipants().size();
-        String summary = String.format("%s paid for %d person%s", payerName, debtorCount, debtorCount == 1 ? "" : "s");
+        String summary = String.format("%s paid for %s", payerName,
+                StringUtils.pluralize(debtorCount, "person", "persons"));
         step2Summary.setText(summary);
     }
 
@@ -886,79 +889,41 @@ public class TransactionDialogController extends com.group_2.ui.core.Controller 
 
     private void updateEqualSplitSummary() {
         int count = state.getParticipants().size();
-        equalSplitSummary.getStyleClass().removeAll("validation-label-success", "validation-label-error",
-                "validation-label-muted");
+        SplitValidationHelper.clearValidationClasses(equalSplitSummary);
         if (count > 0 && state.getTotalAmount() > 0) {
-            double perPerson = state.getTotalAmount() / count;
-            equalSplitSummary.setText(String.format("Each person pays %.2f€", perPerson));
-            equalSplitSummary.getStyleClass().add("validation-label-muted");
+            double perPerson = SplitValidationHelper.calculateEqualSplit(state.getTotalAmount(), count);
+            SplitValidationHelper.applyMutedStyling(equalSplitSummary,
+                    SplitValidationHelper.formatEqualSplitMessage(perPerson));
         } else {
             equalSplitSummary.setText("");
         }
     }
 
     private void updatePercentageSummary() {
-        double total = 0.0;
+        List<Double> values = new ArrayList<>();
         for (UserSummaryDTO participant : state.getParticipants()) {
             Double value = state.getCustomValue(participant);
             if (value != null) {
-                total += value;
+                values.add(value);
             }
         }
 
-        double remaining = 100.0 - total;
-        String remainingText;
-
-        percentageSplitSummary.getStyleClass().removeAll("validation-label-success", "validation-label-error",
-                "validation-label-muted");
-        if (Math.abs(remaining) < 0.01) {
-            remainingText = String.format("%.1f%% left", remaining);
-            percentageSplitSummary.getStyleClass().add("validation-label-success");
-        } else if (remaining < 0) {
-            remainingText = String.format("%.1f%% left", remaining);
-            percentageSplitSummary.getStyleClass().add("validation-label-error");
-        } else {
-            remainingText = String.format("%.1f%% left", remaining);
-            percentageSplitSummary.getStyleClass().add("validation-label-muted");
-        }
-
-        if (!percentageSplitSummary.getStyleClass().contains("validation-label")) {
-            percentageSplitSummary.getStyleClass().add("validation-label");
-        }
-        percentageSplitSummary.setText(String.format("Total: %.1f%% of 100%%\n%s", total, remainingText));
+        SplitValidationHelper.ValidationResult result = SplitValidationHelper.validatePercentageSplit(values);
+        SplitValidationHelper.applyValidationStyling(percentageSplitSummary, result);
     }
 
     private void updateCustomAmountSummary() {
-        double total = 0.0;
+        List<Double> values = new ArrayList<>();
         for (UserSummaryDTO participant : state.getParticipants()) {
             Double value = state.getCustomValue(participant);
             if (value != null) {
-                total += value;
+                values.add(value);
             }
         }
 
-        double totalAmount = state.getTotalAmount();
-        double remaining = totalAmount - total;
-        String remainingText;
-
-        customAmountSplitSummary.getStyleClass().removeAll("validation-label-success", "validation-label-error",
-                "validation-label-muted");
-        if (Math.abs(remaining) < 0.01) {
-            remainingText = String.format("%.2f€ left", remaining);
-            customAmountSplitSummary.getStyleClass().add("validation-label-success");
-        } else if (remaining < 0) {
-            remainingText = String.format("%.2f€ left", remaining);
-            customAmountSplitSummary.getStyleClass().add("validation-label-error");
-        } else {
-            remainingText = String.format("%.2f€ left", remaining);
-            customAmountSplitSummary.getStyleClass().add("validation-label-muted");
-        }
-
-        if (!customAmountSplitSummary.getStyleClass().contains("validation-label")) {
-            customAmountSplitSummary.getStyleClass().add("validation-label");
-        }
-        customAmountSplitSummary.setText(String.format("Total: %.2f€ of %.2f€\n%s",
-                total, totalAmount, remainingText));
+        SplitValidationHelper.ValidationResult result = SplitValidationHelper.validateAmountSplit(values,
+                state.getTotalAmount());
+        SplitValidationHelper.applyValidationStyling(customAmountSplitSummary, result);
     }
 
     private UserSummaryDTO findMemberSummary(Long userId, UserSessionDTO session) {

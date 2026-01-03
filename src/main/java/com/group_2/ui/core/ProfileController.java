@@ -5,6 +5,7 @@ import com.group_2.service.core.CoreViewService;
 import com.group_2.service.core.UserService;
 import com.group_2.service.core.WGService;
 import com.group_2.util.SessionManager;
+import com.group_2.util.StringUtils;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -88,9 +89,7 @@ public class ProfileController extends Controller {
         userEmailText.setText(email);
         emailDisplayText.setText(email);
 
-        String initial = profile.user().name() != null && !profile.user().name().isEmpty()
-                ? profile.user().name().substring(0, 1).toUpperCase()
-                : "?";
+        String initial = StringUtils.getInitial(profile.user().name());
         avatarInitial.setText(initial);
 
         if (profile.wg() != null) {
@@ -116,8 +115,7 @@ public class ProfileController extends Controller {
         dialog.setTitle("Edit Name");
         dialog.setHeaderText("Update your name");
         dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
-        );
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
@@ -178,8 +176,7 @@ public class ProfileController extends Controller {
         dialog.setTitle("Edit Email");
         dialog.setHeaderText("Update your email address");
         dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
-        );
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);

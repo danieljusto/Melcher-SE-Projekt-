@@ -8,6 +8,7 @@ import com.group_2.service.shopping.ShoppingListService;
 import com.group_2.ui.core.Controller;
 import com.group_2.ui.core.NavbarController;
 import com.group_2.util.SessionManager;
+import com.group_2.util.StringUtils;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -113,9 +114,7 @@ public class ShoppingListController extends Controller {
         // Icon
         StackPane iconPane = new StackPane();
         iconPane.getStyleClass().addAll("avatar", "avatar-amber");
-        String iconInitial = (list.name() != null && !list.name().isEmpty())
-                ? list.name().substring(0, 1).toUpperCase()
-                : "?";
+        String iconInitial = StringUtils.getInitial(list.name());
         Text iconText = new Text(iconInitial);
         iconText.getStyleClass().add("avatar-text");
         iconPane.getChildren().add(iconText);
@@ -353,8 +352,7 @@ public class ShoppingListController extends Controller {
         dialog.setTitle("Create New Shopping List");
         dialog.setHeaderText("Enter list details");
         dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
-        );
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         // Set button types
@@ -444,8 +442,7 @@ public class ShoppingListController extends Controller {
         dialog.setTitle("Manage Sharing");
         dialog.setHeaderText("Select members to share with");
         dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
-        );
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);

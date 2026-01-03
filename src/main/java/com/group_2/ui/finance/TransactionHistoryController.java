@@ -7,6 +7,7 @@ import com.group_2.service.finance.TransactionService;
 import com.group_2.ui.core.Controller;
 import com.group_2.util.FormatUtils;
 import com.group_2.util.SessionManager;
+import com.group_2.util.SplitValidationHelper;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -513,9 +514,7 @@ public class TransactionHistoryController extends Controller {
                         splitsContainer.getChildren().add(row);
                     }
                     validationLabel.setText("Equal split");
-                    validationLabel.getStyleClass().removeAll("validation-label-error", "validation-label-muted",
-                            "validation-label-success");
-                    validationLabel.getStyleClass().addAll("validation-label", "validation-label-success");
+                    SplitValidationHelper.applySuccessStyling(validationLabel, "Equal split");
                 } else if (currentMode[0].equals("PERCENT")) {
                     for (TransactionSplitViewDTO split : splits) {
                         HBox row = new HBox(10);
@@ -535,30 +534,15 @@ public class TransactionHistoryController extends Controller {
                         // Add listener for live validation
                         field.textProperty().addListener((obs, oldVal, newVal) -> {
                             try {
-                                double sum = 0;
+                                List<Double> values = new ArrayList<>();
                                 for (TextField f : splitFields.values()) {
-                                    sum += Double.parseDouble(f.getText().replace(",", "."));
+                                    values.add(SplitValidationHelper.parseAmount(f.getText()));
                                 }
-                                double remaining = 100.0 - sum;
-                                validationLabel.getStyleClass().removeAll("validation-label-success",
-                                        "validation-label-error", "validation-label-muted");
-                                if (Math.abs(remaining) < 0.01) {
-                                    validationLabel.getStyleClass().add("validation-label-success");
-                                } else if (remaining < 0) {
-                                    validationLabel.getStyleClass().add("validation-label-error");
-                                } else {
-                                    validationLabel.getStyleClass().add("validation-label-muted");
-                                }
-                                validationLabel
-                                        .setText(String.format("Total: %.1f%% of 100%%\n%.1f%% left", sum, remaining));
-                                if (!validationLabel.getStyleClass().contains("validation-label")) {
-                                    validationLabel.getStyleClass().add("validation-label");
-                                }
+                                SplitValidationHelper.ValidationResult result = SplitValidationHelper
+                                        .validatePercentageSplit(values);
+                                SplitValidationHelper.applyValidationStyling(validationLabel, result);
                             } catch (NumberFormatException ex) {
-                                validationLabel.setText("Invalid number");
-                                validationLabel.getStyleClass().removeAll("validation-label-success",
-                                        "validation-label-muted");
-                                validationLabel.getStyleClass().addAll("validation-label", "validation-label-error");
+                                SplitValidationHelper.applyErrorStyling(validationLabel, "Invalid number");
                             }
                         });
 
@@ -568,18 +552,13 @@ public class TransactionHistoryController extends Controller {
                         row.getChildren().addAll(nameText, field, percentSign);
                         splitsContainer.getChildren().add(row);
                     }
-                    // Initial calculation
-                    double sum = splits.stream().mapToDouble(TransactionSplitViewDTO::percentage).sum();
-                    double remaining = 100.0 - sum;
-                    validationLabel
-                            .setText(String.format("Total: %.2f € of %.2f €\n%.2f € left", sum, total, remaining));
-                    validationLabel.getStyleClass().removeAll("validation-label-success", "validation-label-error",
-                            "validation-label-muted");
-                    if (Math.abs(remaining) < 0.01) {
-                        validationLabel.getStyleClass().addAll("validation-label", "validation-label-success");
-                    } else {
-                        validationLabel.getStyleClass().addAll("validation-label", "validation-label-muted");
-                    }
+                    // Initial percentage validation
+                    List<Double> initialPctValues = splits.stream()
+                            .map(TransactionSplitViewDTO::percentage)
+                            .collect(Collectors.toList());
+                    SplitValidationHelper.ValidationResult pctResult = SplitValidationHelper
+                            .validatePercentageSplit(initialPctValues);
+                    SplitValidationHelper.applyValidationStyling(validationLabel, pctResult);
                 }
             };
 

@@ -5,6 +5,7 @@ import com.group_2.dto.core.WgSummaryDTO;
 import com.group_2.service.core.CoreViewService;
 import com.group_2.ui.finance.TransactionsController;
 import com.group_2.util.SessionManager;
+import com.group_2.util.StringUtils;
 
 import javafx.scene.text.Text;
 import javafx.fxml.FXML;
@@ -62,9 +63,7 @@ public class MainScreenController extends Controller {
 
         headerUserName.setText(session.displayName());
 
-        String initial = session.name() != null && !session.name().isEmpty()
-                ? session.name().substring(0, 1).toUpperCase()
-                : "?";
+        String initial = StringUtils.getInitial(session.name());
         headerAvatar.setText(initial);
 
         WgSummaryDTO wgSummary = coreViewService.getWgSummary(session.wgId());
