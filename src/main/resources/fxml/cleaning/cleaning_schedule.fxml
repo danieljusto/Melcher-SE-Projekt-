@@ -85,25 +85,32 @@
 
                     <!-- Day Headers -->
                     <HBox styleClass="calendar-header" spacing="0">
-                        <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
+                        <StackPane styleClass="calendar-day-header" minWidth="130" maxWidth="Infinity" prefHeight="40"
+                                   HBox.hgrow="ALWAYS">
                             <Text text="Mon" styleClass="day-label"/>
                         </StackPane>
-                        <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
+                        <StackPane styleClass="calendar-day-header" minWidth="130" maxWidth="Infinity" prefHeight="40"
+                                   HBox.hgrow="ALWAYS">
                             <Text text="Tue" styleClass="day-label"/>
                         </StackPane>
-                        <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
+                        <StackPane styleClass="calendar-day-header" minWidth="130" maxWidth="Infinity" prefHeight="40"
+                                   HBox.hgrow="ALWAYS">
                             <Text text="Wed" styleClass="day-label"/>
                         </StackPane>
-                        <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
+                        <StackPane styleClass="calendar-day-header" minWidth="130" maxWidth="Infinity" prefHeight="40"
+                                   HBox.hgrow="ALWAYS">
                             <Text text="Thu" styleClass="day-label"/>
                         </StackPane>
-                        <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
+                        <StackPane styleClass="calendar-day-header" minWidth="130" maxWidth="Infinity" prefHeight="40"
+                                   HBox.hgrow="ALWAYS">
                             <Text text="Fri" styleClass="day-label"/>
                         </StackPane>
-                        <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
+                        <StackPane styleClass="calendar-day-header" minWidth="130" maxWidth="Infinity" prefHeight="40"
+                                   HBox.hgrow="ALWAYS">
                             <Text text="Sat" styleClass="day-label-muted"/>
                         </StackPane>
-                        <StackPane styleClass="calendar-day-header" prefWidth="130" prefHeight="40">
+                        <StackPane styleClass="calendar-day-header" minWidth="130" maxWidth="Infinity" prefHeight="40"
+                                   HBox.hgrow="ALWAYS">
                             <Text text="Sun" styleClass="day-label-muted"/>
                         </StackPane>
                     </HBox>

@@ -89,7 +89,19 @@ public class TemplateEditorController extends Controller {
             navbarController.getBackButton().setOnAction(e -> backToCleaningSchedule());
         }
         loadWorkingCopy();
+        configureDayColumnsResponsive();
         refreshView();
+    }
+
+    private void configureDayColumnsResponsive() {
+        VBox[] columns = { mondayColumn, tuesdayColumn, wednesdayColumn, thursdayColumn, fridayColumn, saturdayColumn, sundayColumn };
+
+        for (VBox col : columns) {
+            col.setMinWidth(160);
+            col.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(col, Priority.ALWAYS);
+            col.setFillWidth(true);
+        }
     }
 
     /**
@@ -170,11 +182,13 @@ public class TemplateEditorController extends Controller {
         VBox card = new VBox(8);
         card.setPadding(new Insets(12));
         card.getStyleClass().add("template-card");
+        card.setMinWidth(0);
+        card.setMaxWidth(Double.MAX_VALUE);
 
         // Room name header
         Text roomName = new Text(template.getRoomName());
         roomName.getStyleClass().add("template-room-name");
-        roomName.setWrappingWidth(130);
+        roomName.wrappingWidthProperty().bind(card.widthProperty().subtract(24));
 
         // Show round-robin info
         HBox assigneeRow = new HBox(5);

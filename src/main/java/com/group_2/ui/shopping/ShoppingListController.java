@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -351,6 +352,10 @@ public class ShoppingListController extends Controller {
         configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Create New Shopping List");
         dialog.setHeaderText("Enter list details");
+        dialog.getDialogPane().getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         // Set button types
         ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
@@ -358,7 +363,6 @@ public class ShoppingListController extends Controller {
 
         // Create content
         VBox content = new VBox(15);
-        content.setPadding(new Insets(20));
 
         TextField nameField = new TextField();
         nameField.setPromptText("List name (e.g., Weekly Groceries)");
@@ -439,6 +443,10 @@ public class ShoppingListController extends Controller {
         configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Manage Sharing");
         dialog.setHeaderText("Select members to share with");
+        dialog.getDialogPane().getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);

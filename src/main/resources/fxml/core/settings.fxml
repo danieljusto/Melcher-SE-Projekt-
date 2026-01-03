@@ -16,11 +16,11 @@
 
     <!-- Top Header -->
     <top>
-        <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
+        <HBox styleClass="navbar" spacing="0" alignment="CENTER_LEFT">
             <Button onAction="#backToHome" styleClass="navbar-back-button">
                 <graphic>
-                    <ImageView fitWidth="18" fitHeight="18" preserveRatio="true">
-                        <Image url="@/pictures/home-white.png"/>
+                    <ImageView fitWidth="35" fitHeight="35" preserveRatio="true">
+                        <Image url="@/pictures/SE_Hommunity.png"/>
                     </ImageView>
                 </graphic>
             </Button>

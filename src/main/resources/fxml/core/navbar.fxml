@@ -9,11 +9,11 @@
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.group_2.ui.core.NavbarController"
-      styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
+      styleClass="navbar" spacing="0" alignment="CENTER_LEFT">
 
     <Button fx:id="backButton" onAction="#backToHome" styleClass="navbar-back-button">
         <graphic>
-            <ImageView fitWidth="35" fitHeight="35" preserveRatio="true">
+            <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
                 <Image url="@/pictures/SE_Hommunity.png"/>
             </ImageView>
         </graphic>

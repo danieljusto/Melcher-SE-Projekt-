@@ -16,12 +16,16 @@
     <!-- Top Header -->
     <top>
         <HBox styleClass="navbar" spacing="20" alignment="CENTER_LEFT">
-            <HBox spacing="12" alignment="CENTER_LEFT">
-                <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
-                    <image>
-                        <Image url="@/pictures/SE_Hommunity.png"/>
-                    </image>
-                </ImageView>
+            <HBox spacing="24" alignment="CENTER_LEFT">
+                <Button focusTraversable="false" mouseTransparent="true" style="-fx-background-color: transparent">
+                    <graphic>
+                        <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                            <image>
+                                <Image url="@/pictures/SE_Hommunity.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Button>
                 <Text text="Hommunity" styleClass="navbar-title"/>
             </HBox>
             <Region HBox.hgrow="ALWAYS"/>
