@@ -1,119 +1,128 @@
 # Refactoring Status
 
-**Letzte Aktualisierung:** 2025-12-31
+**Last Updated:** 2026-01-03
 
-## Aktuelle Übersicht
+## Current Overview
 
-### Architektur
-| Bereich              | Status | Details                                   |
-| -------------------- | ------ | ----------------------------------------- |
-| Layered Architecture | ✅      | JavaFX UI → Services → Repositories       |
-| DTO-basierte API     | ✅      | Finance/Cleaning/Core auf DTOs umgestellt |
-| Session Management   | ✅      | Snapshot-IDs statt Entity-Referenzen      |
-| Entity Encapsulation | ✅      | `WG` mit private fields, LAZY collections |
-| Test Coverage        | ❌      | **0% - Keine Unit Tests vorhanden**       |
+### Architecture
+| Area                 | Status | Details                                             |
+| -------------------- | ------ | --------------------------------------------------- |
+| Layered Architecture | ✅      | JavaFX UI → Services → Repositories                 |
+| DTO-based API        | ✅      | Finance/Cleaning/Core converted to DTOs             |
+| Session Management   | ✅      | Snapshot IDs instead of entity references           |
+| Entity Encapsulation | ✅      | `WG` with private fields, LAZY collections          |
+| Test Coverage        | ⚠️      | **17 test files** (Service, Repository, Util tests) |
 
-### Kritische Probleme (aus Codebase-Scan 2025-12-31)
+### Remaining Issues
 
-#### 🔴 Kritisch
-1. **Keine Unit Tests** - 84 Quelldateien ohne Test-Coverage
-2. **N+1 Query Problem** - `TransactionService.calculateAllBalances()` führt O(n) DB-Aufrufe pro Member aus
-3. **60+ RuntimeException** - Keine custom Exception-Hierarchy
+#### 🟠 High
+1. **Pending Tests** - More test coverage needed (88 source files)
+2. **N+1 Query Problem** - `TransactionService.calculateAllBalances()` performs O(n) DB calls per member
+3. **60+ RuntimeException** - No custom exception hierarchy
+4. **EAGER Fetch Overuse** - Some entity relations still EAGER
 
-#### 🟠 Hoch
-4. **UserService Performance** - `registerUser()` und `authenticate()` laden alle User in Memory
-5. **EAGER Fetch Overuse** - Alle Entity-Relationen EAGER, lädt unnötig viele Daten
-6. **Null Safety** - `FinanceMapper.toDTO()` prüft nested objects nicht auf null
-7. **JSON statt Relation** - StandingOrder speichert Debtor-Daten als JSON-String
-
-#### 🟡 Mittel
-8. **Inkonsistente @Transactional** - Einige Query-Methoden haben Annotation, andere nicht
-9. **Thread Safety** - `SessionManager` Singleton mit mutable state ohne Synchronization
-10. **Entity equals()** - `WG.equals()` basiert nur auf ID (null für unpersisted entities)
+#### 🟡 Medium
+5. **Inconsistent @Transactional** - Some query methods have annotation, others don't
+6. **Thread Safety** - `SessionManager` singleton with mutable state without synchronization
 
 ---
 
-## Abgeschlossene Refactorings
+## Completed Refactorings
 
 ### Session & DTOs ✅
-- `SessionManager` speichert nur Snapshot (IDs + basic data)
+- `SessionManager` stores only snapshot (IDs + basic data)
 - Core View Models: `UserSummaryDTO`, `WgSummaryDTO`, `UserSessionDTO`
 - Finance View DTOs: `TransactionViewDTO`, `BalanceViewDTO`, `StandingOrderViewDTO`
-- Cleaning DTOs: `CleaningTaskDTO`, `CleaningTaskTemplateDTO`, `RoomDTO`
+- Cleaning DTOs: `CleaningTaskDTO`, `CleaningTaskTemplateDTO`, `RoomDTO`, `WorkingTemplateDTO`
 
 ### Finance Domain ✅
-- `TransactionService` validiert WG-Mitgliedschaft (creator/creditor/debtors)
-- `TransactionHistoryController` konsumiert View DTOs
-- `TransactionsController` nutzt `BalanceViewDTO`
-- Standing Order Flows auf View DTOs umgestellt
+- `TransactionService` validates WG membership (creator/creditor/debtors)
+- `TransactionHistoryController` consumes View DTOs
+- `TransactionsController` uses `BalanceViewDTO`
+- Standing Order flows converted to View DTOs
+- **Standing Order Cleanup on WG Leave** - `deactivateStandingOrdersForUser()` implemented
 
 ### Cleaning Domain ✅
-- Cleaning Schedule UI nutzt DTOs und Session Snapshot IDs
-- `CleaningScheduleService` delegiert an fokussierte Sub-Services
+- Cleaning Schedule UI uses DTOs and Session Snapshot IDs
+- **`CleaningScheduleService` split into sub-services:**
+  - `CleaningTaskAssignmentService` - Task assignment
+  - `CleaningTaskLifecycleService` - Task lifecycle
+  - `CleaningTemplateService` - Template management
+  - `QueueManagementService` - Queue management
+  - `RoomService` - Room management
 
 ### Core Domain ✅
-- `WG` Felder private mit Accessors
+- `WG` fields private with accessors
 - Collections LAZY, id-based `equals/hashCode`
-- Member-Listen werden über Domain Services abgerufen
+- Member lists retrieved via domain services
+- **WG deletion fully implemented** with `deleteByWg()` methods in all repositories
+
+### Utilities ✅
+- `FormatUtils` - Currency and date formatting
+- `MonthlyScheduleUtil` - Date resolution for templates
+- `StringUtils` - String helper methods
+- `SplitValidationHelper` - Centralized split validation logic (extracted from controllers)
+
+### Controller Refactoring ✅
+- Split validation centralized in `SplitValidationHelper`
+- Business logic moved from controllers to services
+- Controller audit completed (see `CONTROLLER_AUDIT.md`)
 
 ---
 
-## Nächste Schritte (Priorität)
+## Next Steps (Priority)
 
-### P0 - Kritisch
+### P0 - Critical
 ```
-[ ] Unit Tests hinzufügen (Services zuerst)
-[ ] N+1 Query in calculateAllBalances() fixen
-[ ] Custom Exceptions erstellen
-```
-
-### P1 - Hoch
-```
-[ ] UserService Email-Query optimieren (existsByEmail)
-[ ] UserService Authentication Query optimieren
-[ ] FinanceMapper null safety
-[ ] StandingOrder Debtor-Daten normalisieren
+[ ] Fix N+1 query in calculateAllBalances()
+[ ] Create custom exceptions (EntityNotFoundException, ValidationException)
 ```
 
-### P2 - Mittel
+### P1 - High
 ```
-[ ] EAGER → LAZY Fetch Strategy
-[ ] CleaningScheduleService aufteilen
-[ ] Clock/Time Provider injizieren
-[ ] @Transactional konsistent anwenden
+[ ] Add more unit tests (increase coverage)
+[ ] Improve FinanceMapper null safety
+[ ] EAGER → LAZY fetch strategy for remaining relations
 ```
 
-### P3 - Niedrig
+### P2 - Medium
 ```
-[ ] Mixed Naming (German/English) bereinigen
-[ ] ObjectMapper als Bean injizieren
-[ ] Structured Logging hinzufügen
+[ ] Inject Clock/Time Provider
+[ ] Apply @Transactional consistently (class-level readOnly=true)
+[ ] Thread safety for SessionManager
+```
+
+### P3 - Low (Optional)
+```
+[x] Clean up mixed naming (German/English)
+[ ] Inject ObjectMapper as bean
+[ ] Extend structured logging
 ```
 
 ---
 
-## Bekannte technische Schulden
+## Known Technical Debt
 
-| Schuld             | Risiko | Aufwand | Empfehlung                 |
-| ------------------ | ------ | ------- | -------------------------- |
-| Keine Tests        | Hoch   | Hoch    | Sofort beginnen            |
-| N+1 Queries        | Hoch   | Mittel  | Batch-Query implementieren |
-| Generic Exceptions | Mittel | Mittel  | Exception Hierarchy        |
-| EAGER Fetching     | Mittel | Mittel  | Schrittweise umstellen     |
-| JSON Debtor Data   | Mittel | Hoch    | Normalisieren wenn Zeit    |
-
----
-
-## Sicherheitsaspekte
-
-| Check                     | Status                            |
-| ------------------------- | --------------------------------- |
-| Password Hashing (BCrypt) | ✅                                 |
-| Email Uniqueness          | ⚠️ Ineffizient (lädt alle User)    |
-| WG Membership Validation  | ✅ Transactions, ❌ Standing Orders |
-| Invite Code Generation    | ⚠️ `Random` statt `SecureRandom`   |
-| Input Validation          | ⚠️ Keine Obergrenze für Beträge    |
+| Debt               | Risk     | Effort   | Status                        |
+| ------------------ | -------- | -------- | ----------------------------- |
+| ~~No Tests~~       | ~~High~~ | ~~High~~ | ✅ 17 test files present       |
+| N+1 Queries        | High     | Medium   | ⏳ Batch query still pending   |
+| Generic Exceptions | Medium   | Medium   | ⏳ Exception hierarchy pending |
+| EAGER Fetching     | Medium   | Medium   | ⚠️ Partially converted         |
 
 ---
 
-*Siehe [ERROR_REPORT.md](./ERROR_REPORT.md) für vollständige Details aller gefundenen Probleme.*
+## Security Aspects
+
+| Check                     | Status                                |
+| ------------------------- | ------------------------------------- |
+| Password Hashing (BCrypt) | ✅                                     |
+| Email Uniqueness          | ✅ Optimized                           |
+| WG Membership Validation  | ✅ Transactions & Standing Orders      |
+| Invite Code Generation    | ⚠️ `Random` instead of `SecureRandom`  |
+| Input Validation          | ✅ `SplitValidationHelper` centralized |
+
+---
+
+*See [CONTROLLER_AUDIT.md](./CONTROLLER_AUDIT.md) for controller-specific improvements.*
+

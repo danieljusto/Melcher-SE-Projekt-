@@ -1,74 +1,74 @@
-# Controller Audit: Offene Verbesserungen
+# Controller Audit: Open Improvements
 
-**Letzte Aktualisierung:** 2026-01-03  
+**Last Updated:** 2026-01-03  
 
 ---
 
-## 🟡 Offene Fälle (Optional)
+## 🟡 Open Cases (Optional)
 
-### 1. TransactionsController (614 Zeilen)
+### 1. TransactionsController (614 lines)
 
-| Zeilen  | Methode                  | Problem                                          | Empfehlung          |
-| ------- | ------------------------ | ------------------------------------------------ | ------------------- |
-| 163-187 | `updateBalanceDisplay()` | Card-Farbe basierend auf Balance-Klassifizierung | In Service oder DTO |
-| 313-338 | `showSettlementDialog()` | Filtern verfügbarer Credits für Transfer         | In Service          |
+| Lines   | Method                   | Issue                                      | Recommendation         |
+| ------- | ------------------------ | ------------------------------------------ | ---------------------- |
+| 163-187 | `updateBalanceDisplay()` | Card color based on balance classification | Move to Service or DTO |
+| 313-338 | `showSettlementDialog()` | Filter available credits for transfer      | Move to Service        |
 
-### 2. TransactionHistoryController (756 Zeilen)
+### 2. TransactionHistoryController (756 lines)
 
-| Zeilen  | Methode             | Problem                                               | Empfehlung                 |
-| ------- | ------------------- | ----------------------------------------------------- | -------------------------- |
-| 264-322 | `populateFilters()` | Jahreserstellung, Sortierung, Member-Lookup           | In Service                 |
-| 324-383 | `applyFilters()`    | Komplexe Filterlogik (Year/Month/Payer/Debtor/Search) | `TransactionFilterService` |
+| Lines   | Method              | Issue                                                 | Recommendation                    |
+| ------- | ------------------- | ----------------------------------------------------- | --------------------------------- |
+| 264-322 | `populateFilters()` | Year generation, sorting, member lookup               | Move to Service                   |
+| 324-383 | `applyFilters()`    | Complex filter logic (Year/Month/Payer/Debtor/Search) | Create `TransactionFilterService` |
 
-### 3. TransactionDialogController (981 Zeilen) ⚠️ **Größter Controller**
+### 3. TransactionDialogController (981 lines) ⚠️ **Largest Controller**
 
-| Zeilen  | Methode                           | Problem                                       | Empfehlung                                |
-| ------- | --------------------------------- | --------------------------------------------- | ----------------------------------------- |
-| 400-452 | `buildStandingOrderDescription()` | Komplexe String-Aufbau mit Datumsberechnungen | `StandingOrderService` oder `FormatUtils` |
+| Lines   | Method                            | Issue                                          | Recommendation                                  |
+| ------- | --------------------------------- | ---------------------------------------------- | ----------------------------------------------- |
+| 400-452 | `buildStandingOrderDescription()` | Complex string building with date calculations | Move to `StandingOrderService` or `FormatUtils` |
 
-### 4. StandingOrdersDialogController (730 Zeilen)
+### 4. StandingOrdersDialogController (730 lines)
 
-| Zeilen  | Methode              | Problem                                     | Empfehlung                 |
-| ------- | -------------------- | ------------------------------------------- | -------------------------- |
-| 169-187 | `formatFrequency()`  | Switch-Statement für Frequency-Formatierung | In Enum oder `FormatUtils` |
-| 189-201 | `parseDebtorNames()` | Stream-basierter String-Aufbau              | In Mapper                  |
+| Lines   | Method               | Issue                                     | Recommendation                |
+| ------- | -------------------- | ----------------------------------------- | ----------------------------- |
+| 169-187 | `formatFrequency()`  | Switch statement for frequency formatting | Move to Enum or `FormatUtils` |
+| 189-201 | `parseDebtorNames()` | Stream-based string construction          | Move to Mapper                |
 
-### 5. NoWgController (224 Zeilen)
+### 5. NoWgController (224 lines)
 
-| Zeilen  | Methode            | Problem                                     | Empfehlung                               |
-| ------- | ------------------ | ------------------------------------------- | ---------------------------------------- |
-| 155-164 | `handleCreateWg()` | Schleife die Räume erstellt und IDs sammelt | Transaction-Handling komplett in Service |
+| Lines   | Method             | Issue                                  | Recommendation                                |
+| ------- | ------------------ | -------------------------------------- | --------------------------------------------- |
+| 155-164 | `handleCreateWg()` | Loop creating rooms and collecting IDs | Move transaction handling entirely to Service |
 
 ### 6. SettingsController / ProfileController
 
-| Controller         | Problem                                   | Empfehlung                   |
-| ------------------ | ----------------------------------------- | ---------------------------- |
-| SettingsController | `isCurrentUserAdmin()` Permission-Check   | `PermissionService` oder DTO |
-| ProfileController  | Email-Validierung (`email.contains("@")`) | `ValidationService`          |
+| Controller         | Issue                                    | Recommendation                    |
+| ------------------ | ---------------------------------------- | --------------------------------- |
+| SettingsController | `isCurrentUserAdmin()` permission check  | Create `PermissionService` or DTO |
+| ProfileController  | Email validation (`email.contains("@")`) | Create `ValidationService`        |
 
 ---
 
-## 🟢 Saubere Controller (kein Handlungsbedarf)
+## 🟢 Clean Controllers (no action needed)
 
-| Controller                   | Zeilen |
-| ---------------------------- | ------ |
-| `LoginController`            | 77     |
-| `SignUpController`           | 79     |
-| `MainScreenController`       | 115    |
-| `NavbarController`           | 71     |
-| `ShoppingListController`     | 525    |
-| `CleaningScheduleController` | 747    |
-| `TemplateEditorController`   | 602    |
-
----
-
-## 🎯 Optionale Verbesserungen
-
-1. **`PermissionService`** - Einheitliche Berechtigungsprüfungen
-2. **`ValidationService`** - Email-Validierung und Input-Prüfungen
-3. **`TransactionFilterService`** - Filterlogik aus TransactionHistoryController
-4. **`TransactionDialogState`** erweitern - Business-Validierung
+| Controller                   | Lines |
+| ---------------------------- | ----- |
+| `LoginController`            | 77    |
+| `SignUpController`           | 79    |
+| `MainScreenController`       | 115   |
+| `NavbarController`           | 71    |
+| `ShoppingListController`     | 525   |
+| `CleaningScheduleController` | 747   |
+| `TemplateEditorController`   | 602   |
 
 ---
 
-*Alle kritischen Refactorings wurden abgeschlossen. Die verbleibenden Punkte sind optional.*
+## 🎯 Optional Improvements
+
+1. **`PermissionService`** - Unified permission checks
+2. **`ValidationService`** - Email validation and input checks
+3. **`TransactionFilterService`** - Filter logic from TransactionHistoryController
+4. **`TransactionDialogState`** extension - Business validation
+
+---
+
+*All critical refactorings have been completed. The remaining items are optional.*

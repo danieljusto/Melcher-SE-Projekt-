@@ -1,49 +1,71 @@
-# To dos
+# To Dos
 
-## 🔴 Kritisch (Priorität 0)
-- [ ] Unit Tests hinzufügen (aktuell 0% Coverage für 84 Quelldateien)
-- [ ] N+1 Query Problem in `TransactionService.calculateAllBalances()` beheben
-- [ ] Custom Exception Hierarchy erstellen (`EntityNotFoundException`, `UnauthorizedOperationException`, `ValidationException`)
+## 🔴 Critical (Priority 0)
+- [ ] Fix N+1 Query Problem in `TransactionService.calculateAllBalances()`
+- [ ] Create custom exception hierarchy (`EntityNotFoundException`, `UnauthorizedOperationException`, `ValidationException`)
 
-## 🟠 Hoch (Priorität 1)
-- [ ] `UserService.registerUser()` und `authenticate()` optimieren (aktuell laden alle User in Memory)
-- [ ] Null Safety in `FinanceMapper` verbessern (null-checks vor nested object access)
-- [ ] StandingOrder Debtor-Daten normalisieren (aktuell JSON-String statt Relation)
-- [ ] WG-Mitgliedschaft in Standing Order create/update validieren
+## 🟠 High (Priority 1)
+- [ ] Add more unit tests (currently 17 test files for 88 source files)
+- [ ] Improve null safety in `FinanceMapper` (null-checks before nested object access)
+- [ ] EAGER → LAZY fetch strategy for remaining entity relations
 
-## 🟡 Mittel (Priorität 2)
-- [ ] EAGER zu LAZY Fetch Strategy ändern (alle Entity-Relationen)
-- [ ] `CleaningScheduleService` in kleinere Services aufteilen; Clock/Time Provider injizieren
-- [ ] `@Transactional` konsistent anwenden (class-level `readOnly=true`)
-- [ ] Controller Workflow-Logik in bestehende Services verschieben
+## 🟡 Medium (Priority 2)
+- [ ] Inject Clock/Time Provider into services
+- [ ] Apply `@Transactional` consistently (class-level `readOnly=true`)
+- [ ] Thread safety for `SessionManager` (singleton with mutable state)
+- [ ] Optional: Move more controller workflow logic to services (see `CONTROLLER_AUDIT.md`)
 
-## Refactoring (in Progress)
-- [x] Finance-Controller auf View DTOs umgestellt
-- [x] Session Boundary mit Snapshot-IDs implementiert
-- [x] `WG` Felder gekapselt (private + accessors, LAZY collections)
-- [x] Transaction create/update validiert WG-Mitgliedschaft
-- [ ] `FinanceMapper` pure machen (Repository-Zugriff/JSON-Parsing in Services)
-- [ ] UI-Utilities zentralisieren (Dialogs, Currency Formatting, Navigation)
+## ✅ Completed
 
-## Features
-- [ ] WG verlassen mit negativem Balance blockieren
-- [ ] Transactions: Wording für Single-Debtor verbessern
-- [ ] Transaction History: Transaktionen ehemaliger Mitglieder anzeigen
-- [ ] Notifications für Cleaning Schedule und Transaktionen
+### Refactoring
+- [x] Converted Finance controllers to View DTOs
+- [x] Implemented session boundary with snapshot IDs
+- [x] Encapsulated `WG` fields (private + accessors, LAZY collections)
+- [x] Transaction create/update validates WG membership
+- [x] Split `CleaningScheduleService` into sub-services:
+  - `CleaningTaskAssignmentService`
+  - `CleaningTaskLifecycleService`
+  - `CleaningTemplateService`
+  - `QueueManagementService`
+  - `RoomService`
+- [x] Created `SplitValidationHelper` for centralized split validation
+- [x] Created `WorkingTemplateDTO` for Template Editor
+- [x] Created `FormatUtils`, `MonthlyScheduleUtil`, `StringUtils` utilities
+- [x] Cleaned up mixed naming (German/English) in documentation
 
-## UI/Style
-- [ ] Duplicate Transaction History Header fixen
-- [ ] Icons und Dialog-Styling verbessern
+### WG Management
+- [x] Fully implemented WG deletion (all `deleteByWg` methods)
+- [x] Standing order cleanup on WG leave (`deactivateStandingOrdersForUser()`)
 
-## Sicherheit
-- [x] Password Hashing mit BCrypt implementiert
-- [ ] `SecureRandom` statt `Random` für Invite Codes
-- [ ] Admin-Override für Content-Moderation
+### Testing
+- [x] Added unit tests (17 test files)
+  - Service Tests: `UserServiceTest`, `WGServiceTest`, `TransactionServiceTest`, `CleaningScheduleServiceTest`, `ShoppingListServiceTest`
+  - Repository Tests: `UserRepositoryTest`, `WGRepositoryTest`, `TransactionRepositoryTest`, `CleaningTaskRepositoryTest`, `RoomRepositoryTest`, `ShoppingListRepositoryTest`
+  - Util Tests: `FormatUtilsTest`, `MonthlyScheduleUtilTest`
+  - Model Tests: `RoomAssignmentQueueTest`
 
-## Testing
-- [ ] Tests für Balances, Settlements, Cleaning Schedule Generation
-- [ ] Integration Tests für kritische Workflows
+### Security
+- [x] Implemented password hashing with BCrypt
+- [x] WG membership validation in Standing Order create/update
 
-## Extras
-- [ ] Settings: Währungsauswahl
-- [ ] Shopping List: Payment Link (optional)
+## 📋 Backlog (Optional)
+
+### Features
+- [ ] Block leaving WG with negative balance
+- [ ] Improve wording for single-debtor transactions
+- [ ] Transaction History: Display transactions of former members
+- [ ] Notifications for Cleaning Schedule and transactions
+
+### UI/Style
+- [ ] Improve icons and dialog styling
+
+### Security
+- [ ] Use `SecureRandom` instead of `Random` for invite codes
+- [ ] Admin override for content moderation
+
+### Testing
+- [ ] Integration tests for critical workflows
+
+### Extras
+- [ ] Settings: Currency selection
+- [ ] Shopping List: Payment link (optional)
