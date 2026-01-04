@@ -575,20 +575,6 @@ public class TemplateEditorController extends Controller {
     }
 
     @FXML
-    public void backToHome() {
-        if (hasUnsavedChanges) {
-            if (!confirmDiscardChanges()) {
-                return;
-            }
-        }
-        loadScene(headerTitle.getScene(), "/core/main_screen.fxml");
-        javafx.application.Platform.runLater(() -> {
-            MainScreenController controller = applicationContext.getBean(MainScreenController.class);
-            controller.initView();
-        });
-    }
-
-    @FXML
     public void backToCleaningSchedule() {
         if (hasUnsavedChanges) {
             if (!confirmDiscardChanges()) {

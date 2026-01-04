@@ -969,7 +969,7 @@
     -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     -fx-font-size: 14px;
     -fx-text-fill: #475569;
-    -fx-padding: 10 0;
+    -fx-padding: 10 20 10 20;
 }
 
 .styled-alert .header-panel {
