@@ -19,7 +19,7 @@
         <HBox styleClass="navbar" spacing="0" alignment="CENTER_LEFT">
             <Button onAction="#backToHome" styleClass="navbar-back-button">
                 <graphic>
-                    <ImageView fitWidth="35" fitHeight="35" preserveRatio="true">
+                    <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
                         <Image url="@/pictures/SE_Hommunity.png"/>
                     </ImageView>
                 </graphic>

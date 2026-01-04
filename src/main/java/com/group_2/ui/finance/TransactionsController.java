@@ -231,6 +231,7 @@ public class TransactionsController extends Controller {
         dialog.getDialogPane().getStylesheets().add(
                 Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
         );
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         // Set owner window
         Window owner = balanceTable.getScene().getWindow();
@@ -347,6 +348,14 @@ public class TransactionsController extends Controller {
         // Add only cancel button (payment method buttons handle selection)
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().add(cancelButton);
+        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(cancelButton);
+        cancelBtn.setCancelButton(true);
+        dialog.setResultConverter(bt -> {
+            if (bt == cancelButton) {
+                return null;
+            }
+            return null;
+        });
 
         // Store data needed for credit transfer
         final double finalAbsBalance = absBalance;
@@ -354,18 +363,13 @@ public class TransactionsController extends Controller {
 
         // Handle result
         Optional<String> result = dialog.showAndWait();
-        if (result.isPresent() && !result.get().equals("Cancel")) {
-            String paymentMethod = result.get();
-
-            if (paymentMethod.equals("CreditTransfer")) {
-                // Show credit transfer selection dialog
+        result.ifPresent(paymentMethod -> {
+            if ("CreditTransfer".equals(paymentMethod)) {
                 showCreditTransferDialog(currentUserId, otherUserId, finalAbsBalance, memberName);
             } else {
-                // Show confirmation dialog for regular payment methods
-                showSettlementConfirmation(currentUserId, otherUserId, finalAbsBalance, paymentMethod,
-                        finalCurrentUserPays, memberName);
+                showSettlementConfirmation( currentUserId, otherUserId, finalAbsBalance, paymentMethod, finalCurrentUserPays, memberName);
             }
-        }
+        });
     }
 
     private void showSettlementConfirmation(Long currentUserId, Long otherUserId, double amount, String paymentMethod,
@@ -425,6 +429,10 @@ public class TransactionsController extends Controller {
         // Create dialog to select credit source
         Dialog<BalanceEntry> dialog = new Dialog<>();
         dialog.setTitle("Credit Transfer");
+        dialog.getDialogPane().getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm()
+        );
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
         dialog.initOwner(balanceTable.getScene().getWindow());
 
         VBox content = new VBox(20);
@@ -434,17 +442,14 @@ public class TransactionsController extends Controller {
         content.setPrefWidth(450);
 
         // Header
-        Text headerIcon = new Text("Transfer");
-        headerIcon.getStyleClass().add("dialog-header-icon");
+        Text headerIcon = new Text("Credit transfer");
+        headerIcon.getStyleClass().add("page-title"); // oder dialog-title (moderate)
 
-        Text titleText = new Text("Select Credit Source");
-        titleText.getStyleClass().add("dialog-title");
-
-        Text subtitleText = new Text("Choose a roommate's credit to transfer to " + debtorName);
-        subtitleText.getStyleClass().add("dialog-subtitle");
+        Text subtitleText = new Text("Select which credit to use for " + debtorName + ".");
+        subtitleText.getStyleClass().add("card-title");
 
         Text debtInfo = new Text("Debt to settle: " + FormatUtils.formatCurrency(debtAmount));
-        debtInfo.getStyleClass().add("debt-info-text");
+        debtInfo.getStyleClass().add("card-subtitle");
 
         // Create buttons for each available credit
         VBox creditButtons = new VBox(10);
@@ -459,7 +464,7 @@ public class TransactionsController extends Controller {
             creditButton.getStyleClass().addAll("credit-option-button", "credit-option-button-wide",
                     "credit-option-button-accent");
             creditButton.setText(credit.getMemberName() + " owes you " + FormatUtils.formatCurrency(availableAmount)
-                    + "\n-> Transfer " + FormatUtils.formatCurrency(transferAmount));
+                    + "\n→ Transfer " + FormatUtils.formatCurrency(transferAmount));
 
             final BalanceEntry selectedCredit = credit;
             creditButton.setOnAction(e -> {
@@ -470,11 +475,17 @@ public class TransactionsController extends Controller {
             creditButtons.getChildren().add(creditButton);
         }
 
-        content.getChildren().addAll(headerIcon, titleText, subtitleText, debtInfo, creditButtons);
+        content.getChildren().addAll(headerIcon, subtitleText, debtInfo, creditButtons);
         dialog.getDialogPane().setContent(content);
 
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().add(cancelButton);
+        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(cancelButton);
+        cancelBtn.setCancelButton(true);
+
+        dialog.setResultConverter(bt ->
+                bt.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE ? null : dialog.getResult()
+        );
 
         Optional<BalanceEntry> result = dialog.showAndWait();
         if (result.isPresent()) {
@@ -497,7 +508,7 @@ public class TransactionsController extends Controller {
                 FormatUtils.formatCurrency(amount), creditSourceName, debtorName, creditSourceName,
                 FormatUtils.formatCurrency(amount), debtorName, FormatUtils.formatCurrency(amount));
 
-        ButtonType confirmButton = new ButtonType("Confirm Transfer", ButtonBar.ButtonData.OK_DONE);
+        ButtonType confirmButton = new ButtonType("Confirm", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
 
         Alert confirmDialog = createStyledConfirmDialog("Confirm Credit Transfer", "Confirm credit transfer", message,
@@ -505,6 +516,8 @@ public class TransactionsController extends Controller {
 
         Button confirmBtn = (Button) confirmDialog.getDialogPane().lookupButton(confirmButton);
         confirmBtn.getStyleClass().addAll("confirm-button", "confirm-button-primary");
+        Button cancelBtn = (Button) confirmDialog.getDialogPane().lookupButton(cancelButton);
+        cancelBtn.setCancelButton(true);
 
         Optional<ButtonType> confirmResult = confirmDialog.showAndWait();
         if (confirmResult.isPresent() && confirmResult.get() == confirmButton) {

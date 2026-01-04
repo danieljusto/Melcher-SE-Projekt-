@@ -421,9 +421,8 @@ public class TransactionHistoryController extends Controller {
         dialog.setTitle("Edit Transaction");
         dialog.initOwner(historyTable.getScene().getWindow());
         String stylesheet = getClass().getResource("/css/styles.css").toExternalForm();
-        if (!dialog.getDialogPane().getStylesheets().contains(stylesheet)) {
-            dialog.getDialogPane().getStylesheets().add(stylesheet);
-        }
+        dialog.getDialogPane().getStylesheets().add(stylesheet);
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         // Create dialog content
         VBox content = new VBox(15);
@@ -584,12 +583,14 @@ public class TransactionHistoryController extends Controller {
 
         // Add buttons
         ButtonType saveButton = new ButtonType("Save Changes", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButton, cancelButton);
+        ButtonType cancelType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButton, cancelType);
 
         // Style the save button
         Button saveBtn = (Button) dialog.getDialogPane().lookupButton(saveButton);
         saveBtn.getStyleClass().addAll("confirm-button", "confirm-button-success");
+        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(cancelType);
+        cancelBtn.setCancelButton(true);
 
         // Handle result
         Optional<ButtonType> result = dialog.showAndWait();
