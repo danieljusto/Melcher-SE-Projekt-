@@ -37,8 +37,9 @@ public class UserService {
 
     @Transactional
     public User registerUser(String name, String surname, String email, String password) {
-        // Check if email exists
-        if (userRepository.findAll().stream().anyMatch(u -> u.getEmail() != null && u.getEmail().equals(email))) {
+        // Use pessimistic lock to prevent concurrent registration with same email
+        // The lock ensures only one transaction can check and insert at a time
+        if (userRepository.findByEmailForUpdate(email).isPresent()) {
             throw new RuntimeException("Email already exists");
         }
         // Hash password before storing
@@ -53,10 +54,10 @@ public class UserService {
     }
 
     public Optional<User> authenticate(String email, String password) {
-        // Find user by email, then verify password using BCrypt
-        return userRepository.findAll().stream().filter(u -> u.getEmail() != null && u.getEmail().equals(email)).filter(
-                u -> u.getPassword() != null && passwordEncryptionService.verifyPassword(password, u.getPassword()))
-                .findFirst();
+        // Find user by email using indexed query, then verify password using BCrypt
+        return userRepository.findByEmail(email)
+                .filter(u -> u.getPassword() != null
+                        && passwordEncryptionService.verifyPassword(password, u.getPassword()));
     }
 
     public Optional<UserSummaryDTO> authenticateSummary(String email, String password) {
