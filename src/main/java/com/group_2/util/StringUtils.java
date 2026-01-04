@@ -31,4 +31,12 @@ public final class StringUtils {
     public static String pluralizeWord(int count, String singular, String plural) {
         return count == 1 ? singular : plural;
     }
+
+    // Simple email validation - checks for xxx@xxx.xxx format
+    public static boolean isValidEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    }
 }

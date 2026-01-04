@@ -3,6 +3,7 @@ package com.group_2.ui.core;
 import com.group_2.dto.core.UserSummaryDTO;
 import com.group_2.service.core.UserService;
 import com.group_2.util.SessionManager;
+import com.group_2.util.StringUtils;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
@@ -79,6 +80,12 @@ public class SignUpController extends Controller {
         // Validate that all fields are filled
         if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password.isEmpty()) {
             showErrorAlert("Validation Error", "Please fill in all fields.");
+            return;
+        }
+
+        // Validate email format
+        if (!StringUtils.isValidEmail(email)) {
+            showErrorAlert("Validation Error", "Please enter a valid email address.");
             return;
         }
 
