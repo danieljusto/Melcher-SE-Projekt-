@@ -131,6 +131,21 @@ Die Integration eines E-Mail-Services würde die Benutzererfahrung erheblich ver
   - REST-API für externe Clients (Mobile Apps, Web-Frontend)
   - API-Versionierung und Dokumentation (OpenAPI/Swagger)
 
+### 7.6 Datenbank-Locking
+- **Aktueller Zustand:** Erste Locking-Mechanismen für kritische Operationen (z.B. Benutzerregistrierung) implementiert
+- **Vorgeschlagene Erweiterungen:**
+  - Erweiterung der Locking-Strategie auf weitere konkurrierende Zugriffe
+  - Vermeidung von Race Conditions bei gleichzeitigen Benutzeraktionen
+  - Konsistente Datenintegrität bei Mehrbenutzer-Szenarien
+
+### 7.7 Zentrales Server-Deployment
+- **Aktueller Zustand:** Lokale Anwendung mit eingebetteter H2-Datenbank
+- **Vorgeschlagene Erweiterungen:**
+  - Deployment der Spring-Anwendung auf einem zentralen Server
+  - H2-Datenbank im Server-Modus für gemeinsamen Zugriff aller WG-Mitglieder
+  - Synchronisation der Daten in Echtzeit zwischen allen Clients
+  - Zentrale Datensicherung und Backup-Strategien
+
 ---
 
 ## 8. Multi-Plattform und Skalierbarkeit
