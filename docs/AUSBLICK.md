@@ -16,7 +16,7 @@ Die Integration eines E-Mail-Services würde die Benutzererfahrung erheblich ver
   - Sichere Token-Generierung mittels `SecureRandom`
 
 ### 1.2 E-Mail-Verifizierung bei Registrierung
-- **Aktueller Zustand:** E-Mail-Adressen werden bei der Registrierung nicht verifiziert (`UserService.registerUser`)
+- **Aktueller Zustand:** Grundlegende Format-Validierung ist implementiert (`StringUtils.isValidEmail()` prüft auf `xxx@xxx.xxx`-Format). Eine echte Verifizierung der E-Mail-Adresse (ob sie existiert und dem Benutzer gehört) erfolgt nicht.
 - **Vorgeschlagene Lösung:**
   - Bestätigungs-E-Mail nach Registrierung
   - Account-Aktivierung erst nach E-Mail-Bestätigung
@@ -115,7 +115,6 @@ Die Integration eines E-Mail-Services würde die Benutzererfahrung erheblich ver
 
 ### 7.3 Sicherheit
 - **Vorgeschlagene Verbesserungen:**
-  - `SecureRandom` statt `Random` für Invite-Codes
   - Rate-Limiting für Login-Versuche
   - Session-Timeout und automatischer Logout
   - Thread-Safety für `SessionManager`
