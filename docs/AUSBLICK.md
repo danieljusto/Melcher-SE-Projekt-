@@ -57,29 +57,15 @@ Die Integration eines E-Mail-Services würde die Benutzererfahrung erheblich ver
 ### 3.1 Ausgaben-Export
 - **Vorgeschlagene Features:**
   - Export der Transaktionshistorie als CSV/PDF
-  - Monatsübersichten und Jahresberichte
-  - Filterung nach Zeitraum, Kategorie oder Mitbewohner
 
-### 3.2 Kategorisierung von Ausgaben
-- **Aktueller Zustand:** Transaktionen haben nur eine Beschreibung
-- **Vorgeschlagene Lösung:**
-  - Kategorien-Feld für Transaktionen (Miete, Einkäufe, Haushalt, etc.)
-  - Kategorisierte Ausgabenübersichten
-  - Statistiken und Diagramme pro Kategorie
-
-### 3.3 Budgetplanung
-- Monatliches WG-Budget festlegen
-- Warnungen bei Budgetüberschreitung
-- Prognosen basierend auf wiederkehrenden Daueraufträgen
-
-### 3.4 Externe Zahlungsintegration
+### 3.2 Externe Zahlungsintegration
 - Integration mit PayPal, Klarna, oder Banking-APIs
 - Automatische Begleichung von Schulden
 - QR-Code-Generierung für schnelle Überweisungen
 
 ---
 
-## 4. Benutzerverwaltung
+## 4. Benutzerverwaltung (Basic stuff was jede app hat)
 
 ### 4.1 Selbständige Profilverwaltung
 - **Aktueller Zustand:** Begrenzte Optionen zur Profilbearbeitung in `ProfileController`
@@ -94,46 +80,21 @@ Die Integration eines E-Mail-Services würde die Benutzererfahrung erheblich ver
 - **Vorgeschlagene Erweiterungen:**
   - Differenzierte Rollen (Admin, Moderator, Mitglied)
   - Granulare Berechtigungen (z.B. nur Transaktionen erstellen, nicht löschen)
+  - Genauere Berechtigungsverwaltung
 
 ---
 
 ## 5. Putzplan-Erweiterungen
 
-### 5.1 Flexible Wiederholungsmuster
-- **Aktueller Zustand:** Putzaufgaben basieren auf wöchentlichen Zyklen
-- **Vorgeschlagene Erweiterungen:**
-  - Alle 2 Wochen, monatliche, saisonale Aufgaben
-  - Flexible Datumsauswahl für einmalige Aufgaben
-  - Integration mit Kalender-Apps (iCal-Export)
-
-### 5.2 Aufgabenbewertung und Fairness-Metrik
-- Erfassung des Zeitaufwands pro Aufgabe
-- Automatische Anpassung der Rotation basierend auf Aufgabenschwere
-- Statistiken zur Aufgabenverteilung pro Mitbewohner
-
-### 5.3 Foto-Dokumentation
-- Vorher-/Nachher-Fotos für erledigte Aufgaben
-- Quality-Checks durch andere Mitbewohner
+- Integration mit Kalender-Apps (iCal-Export)
 
 ---
 
 ## 6. Einkaufslisten-Erweiterungen
 
-### 6.1 Preiserfassung
-- **Aktueller Zustand:** Nur Artikelname und "gekauft"-Status (`ShoppingListItem`)
-- **Vorgeschlagene Lösung:**
-  - Optionales Preisfeld pro Artikel
-  - Automatische Transaktionserstellung beim Abhaken
-  - Summe pro Einkaufsliste
-
-### 6.2 Rezept-Integration
 - Rezepte mit Zutatenlisten
   - Automatisches Hinzufügen von Rezutzutaten zur Einkaufsliste
 - Vorrats-Tracking
-
-### 6.3 Barcode-Scanning
-- Produkterkennung via Barcode
-- Preis- und Produktinformationen automatisch einfügen
 
 ---
 
@@ -180,15 +141,6 @@ Die Integration eines E-Mail-Services würde die Benutzererfahrung erheblich ver
 - Push-Notifications auf mobilen Geräten
 - Offline-Synchronisation
 
-### 8.2 Web-Interface
-- Responsive Web-Anwendung
-- Zugriff von jedem Gerät ohne Installation
-
-### 8.3 Mehrere WGs pro Benutzer
-- **Aktueller Zustand:** Ein Benutzer kann nur einer WG angehören (`User.wg`)
-- **Vorgeschlagene Lösung:**
-  - Many-to-Many-Beziehung zwischen User und WG
-  - WG-Wechsel in der Anwendung
 
 ---
 
@@ -211,17 +163,21 @@ Die Integration eines E-Mail-Services würde die Benutzererfahrung erheblich ver
 
 ## Zusammenfassung
 
-Die Anwendung bietet bereits eine solide Grundlage für die Verwaltung von Wohngemeinschaften mit Funktionen für Finanzverwaltung, Putzpläne und Einkaufslisten. Die hier vorgeschlagenen Erweiterungen würden die Benutzerfreundlichkeit, Sicherheit und Funktionalität erheblich erweitern:
+Die Anwendung bietet eine solide Grundlage für die Verwaltung von Wohngemeinschaften. Die identifizierten Verbesserungspotenziale lassen sich in drei Kategorien einteilen:
 
-| Priorität | Bereich | Verbesserung |
-|-----------|---------|--------------|
-| **Hoch** | E-Mail-Service | Passwort-Reset, E-Mail-Verifizierung |
-| **Hoch** | Sicherheit | SecureRandom, Exception Handling |
-| **Hoch** | Performance | N+1 Query-Fixes |
-| **Mittel** | Benutzerverwaltung | Account-Löschung, Profilerweiterungen |
-| **Mittel** | Benachrichtigungen | In-App-Notifications |
-| **Mittel** | Finanzmodul | Export, Kategorien |
-| **Niedrig** | Multi-Plattform | Mobile App, Web-Interface |
-| **Niedrig** | i18n | Mehrsprachigkeit, Währungsauswahl |
+**Kernfunktionalität:**
+- E-Mail-Service für Passwort-Reset, Account-Verifizierung und Benachrichtigungen
+- Push-Benachrichtigungen für zeitkritische Ereignisse
+- Erweiterte Benutzerverwaltung mit Account-Löschung und Rollenberechtigungen
 
-Diese Erweiterungen könnten schrittweise in zukünftigen Entwicklungszyklen implementiert werden, wobei der E-Mail-Service und die Sicherheitsverbesserungen die höchste Priorität haben sollten.
+**Funktionale Erweiterungen:**
+- Finanzmodul: Export-Funktionen
+- Putzplan: Kalender-Integration
+- Einkaufslisten: Rezept-Verwaltung und Vorrats-Tracking
+
+**Technische Qualität:**
+- Performance-Optimierung (N+1 Queries, Caching)
+- Verbessertes Exception Handling und Sicherheit
+- Erhöhung der Testabdeckung und API-Entwicklung
+
+Diese Erweiterungen würden die Benutzerfreundlichkeit und technische Qualität der Anwendung signifikant steigern. Prioritär sollten der E-Mail-Service und die Sicherheitsverbesserungen umgesetzt werden, da diese grundlegende Funktionen für eine produktionsreife Anwendung darstellen.
