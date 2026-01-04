@@ -242,4 +242,31 @@ class WGServiceTest {
         assertThat(status.balance()).isLessThan(0);
         assertThat(status.message()).contains("owe").contains("roommate");
     }
+
+    @Test
+    void removeMitbewohner_CleansUpOrphanedTransactions() {
+        // Given - WG with admin + 2 members, transaction between the 2 members
+        WG wg = wgService.createWG("Test WG", admin, List.of());
+        User member1 = userRepository.save(TestDataFactory.user("member1@example.com", null));
+        User member2 = userRepository.save(TestDataFactory.user("member2@example.com", null));
+        wgService.addMitbewohner(wg.getId(), member1);
+        wgService.addMitbewohner(wg.getId(), member2);
+
+        // Transaction between member1 (creditor) and member2 (debtor)
+        var transaction = transactionService.createTransaction(member1.getId(), member1.getId(),
+                List.of(member2.getId()), List.of(100.0), 50.0, "Expense between leaving members");
+        Long transactionId = transaction.getId();
+
+        // When - member2 leaves first
+        wgService.removeMitbewohner(wg.getId(), member2.getId());
+
+        // Then - transaction should still exist (member1 is still in WG)
+        assertThat(transactionService.getTransactionsByWG(wg.getId())).hasSize(1);
+
+        // When - member1 leaves too
+        wgService.removeMitbewohner(wg.getId(), member1.getId());
+
+        // Then - transaction should be deleted (no one involved is in WG anymore)
+        assertThat(transactionService.getTransactionsByWG(wg.getId())).isEmpty();
+    }
 }

@@ -454,4 +454,64 @@ public class TransactionService {
         }
         transactionRepository.deleteByWg(wg);
     }
+
+    // Called when a user leaves - deletes transactions where ALL involved parties
+    // (creditor + all debtors) are no longer in the WG
+    @Transactional
+    public void cleanupOrphanedTransactionsForDepartingUser(Long departingUserId, Long wgId) {
+        WG wg = wgRepository.findById(wgId).orElse(null);
+        if (wg == null) {
+            return;
+        }
+
+        // Get current WG member IDs (after the user has been removed)
+        java.util.Set<Long> currentMemberIds = wg.getMitbewohner().stream().map(User::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Find all transactions in this WG
+        List<Transaction> allTransactions = transactionRepository.findByWg(wg);
+
+        for (Transaction transaction : allTransactions) {
+            // Collect all user IDs involved in this transaction
+            java.util.Set<Long> involvedUserIds = new java.util.HashSet<>();
+            involvedUserIds.add(transaction.getCreditor().getId());
+            for (TransactionSplit split : transaction.getSplits()) {
+                involvedUserIds.add(split.getDebtor().getId());
+            }
+
+            // Check if ANY involved user is still in the WG
+            boolean anyStillInWg = involvedUserIds.stream().anyMatch(currentMemberIds::contains);
+
+            // If no one involved is still in the WG, delete the transaction
+            if (!anyStillInWg) {
+                transactionSplitRepository.deleteAll(transaction.getSplits());
+                transactionRepository.delete(transaction);
+            }
+        }
+    }
+
+    // Called BEFORE a user leaves - creates settlement transactions for all debtors
+    // who owe the departing user money (positive balances)
+    @Transactional
+    public void settleCreditsForDepartingUser(Long departingUserId) {
+        Map<Long, Double> balances = calculateAllBalances(departingUserId);
+
+        // Find all positive balances (others owe the departing user)
+        for (Map.Entry<Long, Double> entry : balances.entrySet()) {
+            Long debtorId = entry.getKey();
+            double amount = entry.getValue();
+
+            // Positive balance means debtor owes money to departing user
+            if (amount > 0) {
+                // Create a settlement transaction: debtor pays departing user
+                // This effectively zeros out the debt
+                createTransaction(departingUserId, // creator
+                        debtorId, // creditor (debtor becomes creditor in reversal)
+                        List.of(departingUserId), // departing user as debtor
+                        null, // equal split (100%)
+                        amount, // the owed amount
+                        "Settlement - member leaving WG");
+            }
+        }
+    }
 }

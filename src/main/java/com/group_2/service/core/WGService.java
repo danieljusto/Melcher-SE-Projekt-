@@ -221,6 +221,11 @@ public class WGService {
         // or debtor)
         standingOrderService.deactivateStandingOrdersForUser(userId, wgId);
 
+        // Settle any credits owed to the departing user (create settlement
+        // transactions)
+        // This must happen BEFORE removal so balances can still be calculated
+        transactionService.settleCreditsForDepartingUser(userId);
+
         wg.removeMitbewohner(userToRemove);
 
         // Regenerate invite code to prevent removed user from rejoining with old code
@@ -239,6 +244,9 @@ public class WGService {
 
         // Reset cleaning schedule to remove departed member and clear all reassignments
         cleaningScheduleService.resetScheduleForMembershipChange(savedWg);
+
+        // Clean up orphaned transactions (where all involved parties have left the WG)
+        transactionService.cleanupOrphanedTransactionsForDepartingUser(userId, wgId);
     }
 
     // Checks if user can leave WG (admin status + individual balance validation)
