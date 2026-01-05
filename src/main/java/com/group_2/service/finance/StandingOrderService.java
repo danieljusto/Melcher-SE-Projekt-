@@ -64,7 +64,7 @@ public class StandingOrderService {
             if (Boolean.TRUE.equals(monthlyLastDay)) {
                 // Last day of month mode
                 LocalDate lastDayThisMonth = now.withDayOfMonth(MonthlyScheduleUtil.getEffectiveLastDay(now));
-                if (lastDayThisMonth.isAfter(now)) {
+                if (!lastDayThisMonth.isBefore(now)) {
                     nextExecution = lastDayThisMonth;
                 } else {
                     LocalDate nextMonth = now.plusMonths(1);
@@ -74,7 +74,7 @@ public class StandingOrderService {
                 // Fixed day mode
                 int actualDay = MonthlyScheduleUtil.getEffectiveDay(now, monthlyDay);
                 LocalDate candidateDate = now.withDayOfMonth(actualDay);
-                if (candidateDate.isAfter(now)) {
+                if (!candidateDate.isBefore(now)) {
                     nextExecution = candidateDate;
                 } else {
                     // Next month

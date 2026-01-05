@@ -453,3 +453,294 @@ org.h2.jdbc.JdbcSQLNonTransientException: The object is already closed [90007-22
 org.h2.jdbc.JdbcSQLNonTransientException: The object is already closed [90007-224]
 2026-01-05 19:43:24.661529+01:00 jdbc[3]: exception
 org.h2.jdbc.JdbcSQLNonTransientException: The object is already closed [90007-224]
+2026-01-05 20:45:47.476047+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 20:51:59.728704+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabelle "TRANSACTION_SPLIT" nicht gefunden
+Table "TRANSACTION_SPLIT" not found; SQL statement:
+DELETE FROM transaction_split [42102-224]
+2026-01-05 20:51:59.733809+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabelle "TRANSACTION" nicht gefunden
+Table "TRANSACTION" not found; SQL statement:
+DELETE FROM transaction [42102-224]
+2026-01-05 20:51:59.733809+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabelle "STANDING_ORDER" nicht gefunden
+Table "STANDING_ORDER" not found; SQL statement:
+DELETE FROM standing_order [42102-224]
+2026-01-05 20:52:20.835866+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Tabelle "STANDING_ORDER" nicht gefunden
+Table "STANDING_ORDER" not found; SQL statement:
+DELETE FROM standing_order [42102-224]
+2026-01-05 21:02:40.839912+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:13:25.740847+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:13:25.753592+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:13:25.756727+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:13:25.757734+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:13:25.759748+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:13:25.761598+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:13:25.762606+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:17:02.943372+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- =============================================
+-- DEZEMBER 2025 – 10 TRANSAKTIONEN
+-- ========== [22018-224]
+2026-01-05 21:17:02.949329+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 2. Pizza – User 1 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(2, 0, 1, 1, 32.50, 'Pizza Lieferung [22018-224]
+2026-01-05 21:17:02.954557+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 3. Drogerie – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(3, 0, 2, 2, 20.00, 'Putzmittel [22018-224]
+2026-01-05 21:17:02.957578+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 4. Strom – User 3 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(4, 0, 3, 2, 60.00, 'Strom Abschlag [22018-224]
+2026-01-05 21:17:02.960602+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 5. WG Kasse – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(5, 0, 2, 2, 40.00, 'WG Ka [22018-224]
+2026-01-05 21:17:02.964124+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "4 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "4 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 6. Weihnachtsmarkt – User 4 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(6, 0, 4, 4, 25.00, 'Weihn [22018-224]
+2026-01-05 21:17:02.966659+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 7. Küchengeräte – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(7, 0, 2, 2, 35.00, 'Küche [22018-224]
+2026-01-05 21:17:02.970784+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "5 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "5 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 8. Taxi – User 5 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(8, 0, 5, 5, 18.00, 'Taxi Heimweg' [22018-224]
+2026-01-05 21:17:02.973408+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 9. Snacks – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(9, 0, 2, 2, 22.00, 'Snack Bestellun [22018-224]
+2026-01-05 21:17:02.976429+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 10. Druckkosten – User 1 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(10, 0, 1, 2, 5.00, 'Druc [22018-224]
+2026-01-05 21:17:02.979459+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- =============================================
+-- JANUAR 2026 – 10 TRANSAKTIONEN
+-- ========= [22018-224]
+2026-01-05 21:17:02.983488+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 12. Drogerie – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(12, 0, 2, 2, 19.00, 'Reinigungsmi [22018-224]
+2026-01-05 21:17:02.986497+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 13. Getränke – User 3 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(13, 0, 3, 3, 28.50, 'Getränkem [22018-224]
+2026-01-05 21:17:02.990283+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 14. Klopapier – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(14, 0, 2, 2, 12.99, 'Toilettenp [22018-224]
+2026-01-05 21:17:02.992810+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 15–20 bewusst ähnlich strukturiert (Kino, Bäcker, Haushalt, Geschenk etc.)
+-- → Muster ist jetzt konsistent, erweiterbar und testtauglich
+
+-- =============================================
+-- STANDING ORDERS (UNVERÄNDERT)
+-- =============================================
+
+INSERT INTO STANDING_ [22018-224]
+2026-01-05 21:17:02.995471+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+INSERT INTO STANDING_ORDERS VALUES
+(2, 0, 2, 2, 1, 39.99, 'Internet Telekom', 'MONTHLY', '2026-02-15', TRUE,
+ '2025-12-15 09:00:00',
+ '[{"userId":2,"percentage":50.0},{"userId":3,"percentage":50.0}]',
+ 15, FALSE) [22018-224]
+2026-01-05 21:17:11.543798+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- =============================================
+-- DEZEMBER 2025 – 10 TRANSAKTIONEN
+-- ========== [22018-224]
+2026-01-05 21:17:11.546333+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 2. Pizza – User 1 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(2, 0, 1, 1, 32.50, 'Pizza Lieferung [22018-224]
+2026-01-05 21:17:11.547851+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 3. Drogerie – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(3, 0, 2, 2, 20.00, 'Putzmittel [22018-224]
+2026-01-05 21:17:11.549861+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 4. Strom – User 3 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(4, 0, 3, 2, 60.00, 'Strom Abschlag [22018-224]
+2026-01-05 21:17:11.551372+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 5. WG Kasse – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(5, 0, 2, 2, 40.00, 'WG Ka [22018-224]
+2026-01-05 21:17:11.555572+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "4 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "4 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 6. Weihnachtsmarkt – User 4 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(6, 0, 4, 4, 25.00, 'Weihn [22018-224]
+2026-01-05 21:17:11.576610+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 7. Küchengeräte – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(7, 0, 2, 2, 35.00, 'Küche [22018-224]
+2026-01-05 21:17:11.578634+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "5 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "5 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 8. Taxi – User 5 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(8, 0, 5, 5, 18.00, 'Taxi Heimweg' [22018-224]
+2026-01-05 21:17:11.580649+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 9. Snacks – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(9, 0, 2, 2, 22.00, 'Snack Bestellun [22018-224]
+2026-01-05 21:17:11.582165+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 10. Druckkosten – User 1 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(10, 0, 1, 2, 5.00, 'Druc [22018-224]
+2026-01-05 21:17:11.585694+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "1 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- =============================================
+-- JANUAR 2026 – 10 TRANSAKTIONEN
+-- ========= [22018-224]
+2026-01-05 21:17:11.587803+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 12. Drogerie – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(12, 0, 2, 2, 19.00, 'Reinigungsmi [22018-224]
+2026-01-05 21:17:11.589719+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "3 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 13. Getränke – User 3 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(13, 0, 3, 3, 28.50, 'Getränkem [22018-224]
+2026-01-05 21:17:11.591930+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "2 (TRANSACTIONS: ""TIMESTAMP"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 14. Klopapier – User 2 zahlt
+INSERT INTO TRANSACTIONS VALUES
+(14, 0, 2, 2, 12.99, 'Toilettenp [22018-224]
+2026-01-05 21:17:11.594470+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+-- 15–20 bewusst ähnlich strukturiert (Kino, Bäcker, Haushalt, Geschenk etc.)
+-- → Muster ist jetzt konsistent, erweiterbar und testtauglich
+
+-- =============================================
+-- STANDING ORDERS (UNVERÄNDERT)
+-- =============================================
+
+INSERT INTO STANDING_ [22018-224]
+2026-01-05 21:17:11.595525+01:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Datenumwandlungsfehler beim Umwandeln von "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"
+Data conversion error converting "0 (STANDING_ORDERS: ""CREATED_AT"" TIMESTAMP(6) NOT NULL)"; SQL statement:
+INSERT INTO STANDING_ORDERS VALUES
+(2, 0, 2, 2, 1, 39.99, 'Internet Telekom', 'MONTHLY', '2026-02-15', TRUE,
+ '2025-12-15 09:00:00',
+ '[{"userId":2,"percentage":50.0},{"userId":3,"percentage":50.0}]',
+ 15, FALSE) [22018-224]
+2026-01-05 21:23:22.188438+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:23:22.191068+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:23:22.191578+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:23:22.192079+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:23:22.193086+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:23:22.193595+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:23:22.195002+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:28:27.041785+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:28:27.044272+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:28:27.045284+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:28:27.046282+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:28:27.047297+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:28:27.047813+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
+2026-01-05 21:28:27.048829+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Das Objekt wurde bereits geschlossen
+The object is already closed [90007-224]
