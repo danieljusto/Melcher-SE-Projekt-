@@ -12,7 +12,7 @@
       styleClass="root-pane"
       stylesheets="@/css/styles.css">
 
-    <Text text="Welcome Back" styleClass="title-text"/>
+    <Text text="Welcome" styleClass="title-text"/>
 
     <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
         <Label text="Email" styleClass="field-label"/>
