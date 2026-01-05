@@ -266,6 +266,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         if (!dialog.getDialogPane().getStylesheets().contains(stylesheet)) {
             dialog.getDialogPane().getStylesheets().add(stylesheet);
         }
+        dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         // Create dialog content
         VBox content = new VBox(15);
@@ -550,10 +551,13 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
 
         dialog.getDialogPane().setContent(content);
 
+
         // Add buttons
         ButtonType saveButton = new ButtonType("Save Changes", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButton, cancelButton);
+        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(cancelButton);
+        cancelBtn.setCancelButton(true);
 
         // Style the save button
         Button saveBtn = (Button) dialog.getDialogPane().lookupButton(saveButton);
