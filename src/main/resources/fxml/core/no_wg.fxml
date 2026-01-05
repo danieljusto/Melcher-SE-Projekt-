@@ -97,7 +97,7 @@
                     <VBox spacing="8">
                         <Text text="Invite Code" styleClass="card-subtitle"/>
                         <TextField fx:id="wgIdField" promptText="e.g., ABC12DEF"
-                                   styleClass="modern-text-field"/>
+                                   styleClass="modern-text-field" onAction="#handleJoinWg"/>
                         <Text text="Ask your roommate for the 8-character invite code"
                               styleClass="list-item-subtitle"/>
                     </VBox>

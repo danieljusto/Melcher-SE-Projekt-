@@ -17,24 +17,24 @@
 
     <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
         <Label text="Name" styleClass="field-label"/>
-        <TextField fx:id="signupNameField" styleClass="text-field"/>
+        <TextField fx:id="signupNameField" styleClass="text-field" onAction="#handleSignup"/>
     </VBox>
     
     <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
         <Label text="Surname" styleClass="field-label"/>
-        <TextField fx:id="signupSurnameField" styleClass="text-field"/>
+        <TextField fx:id="signupSurnameField" styleClass="text-field" onAction="#handleSignup"/>
     </VBox>
     
     <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
         <Label text="Email" styleClass="field-label"/>
-        <TextField fx:id="signupEmailField" styleClass="text-field"/>
+        <TextField fx:id="signupEmailField" styleClass="text-field" onAction="#handleSignup"/>
     </VBox>
     
     <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="300">
         <Label text="Password" styleClass="field-label"/>
         <StackPane>
-            <PasswordField fx:id="signupPasswordField" styleClass="text-field, password-field-with-toggle"/>
-            <TextField fx:id="signupPasswordTextField" styleClass="text-field, password-field-with-toggle" visible="false" managed="false"/>
+            <PasswordField fx:id="signupPasswordField" styleClass="text-field, password-field-with-toggle" onAction="#handleSignup"/>
+            <TextField fx:id="signupPasswordTextField" styleClass="text-field, password-field-with-toggle" onAction="#handleSignup" visible="false" managed="false"/>
             <HBox alignment="CENTER_RIGHT" pickOnBounds="false" mouseTransparent="false">
                 <Button fx:id="togglePasswordButton" text="◉" onAction="#togglePasswordVisibility" styleClass="password-toggle-button"/>
             </HBox>
