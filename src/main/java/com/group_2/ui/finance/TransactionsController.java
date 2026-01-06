@@ -162,26 +162,43 @@ public class TransactionsController extends Controller {
 
     private void updateBalanceDisplay() {
         Long currentUserId = sessionManager.getCurrentUserId();
-        if (currentUserId == null)
-            return;
+        if (currentUserId == null) return;
 
         double totalBalance = transactionService.getTotalBalance(currentUserId);
         totalBalanceText.setText(FormatUtils.formatCurrency(totalBalance));
 
-        // Change card color based on balance
+        // Ensure base class for card exists (once)
         if (!balanceCard.getStyleClass().contains("balance-card")) {
             balanceCard.getStyleClass().add("balance-card");
         }
-        balanceCard.getStyleClass()
-                .removeAll("balance-card-positive", "balance-card-negative", "balance-card-neutral");
+
+        // === IMPORTANT: reset text classes first ===
+        totalBalanceText.getStyleClass().removeAll(
+                "balance-text-positive",
+                "balance-text-negative",
+                "balance-text-neutral"
+        );
+
         if (totalBalance > 0) {
-            // Green gradient - they owe you
+            totalBalanceText.getStyleClass().add("balance-text-positive");
+        } else if (totalBalance < 0) {
+            totalBalanceText.getStyleClass().add("balance-text-negative");
+        } else {
+            totalBalanceText.getStyleClass().add("balance-text-neutral");
+        }
+
+        // Card background classes
+        balanceCard.getStyleClass().removeAll(
+                "balance-card-positive",
+                "balance-card-negative",
+                "balance-card-neutral"
+        );
+
+        if (totalBalance > 0) {
             balanceCard.getStyleClass().add("balance-card-positive");
         } else if (totalBalance < 0) {
-            // Red gradient - you owe them
             balanceCard.getStyleClass().add("balance-card-negative");
         } else {
-            // Blue gradient - all settled
             balanceCard.getStyleClass().add("balance-card-neutral");
         }
     }
@@ -242,7 +259,7 @@ public class TransactionsController extends Controller {
         content.setPadding(new Insets(30));
         content.setAlignment(Pos.CENTER);
         content.getStyleClass().add("dialog-content");
-        content.setPrefWidth(500);
+        content.setPrefWidth(550);
 
         // Message
         Text messageText;

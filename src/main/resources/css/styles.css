@@ -520,15 +520,15 @@
     -fx-background-color: rgba(239, 68, 68, 0.1);
     -fx-background-radius: 50;
     -fx-text-fill: #ef4444;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-alignment: center;
     -fx-cursor: hand;
     -fx-border-color: transparent;
-    -fx-min-width: 28;
-    -fx-min-height: 28;
-    -fx-max-width: 28;
-    -fx-max-height: 28;
+    -fx-min-width: 30;
+    -fx-min-height: 30;
+    -fx-max-width: 30;
+    -fx-max-height: 30;
 }
 
 .task-delete-button:hover {
@@ -1823,29 +1823,27 @@
 }
 
 /* Balance text colors for tables */
-.balance-text-positive {
+.balance-card .balance-text-positive {
     -fx-text-fill: #10b981;
+    -fx-fill: #10b981;
     -fx-font-weight: bold;
 }
 
-.table-cell.balance-text-positive {
-    -fx-text-fill: #10b981;
-    -fx-font-weight: bold;
-}
-
-.balance-text-negative {
+.balance-card .balance-text-negative {
     -fx-text-fill: #ef4444;
+    -fx-fill: #ef4444;
+    -fx-font-weight: bold;
+}
+
+.balance-card .balance-text-neutral {
+    -fx-text-fill: #ffffff;
+    -fx-fill: #ffffff;
     -fx-font-weight: bold;
 }
 
 .table-cell.balance-text-negative {
     -fx-text-fill: #ef4444;
     -fx-font-weight: bold;
-}
-
-.balance-text-neutral {
-    -fx-text-fill: #475569;
-    -fx-font-weight: normal;
 }
 
 .table-cell.balance-text-neutral {
@@ -2088,8 +2086,8 @@
     -fx-padding: 15 25;
     -fx-background-radius: 12;
     -fx-cursor: hand;
-    -fx-min-width: 140;
-    -fx-pref-width: 140;
+    -fx-min-width: 150;
+    -fx-pref-width: 150;
     -fx-min-height: 54;
     -fx-pref-height: 54;
 }
