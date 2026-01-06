@@ -92,13 +92,28 @@ public class ShoppingListController extends Controller {
 
         if (lists.isEmpty()) {
             selectedList = null;
+            // Show "no lists" view when there are no lists
+            noListSelectedView.setVisible(true);
+            noListSelectedView.setManaged(true);
+            listDetailsView.setVisible(false);
+            listDetailsView.setManaged(false);
         } else {
             for (ShoppingListDTO list : lists) {
                 listsContainer.getChildren().add(createListCard(list));
             }
-            // Auto-select first list if none is selected
-            if (selectedList == null) {
+
+            // Check if currently selected list still exists in the available lists
+            boolean selectedListStillExists = selectedList != null
+                    && lists.stream().anyMatch(list -> list.id().equals(selectedList.id()));
+
+            if (selectedList == null || !selectedListStillExists) {
+                // Auto-select first list if none is selected or if selected list no longer
+                // exists
                 selectList(lists.get(0));
+            } else {
+                // Refresh the selected list with updated data
+                lists.stream().filter(list -> list.id().equals(selectedList.id())).findFirst()
+                        .ifPresent(this::selectList);
             }
         }
     }
@@ -351,8 +366,8 @@ public class ShoppingListController extends Controller {
         configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Create New Shopping List");
         dialog.setHeaderText("Enter list details");
-        dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
+        dialog.getDialogPane().getStylesheets()
+                .add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         // Set button types
@@ -441,8 +456,8 @@ public class ShoppingListController extends Controller {
         configureDialogOwner(dialog, getOwnerWindow(listsContainer));
         dialog.setTitle("Manage Sharing");
         dialog.setHeaderText("Select members to share with");
-        dialog.getDialogPane().getStylesheets().add(
-                Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
+        dialog.getDialogPane().getStylesheets()
+                .add(Objects.requireNonNull(getClass().getResource("/css/styles.css")).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
 
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
