@@ -1931,6 +1931,16 @@
     -fx-background-insets: 0;
 }
 
+.dialog-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.dialog-scroll-pane>.viewport {
+    -fx-background-color: white;
+}
+
 .dialog-footer {
     -fx-padding: 16 24;
     -fx-border-color: #e5e7eb;
