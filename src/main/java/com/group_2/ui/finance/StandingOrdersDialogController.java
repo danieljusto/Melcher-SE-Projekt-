@@ -259,6 +259,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
         // Create edit dialog
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Edit Standing Order");
+        dialog.setResizable(true);
         if (dialogOverlay.getScene() != null) {
             dialog.initOwner(dialogOverlay.getScene().getWindow());
         }
@@ -267,6 +268,7 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
             dialog.getDialogPane().getStylesheets().add(stylesheet);
         }
         dialog.getDialogPane().getStyleClass().add("styled-dialog");
+        dialog.getDialogPane().setMaxHeight(600);
 
         // Create dialog content
         VBox content = new VBox(15);
@@ -549,8 +551,15 @@ public class StandingOrdersDialogController extends com.group_2.ui.core.Controll
             content.getChildren().add(debtorsLabel);
         }
 
-        dialog.getDialogPane().setContent(content);
+        // Wrap content in ScrollPane to make dialog scrollable
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(450);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.getStyleClass().add("edge-to-edge");
 
+        dialog.getDialogPane().setContent(scrollPane);
 
         // Add buttons
         ButtonType saveButton = new ButtonType("Save Changes", ButtonBar.ButtonData.OK_DONE);

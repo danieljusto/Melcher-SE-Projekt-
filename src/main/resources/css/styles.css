@@ -1841,13 +1841,18 @@
     -fx-font-weight: bold;
 }
 
+.table-cell.balance-text-positive {
+    -fx-text-fill: #10b981;
+    -fx-font-weight: bold;
+}
+
 .table-cell.balance-text-negative {
     -fx-text-fill: #ef4444;
     -fx-font-weight: bold;
 }
 
 .table-cell.balance-text-neutral {
-    -fx-text-fill: #475569;
+    -fx-text-fill: #1f2937;
     -fx-font-weight: normal;
 }
 
@@ -1929,16 +1934,6 @@
     -fx-padding: 20 24;
     -fx-background-color: white;
     -fx-background-insets: 0;
-}
-
-.dialog-scroll-pane {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-    -fx-border-color: transparent;
-}
-
-.dialog-scroll-pane>.viewport {
-    -fx-background-color: white;
 }
 
 .dialog-footer {
